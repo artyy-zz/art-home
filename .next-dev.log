@@ -1,0 +1,49 @@
+
+> arthome@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://26.108.41.110:3000
+- Environments: .env
+✓ Ready in 299ms
+
+ GET /sq 200 in 2.0s (next.js: 1739ms, generate-params: 308ms, application-code: 283ms)
+ GET /sq 200 in 135ms (next.js: 14ms, generate-params: 7ms, application-code: 122ms)
+ GET /sq/login 200 in 1249ms (next.js: 1176ms, generate-params: 311ms, application-code: 73ms)
+ GET /sq/admin 200 in 2.6s (next.js: 2.4s, generate-params: 358ms, application-code: 147ms)
+ POST /sq/login 303 in 2.7s (next.js: 12ms, generate-params: 6ms, application-code: 2.7s)
+  └─ ƒ loginAction("sq", undefined, {}) in 104ms src/actions/auth.ts
+ GET /en/contact 200 in 968ms (next.js: 858ms, generate-params: 309ms, application-code: 109ms)
+ GET /en/contact 200 in 96ms (next.js: 14ms, generate-params: 9ms, application-code: 83ms)
+ POST /en/contact 200 in 62ms (next.js: 9ms, generate-params: 6ms, application-code: 52ms)
+  └─ ƒ createLeadAction("en", undefined, {}) in 10ms src/actions/public.ts
+ GET /en/admin/leads 200 in 1034ms (next.js: 821ms, generate-params: 373ms, application-code: 213ms)
+ GET /en/admin/invoices 200 in 873ms (next.js: 744ms, generate-params: 334ms, application-code: 129ms)
+ GET /api/invoices/cmoesprjc002funkksnnspvk9/pdf 200 in 1804ms (next.js: 1734ms, application-code: 69ms)
+ GET /api/invoices/cmoesprjc002funkksnnspvk9/pdf 200 in 32ms (next.js: 12ms, application-code: 20ms)
+ GET / 307 in 376ms (next.js: 309ms, application-code: 66ms)
+ GET /sq 200 in 139ms (next.js: 10ms, generate-params: 6ms, application-code: 129ms)
+ GET / 307 in 53ms (next.js: 5ms, application-code: 48ms)
+ GET /sq 200 in 116ms (next.js: 10ms, generate-params: 7ms, application-code: 105ms)
+ GET /en 200 in 57ms (next.js: 12ms, generate-params: 7ms, application-code: 45ms)
+ GET /sq 200 in 64ms (next.js: 10ms, generate-params: 7ms, application-code: 53ms)
+ GET /en 200 in 58ms (next.js: 10ms, generate-params: 6ms, application-code: 48ms)
+ GET /sq 200 in 66ms (next.js: 10ms, generate-params: 6ms, application-code: 56ms)
+ GET /sq/contact 200 in 35ms (next.js: 11ms, generate-params: 7ms, application-code: 25ms)
+ GET /sq/furniture 200 in 736ms (next.js: 682ms, generate-params: 333ms, application-code: 54ms)
+ GET /sq/contact 200 in 36ms (next.js: 11ms, generate-params: 7ms, application-code: 25ms)
+ GET /sq 200 in 59ms (next.js: 10ms, generate-params: 6ms, application-code: 49ms)
+ GET /sq 200 in 19ms (next.js: 11ms, generate-params: 6ms, application-code: 8ms)
+ GET /sq 200 in 43ms (next.js: 3ms, generate-params: 27µs, application-code: 40ms)
+ GET /sq 200 in 18ms (next.js: 11ms, generate-params: 7ms, application-code: 7ms)
+ GET /sq 200 in 43ms (next.js: 4ms, generate-params: 37µs, application-code: 39ms)
+ GET /sq 200 in 17ms (next.js: 11ms, generate-params: 7ms, application-code: 6ms)
+ GET /sq 200 in 38ms (next.js: 3ms, generate-params: 29µs, application-code: 35ms)
+ GET /sq/about 200 in 653ms (next.js: 619ms, generate-params: 289ms, application-code: 33ms)
+ GET /sq/contact 200 in 36ms (next.js: 11ms, generate-params: 7ms, application-code: 25ms)
+ GET /sq/contact 200 in 35ms (next.js: 10ms, generate-params: 7ms, application-code: 25ms)
+ GET /sq/gallery 200 in 686ms (next.js: 640ms, generate-params: 304ms, application-code: 46ms)
+ GET /sq/about 200 in 34ms (next.js: 10ms, generate-params: 6ms, application-code: 24ms)
+ GET /sq/furniture 200 in 57ms (next.js: 10ms, generate-params: 6ms, application-code: 47ms)
+ GET /sq 200 in 53ms (next.js: 11ms, generate-params: 7ms, application-code: 42ms)

@@ -1,0 +1,136 @@
+import Link from "next/link";
+import { Card } from "@/components/shared/card";
+import { ComingSoonButton } from "@/components/shared/coming-soon-button";
+import { PlaceholderMedia } from "@/components/shared/placeholder-media";
+import { SectionHeading } from "@/components/shared/section-heading";
+import { buttonClasses } from "@/components/shared/button";
+import { getFeaturedProducts } from "@/lib/erp";
+import { getDictionary, type Locale } from "@/lib/i18n";
+import { getProductImage, siteImages } from "@/lib/site-images";
+
+export default async function HomePage({ params }: PageProps<"/[locale]">) {
+  const { locale } = await params;
+  const typedLocale = locale as Locale;
+  const dict = getDictionary(typedLocale);
+  const featuredProducts = await getFeaturedProducts(typedLocale);
+
+  return (
+    <div className="animate-fade">
+      <section className="px-6 pb-12 pt-10 md:px-10 md:pb-20">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="industrial-grid relative overflow-hidden rounded-[36px] px-7 py-8 md:px-10 md:py-12">
+            <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">
+              {dict.home.eyebrow}
+            </p>
+            <h1 className="mt-6 max-w-3xl font-display text-5xl leading-none text-[var(--color-foreground)] md:text-7xl">
+              {dict.home.title}
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--color-muted)] md:text-lg">
+              {dict.home.subtitle}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ComingSoonButton variant="primary" size="lg">
+                {dict.common.requestQuote}
+              </ComingSoonButton>
+              <Link
+                href={`/${typedLocale}/furniture`}
+                className={buttonClasses({ variant: "secondary", size: "lg" })}
+              >
+                {dict.common.exploreCollection}
+              </Link>
+            </div>
+            <p className="mt-12 text-sm leading-7 text-[var(--color-muted)]">
+              ..............
+            </p>
+          </Card>
+          <PlaceholderMedia
+            label={typedLocale === "sq" ? "Kuzhina Art Home" : "Art Home Kitchens"}
+            src={siteImages.hero}
+            priority
+            className="h-full min-h-[420px]"
+          />
+        </div>
+      </section>
+
+      <section className="px-6 py-12 md:px-10 md:py-18">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeading
+            label="Art Home"
+            title={dict.home.featuredTitle}
+            description={
+              typedLocale === "sq"
+                ? "Kategori të menduara për banesa dhe projekte të personalizuara."
+                : "Categories designed for homes and personalized interior projects."
+            }
+          />
+          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {featuredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden rounded-[30px]">
+                <PlaceholderMedia
+                  label={product.name}
+                  src={getProductImage(product.slug, product.category)}
+                />
+                <div className="p-6">
+                  <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">
+                    {product.categoryTitle}
+                  </p>
+                  <h3 className="mt-3 font-display text-3xl leading-none text-[var(--color-foreground)]">
+                    {product.name}
+                  </h3>
+                  <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
+                    {product.summary}
+                  </p>
+                  <div className="mt-5">
+                    <ComingSoonButton variant="ghost" size="sm">
+                      {dict.common.requestQuote}
+                    </ComingSoonButton>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 pb-18 pt-10 md:px-10">
+        <div className="mx-auto max-w-7xl">
+          <Card tone="dark" className="overflow-hidden rounded-[36px] p-8 md:p-10">
+            <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
+              <div>
+                <p className="text-xs uppercase tracking-[0.26em] text-white/55">
+                  {typedLocale === "sq" ? "Proces i qartë" : "Clear workflow"}
+                </p>
+                <h2 className="mt-4 font-display text-5xl leading-none text-white md:text-6xl">
+                  {dict.home.ctaTitle}
+                </h2>
+                <p className="mt-5 max-w-3xl text-base leading-8 text-white/74">
+                  {dict.home.ctaBody}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                <ComingSoonButton
+                  variant="secondary"
+                  size="lg"
+                  className="!bg-white !text-[var(--color-panel)]"
+                  messageClassName="text-white"
+                >
+                  {dict.common.requestQuote}
+                </ComingSoonButton>
+                <Link
+                  href={`/${typedLocale}/about`}
+                  className={buttonClasses({
+                    variant: "ghost",
+                    size: "lg",
+                    className: "text-white hover:bg-white/8",
+                  })}
+                >
+                  {dict.common.learnMore}
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+}

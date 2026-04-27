@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Locale {
+  sq
+  en
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+enum PermissionModule {
+  DASHBOARD
+  LEADS
+  CLIENTS
+  INVENTORY
+  OFFERS
+  INVOICES
+  REPORTS
+  USERS
+  ROLES
+  SETTINGS
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+  EXPORT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  CLOSED
+}
+
+enum FurnitureCategory {
+  KITCHENS
+  TABLES
+  WARDROBES
+  CUSTOM
+}
+
+enum MaterialType {
+  WOOD
+  HARDWARE
+  COMPONENT
+  FINISH
+  ACCESSORY
+}
+
+enum Unit {
+  PCS
+  METER
+  SQM
+  KG
+  SET
+}
+
+enum InventoryMovementKind {
+  RESTOCK
+  CONSUMPTION
+  ADJUSTMENT
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum NotificationType {
+  LOW_STOCK
+  UNPAID_INVOICE
+  LEAD
+  SYSTEM
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(STAFF)
+  roleId       String?
+  roleRecord   Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([roleId])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String?          @unique
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  isOwner     Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id        String           @id @default(cuid())
+  role      UserRole?
+  roleId    String?
+  module    PermissionModule
+  action    PermissionAction
+  allowed   Boolean          @default(false)
+  updatedAt DateTime         @updatedAt
+  roleRecord Role?           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([role, module, action])
+  @@unique([roleId, module, action])
+  @@index([role])
+  @@index([roleId])
+}
+
+model Client {
+  id            String   @id @default(cuid())
+  name          String
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  leads         Lead[]
+  offers        Offer[]
+  invoices      Invoice[]
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  phone        String
+  email        String
+  description  String
+  status       LeadStatus @default(NEW)
+  sourceLocale Locale     @default(sq)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  clientId     String?
+  client       Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  offers       Offer[]
+
+  @@index([status, createdAt])
+}
+
+model Material {
+  id                String              @id @default(cuid())
+  name              String
+  sku               String              @unique
+  type              MaterialType
+  unit              Unit
+  stockQuantity     Float
+  lowStockThreshold Float
+  costPerUnitCents  Int
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  bomItems          ProductBomItem[]
+  movements         InventoryMovement[]
+
+  @@index([type, name])
+}
+
+model Product {
+  id               String             @id @default(cuid())
+  slug             String             @unique
+  nameSq           String
+  nameEn           String
+  category         FurnitureCategory
+  summarySq        String
+  summaryEn        String
+  descriptionSq    String
+  descriptionEn    String
+  dimensions       String?
+  materialNotesSq  String?
+  materialNotesEn  String?
+  featured         Boolean            @default(false)
+  basePriceCents   Int
+  laborCostCents   Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  bomItems         ProductBomItem[]
+  offerItems       OfferItem[]
+  invoiceItems     InvoiceItem[]
+
+  @@index([category, featured])
+}
+
+model ProductBomItem {
+  id         String   @id @default(cuid())
+  quantity   Float
+  createdAt  DateTime @default(now())
+  productId  String
+  materialId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, materialId])
+}
+
+model Offer {
+  id             String      @id @default(cuid())
+  number         String      @unique
+  status         OfferStatus @default(PENDING)
+  currency       String      @default("EUR")
+  notes          String?
+  subtotalCents  Int
+  vatEnabled     Boolean     @default(true)
+  vatRate        Float       @default(18)
+  vatAmountCents Int
+  totalCents     Int
+  validUntil     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  clientId       String
+  leadId         String?
+  client         Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  lead           Lead?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  items          OfferItem[]
+  invoice        Invoice?
+
+  @@index([status, createdAt])
+}
+
+model OfferItem {
+  id             String   @id @default(cuid())
+  productName    String
+  description    String?
+  quantity       Int
+  unitPriceCents Int
+  unitCostCents  Int      @default(0)
+  lineTotalCents Int
+  offerId        String
+  productId      String?
+  offer          Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Invoice {
+  id                  String        @id @default(cuid())
+  number              String        @unique
+  status              InvoiceStatus @default(UNPAID)
+  notes               String?
+  subtotalCents       Int
+  vatEnabled          Boolean       @default(true)
+  vatRate             Float         @default(18)
+  vatAmountCents      Int
+  totalCents          Int
+  amountPaidCents     Int           @default(0)
+  dueDate             DateTime
+  issuedAt            DateTime      @default(now())
+  paidAt              DateTime?
+  inventoryDeductedAt DateTime?
+  clientId            String
+  offerId             String?       @unique
+  client              Client        @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  offer               Offer?        @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  items               InvoiceItem[]
+  movements           InventoryMovement[]
+
+  @@index([status, dueDate])
+}
+
+model InvoiceItem {
+  id             String   @id @default(cuid())
+  productName    String
+  description    String?
+  quantity       Int
+  unitPriceCents Int
+  unitCostCents  Int      @default(0)
+  lineTotalCents Int
+  invoiceId      String
+  productId      String?
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model InventoryMovement {
+  id         String                @id @default(cuid())
+  kind       InventoryMovementKind
+  quantity   Float
+  note       String?
+  createdAt  DateTime              @default(now())
+  materialId String
+  invoiceId  String?
+  material   Material              @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  invoice    Invoice?              @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([kind, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  href      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([isRead, createdAt])
+}

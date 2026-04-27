@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  --color-background: #f5f2ed;
+  --color-surface: #fffdf8;
+  --color-foreground: #161412;
+  --color-muted: #655e56;
+  --color-line: rgba(22, 20, 18, 0.1);
+  --color-line-strong: rgba(22, 20, 18, 0.18);
+  --color-accent: #96724f;
+  --color-accent-strong: #62452c;
+  --color-accent-soft: rgba(150, 114, 79, 0.12);
+  --color-panel: #1e1a16;
+  --color-panel-soft: #26211d;
+  --color-success: #215b3f;
+  --color-warning: #9f6f18;
+  --color-danger: #8c2f2b;
+  --shadow-luxury: 0 22px 65px rgba(19, 17, 15, 0.12);
+  --shadow-panel: 0 30px 80px rgba(7, 6, 5, 0.32);
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans), sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(150, 114, 79, 0.13), transparent 32%),
+    linear-gradient(180deg, #fbf8f4 0%, #f1ece5 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(150, 114, 79, 0.2);
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+.surface-card {
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(248, 244, 238, 0.96) 100%);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-luxury);
+  backdrop-filter: blur(16px);
+}
+
+.panel-card {
+  background:
+    linear-gradient(180deg, rgba(38, 33, 29, 0.96) 0%, rgba(24, 20, 17, 0.98) 100%),
+    var(--color-panel);
+  color: #f5f0e7;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-panel);
+}
+
+.industrial-grid {
+  background-image:
+    linear-gradient(rgba(22, 20, 18, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 20, 18, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.grain-overlay {
+  position: relative;
+}
+
+.grain-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 0.7px, transparent 0.7px);
+  background-size: 10px 10px;
+  opacity: 0.25;
+}
+
+.animate-rise {
+  animation: rise 0.8s cubic-bezier(0.2, 1, 0.2, 1) both;
+}
+
+.animate-fade {
+  animation: fade 0.7s ease both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background:
+      radial-gradient(circle at top center, rgba(150, 114, 79, 0.14), transparent 34%),
+      linear-gradient(180deg, #fbf8f4 0%, #f3eee7 100%);
+  }
+}
