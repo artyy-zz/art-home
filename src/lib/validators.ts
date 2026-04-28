@@ -14,6 +14,28 @@ const optionalText = z
   .transform((value) => (value.length ? value : undefined))
   .optional();
 
+const defaultVatRate = z.preprocess(
+  (value) => {
+    if (value == null || String(value).trim() === "") {
+      return 18;
+    }
+
+    return value;
+  },
+  z.coerce.number().min(0),
+);
+
+const optionalAmount = z.preprocess(
+  (value) => {
+    if (value == null || String(value).trim() === "") {
+      return undefined;
+    }
+
+    return value;
+  },
+  z.coerce.number().min(0).optional(),
+);
+
 export const loginSchema = z.object({
   email: z.email("Invalid email address").trim(),
   password: z.string().min(8, "Password is required"),
@@ -32,8 +54,12 @@ export const clientSchema = z.object({
   email: optionalText,
   phone: optionalText,
   address: optionalText,
+  nui: optionalText,
+  vatRate: defaultVatRate,
   notes: optionalText,
 });
+
+export const supplierSchema = clientSchema;
 
 export const leadStatusSchema = z.object({
   status: z.nativeEnum(LeadStatus),
@@ -79,7 +105,7 @@ export const productSchema = z.object({
 });
 
 export const offerItemSchema = z.object({
-  productId: z.string().min(1),
+  materialId: z.string().min(1),
   quantity: z.coerce.number().int().positive(),
   unitPrice: z.coerce.number().positive(),
 });
@@ -102,6 +128,7 @@ export const invoiceSchema = z.object({
   notes: optionalText,
   vatEnabled: z.boolean().default(true),
   vatRate: z.coerce.number().min(0),
+  amountPaid: optionalAmount,
   items: z.array(offerItemSchema).min(1),
 });
 
@@ -111,6 +138,27 @@ export const invoiceUpdateSchema = z.object({
   notes: optionalText,
   vatEnabled: z.boolean().default(true),
   vatRate: z.coerce.number().min(0),
+  amountPaid: optionalAmount,
+});
+
+export const purchaseInvoiceSchema = z.object({
+  supplierId: z.string().min(1),
+  status: z.nativeEnum(InvoiceStatus),
+  dueDate: z.string().min(1),
+  notes: optionalText,
+  vatEnabled: z.boolean().default(true),
+  vatRate: z.coerce.number().min(0),
+  amountPaid: optionalAmount,
+  items: z.array(offerItemSchema).min(1),
+});
+
+export const purchaseInvoiceUpdateSchema = z.object({
+  status: z.nativeEnum(InvoiceStatus),
+  dueDate: z.string().min(1),
+  notes: optionalText,
+  vatEnabled: z.boolean().default(true),
+  vatRate: z.coerce.number().min(0),
+  amountPaid: optionalAmount,
 });
 
 export const userCreateSchema = z.object({

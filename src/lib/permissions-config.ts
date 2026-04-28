@@ -5,6 +5,7 @@ export const permissionModules = [
   "INVENTORY",
   "OFFERS",
   "INVOICES",
+  "PURCHASE_INVOICES",
   "REPORTS",
   "USERS",
   "ROLES",
@@ -32,7 +33,8 @@ export const permissionModuleLabels = {
   CLIENTS: { sq: "Klientët", en: "Clients" },
   INVENTORY: { sq: "Inventari", en: "Inventory" },
   OFFERS: { sq: "Ofertat", en: "Offers" },
-  INVOICES: { sq: "Faturat", en: "Invoices" },
+  INVOICES: { sq: "Faturat e Shitjes", en: "Sales Invoices" },
+  PURCHASE_INVOICES: { sq: "Faturat e Blerjes", en: "Purchase Invoices" },
   REPORTS: { sq: "Raportet", en: "Reports" },
   USERS: { sq: "Përdoruesit", en: "Users" },
   ROLES: { sq: "Rolet & Lejet", en: "Roles & Permissions" },
@@ -54,6 +56,7 @@ export const adminModulePaths = {
   INVENTORY: "/admin/inventory",
   OFFERS: "/admin/offers",
   INVOICES: "/admin/invoices",
+  PURCHASE_INVOICES: "/admin/purchase-invoices",
   REPORTS: "/admin/reports",
   USERS: "/admin/users",
   ROLES: "/admin/roles",
@@ -62,7 +65,7 @@ export const adminModulePaths = {
 
 export const roleLabels = {
   OWNER: { sq: "Owner / Super Admin", en: "Owner / Super Admin" },
-  MANAGER: { sq: "Manager / Admin", en: "Manager / Admin" },
+  MANAGER: { sq: "Admin", en: "Admin" },
   STAFF: { sq: "Staff / Employee", en: "Staff / Employee" },
 } as const;
 
@@ -74,7 +77,7 @@ export const systemRoleDefinitions = {
   },
   MANAGER: {
     key: "MANAGER",
-    name: "Manager / Admin",
+    name: "Admin",
     description: "Strong business permissions for daily ERP administration.",
   },
   STAFF: {

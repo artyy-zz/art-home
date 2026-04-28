@@ -17,19 +17,19 @@ type InventoryItemOption = {
   categoryTitle: string;
 };
 
-type ClientOption = {
+type SupplierOption = {
   id: string;
   name: string;
   vatRate: number;
 };
 
-type InvoiceRow = {
+type PurchaseInvoiceRow = {
   materialId: string;
   quantity: number;
   unitPrice: number;
 };
 
-const emptyRow: InvoiceRow = {
+const emptyRow: PurchaseInvoiceRow = {
   materialId: "",
   quantity: 1,
   unitPrice: 0,
@@ -44,38 +44,38 @@ function defaultDueDate() {
   return date.toISOString().slice(0, 10);
 }
 
-export function InvoiceBuilderForm({
+export function PurchaseInvoiceBuilderForm({
   locale,
-  clients,
+  suppliers,
   items,
   action,
 }: {
   locale: Locale;
-  clients: ClientOption[];
+  suppliers: SupplierOption[];
   items: InventoryItemOption[];
   action: FormAction;
 }) {
-  const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id ?? "");
+  const [selectedSupplierId, setSelectedSupplierId] = useState(suppliers[0]?.id ?? "");
   const [vatEnabled, setVatEnabled] = useState(true);
-  const [rows, setRows] = useState<InvoiceRow[]>([{ ...emptyRow }]);
-  const selectedClient = useMemo(
-    () => clients.find((client) => client.id === selectedClientId),
-    [clients, selectedClientId],
+  const [rows, setRows] = useState<PurchaseInvoiceRow[]>([{ ...emptyRow }]);
+  const selectedSupplier = useMemo(
+    () => suppliers.find((supplier) => supplier.id === selectedSupplierId),
+    [suppliers, selectedSupplierId],
   );
 
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <select
-          name="clientId"
+          name="supplierId"
           className={inputClassName}
-          value={selectedClientId}
-          onChange={(event) => setSelectedClientId(event.target.value)}
+          value={selectedSupplierId}
+          onChange={(event) => setSelectedSupplierId(event.target.value)}
           required
         >
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
+          {suppliers.map((supplier) => (
+            <option key={supplier.id} value={supplier.id}>
+              {supplier.name}
             </option>
           ))}
         </select>
@@ -110,7 +110,7 @@ export function InvoiceBuilderForm({
             onChange={(event) => setVatEnabled(event.target.checked)}
             className="h-4 w-4"
           />
-          {locale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({selectedClient?.vatRate ?? 18}%)
+          {locale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({selectedSupplier?.vatRate ?? 18}%)
         </label>
       </div>
       <textarea
@@ -217,7 +217,7 @@ export function InvoiceBuilderForm({
         </div>
       </div>
       <input type="hidden" name="itemsData" value={JSON.stringify(rows.filter((row) => row.materialId))} />
-      <SubmitButton>{locale === "sq" ? "Krijo faturë shitjeje" : "Create sales invoice"}</SubmitButton>
+      <SubmitButton>{locale === "sq" ? "Krijo faturë blerjeje" : "Create purchase invoice"}</SubmitButton>
     </form>
   );
 }

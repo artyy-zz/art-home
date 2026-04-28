@@ -4,6 +4,7 @@ import {
   deleteMaterialAction,
   updateMaterialAction,
 } from "@/actions/admin";
+import { MaterialType } from "@prisma/client";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
@@ -15,6 +16,13 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
+const materialTypeOptions = [
+  MaterialType.WOOD,
+  MaterialType.HARDWARE,
+  MaterialType.COMPONENT,
+  MaterialType.FINISH,
+  MaterialType.ACCESSORY,
+];
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -47,31 +55,31 @@ export default async function InventoryPage({
       {canCreate ? (
         <Card className="rounded-[28px] p-6">
           <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Shto material" : "Add material"}
+            {typedLocale === "sq" ? "Shto artikull" : "Add item"}
           </h2>
           <form action={createMaterialAction.bind(null, typedLocale)} className="mt-6 grid gap-4 md:grid-cols-3">
             <input name="name" required className={inputClassName} placeholder={typedLocale === "sq" ? "Emri" : "Name"} />
             <input name="sku" required className={inputClassName} placeholder="SKU" />
-            <select name="type" className={inputClassName}>
-              <option value="WOOD">WOOD</option>
-              <option value="HARDWARE">HARDWARE</option>
-              <option value="COMPONENT">COMPONENT</option>
-              <option value="FINISH">FINISH</option>
-              <option value="ACCESSORY">ACCESSORY</option>
+            <select name="type" required className={inputClassName}>
+              {materialTypeOptions.map((type) => (
+                <option key={type} value={type}>
+                  {materialTypeLabel(type, typedLocale)}
+                </option>
+              ))}
             </select>
-            <select name="unit" className={inputClassName}>
+            <select name="unit" required className={inputClassName}>
               <option value="PCS">PCS</option>
               <option value="SET">SET</option>
               <option value="METER">METER</option>
               <option value="SQM">SQM</option>
               <option value="KG">KG</option>
             </select>
-            <input name="stockQuantity" type="number" step="0.01" className={inputClassName} placeholder={typedLocale === "sq" ? "Stoku" : "Stock"} />
-            <input name="lowStockThreshold" type="number" step="0.01" className={inputClassName} placeholder={typedLocale === "sq" ? "Pragu i stokut të ulët" : "Low-stock threshold"} />
-            <input name="costPerUnit" type="number" step="0.01" className={inputClassName} placeholder={typedLocale === "sq" ? "Kosto / njësi EUR" : "Cost / unit EUR"} />
+            <input name="stockQuantity" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Stoku" : "Stock"} />
+            <input name="lowStockThreshold" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Pragu i stokut të ulët" : "Low-stock threshold"} />
+            <input name="costPerUnit" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Kosto / njësi EUR" : "Cost / unit EUR"} />
             <textarea name="notes" className={`${inputClassName} md:col-span-2`} placeholder={typedLocale === "sq" ? "Shënime" : "Notes"} />
             <button className={buttonClasses({ className: "md:w-fit" })}>
-              {typedLocale === "sq" ? "Ruaj materialin" : "Save material"}
+              {typedLocale === "sq" ? "Ruaj artikullin" : "Save item"}
             </button>
           </form>
         </Card>
@@ -84,17 +92,17 @@ export default async function InventoryPage({
           sort={sort}
           direction={direction}
           searchPlaceholder={
-            typedLocale === "sq" ? "Kërko material, SKU ose lloj" : "Search material, SKU, or type"
+            typedLocale === "sq" ? "Kërko artikull, SKU ose lloj" : "Search item, SKU, or type"
           }
           searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
           emptyMessage={
             typedLocale === "sq"
-              ? "Nuk ka materiale për këtë kërkim."
-              : "No materials match this search."
+              ? "Nuk ka artikuj për këtë kërkim."
+              : "No items match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
           columns={[
-            { key: "material", label: typedLocale === "sq" ? "Materiali" : "Material", sortable: true },
+            { key: "material", label: typedLocale === "sq" ? "Artikulli" : "Item", sortable: true },
             { key: "type", label: typedLocale === "sq" ? "Lloji" : "Type", sortable: true },
             { key: "stock", label: typedLocale === "sq" ? "Stoku" : "Stock", sortable: true },
             { key: "threshold", label: typedLocale === "sq" ? "Pragu" : "Threshold", sortable: true },
@@ -102,7 +110,7 @@ export default async function InventoryPage({
           ]}
           rows={materials.map((material) => ({
             id: material.id,
-            searchText: `${material.name} ${material.sku} ${material.type} ${material.notes ?? ""}`,
+            searchText: `${material.name} ${material.sku} ${materialTypeLabel(material.type, typedLocale)} ${material.notes ?? ""}`,
             sortValues: {
               material: material.name,
               type: material.type,
@@ -154,11 +162,11 @@ export default async function InventoryPage({
                       <input name="name" required defaultValue={material.name} className={inputClassName} />
                       <input name="sku" required defaultValue={material.sku} className={inputClassName} />
                       <select name="type" defaultValue={material.type} className={inputClassName}>
-                        <option value="WOOD">WOOD</option>
-                        <option value="HARDWARE">HARDWARE</option>
-                        <option value="COMPONENT">COMPONENT</option>
-                        <option value="FINISH">FINISH</option>
-                        <option value="ACCESSORY">ACCESSORY</option>
+                        {materialTypeOptions.map((type) => (
+                          <option key={type} value={type}>
+                            {materialTypeLabel(type, typedLocale)}
+                          </option>
+                        ))}
                       </select>
                       <select name="unit" defaultValue={material.unit} className={inputClassName}>
                         <option value="PCS">PCS</option>
@@ -167,9 +175,9 @@ export default async function InventoryPage({
                         <option value="SQM">SQM</option>
                         <option value="KG">KG</option>
                       </select>
-                      <input name="stockQuantity" type="number" step="0.01" defaultValue={material.stockQuantity} className={inputClassName} />
-                      <input name="lowStockThreshold" type="number" step="0.01" defaultValue={material.lowStockThreshold} className={inputClassName} />
-                      <input name="costPerUnit" type="number" step="0.01" defaultValue={material.costPerUnitCents / 100} className={inputClassName} />
+                      <input name="stockQuantity" type="number" min="0" step="0.01" required defaultValue={material.stockQuantity} className={inputClassName} />
+                      <input name="lowStockThreshold" type="number" min="0" step="0.01" required defaultValue={material.lowStockThreshold} className={inputClassName} />
+                      <input name="costPerUnit" type="number" min="0" step="0.01" required defaultValue={material.costPerUnitCents / 100} className={inputClassName} />
                       <textarea name="notes" defaultValue={material.notes ?? ""} className={inputClassName} />
                       <button className={buttonClasses({ size: "sm" })}>
                         {typedLocale === "sq" ? "Ruaj" : "Save"}

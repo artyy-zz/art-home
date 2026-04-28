@@ -7,6 +7,8 @@ import type { Locale } from "@/lib/i18n";
 import { can, getAssignableRoles, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
+import { Check, Pencil, Trash2, X } from "lucide-react";
+import Link from "next/link";
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
@@ -17,6 +19,28 @@ function param(
 ) {
   const value = searchParams[key];
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function usersHref(
+  locale: Locale,
+  searchParams: Record<string, string | string[] | undefined>,
+  editUserId?: string,
+) {
+  const params = new URLSearchParams();
+
+  for (const key of ["q", "sort", "dir"]) {
+    const value = param(searchParams, key);
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  if (editUserId) {
+    params.set("edit", editUserId);
+  }
+
+  const query = params.toString();
+  return `/${locale}/admin/users${query ? `?${query}` : ""}`;
 }
 
 export default async function UsersPage({
@@ -31,6 +55,7 @@ export default async function UsersPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
+  const editUserId = param(resolvedSearchParams, "edit");
   const roles = (await getAssignableRoles()).filter(
     (role) => !role.isOwner || user.role === "OWNER" || user.roleRecord?.isOwner,
   );
@@ -105,56 +130,86 @@ export default async function UsersPage({
             { key: "lastLogin", label: typedLocale === "sq" ? "Hyrja e fundit" : "Last login", sortable: true },
             { key: "createdAt", label: typedLocale === "sq" ? "Krijuar" : "Created", sortable: true },
           ]}
-          rows={users.map((record) => ({
-            id: record.id,
-            searchText: `${record.name} ${record.email} ${record.roleRecord?.name ?? record.role}`,
-            sortValues: {
-              name: record.name,
-              role: record.roleRecord?.name ?? record.role,
-              lastLogin: record.lastLoginAt,
-              createdAt: record.createdAt,
-            },
-            cells: {
-              name: (
-                <div>
-                  <p className="font-semibold">{record.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
-                </div>
+          rows={users.map((record) => {
+            const roleLabel = record.roleRecord?.name ?? record.role;
+            const isProtectedOwner = Boolean(record.roleRecord?.isOwner) || record.role === "OWNER";
+            const isEditing = editUserId === record.id;
+            const currentRoleOption = roles.find((role) => role.id === record.roleId);
+            const selectedRoleId =
+              currentRoleOption?.id ??
+              roles.find((role) => role.key === record.role)?.id ??
+              roles.find((role) => role.key === "STAFF")?.id;
+
+            return {
+              id: record.id,
+              searchText: `${record.name} ${record.email} ${roleLabel}`,
+              sortValues: {
+                name: record.name,
+                role: roleLabel,
+                lastLogin: record.lastLoginAt,
+                createdAt: record.createdAt,
+              },
+              cells: {
+                name: (
+                  <div>
+                    <p className="font-semibold">{record.name}</p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
+                  </div>
+                ),
+                role: roleLabel,
+                lastLogin: record.lastLoginAt ? formatDate(record.lastLoginAt, localeString) : "-",
+                createdAt: formatDate(record.createdAt, localeString),
+              },
+              actions: (
+                <>
+                  {canEdit && !isProtectedOwner ? (
+                    isEditing ? (
+                      <form action={updateUserRoleAction.bind(null, typedLocale, record.id)} className="flex flex-wrap justify-end gap-2">
+                        <select
+                          name="roleId"
+                          defaultValue={selectedRoleId}
+                          className="h-10 rounded-full border border-black/10 bg-white/90 px-3 text-sm text-[var(--color-foreground)]"
+                        >
+                          {roles.map((role) => (
+                            <option key={role.id} value={role.id}>
+                              {role.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button className={buttonClasses({ size: "sm", className: "gap-2" })}>
+                          <Check className="h-4 w-4" />
+                          {typedLocale === "sq" ? "Ndrysho" : "Edit"}
+                        </button>
+                        <Link
+                          href={usersHref(typedLocale, resolvedSearchParams)}
+                          className={buttonClasses({ variant: "secondary", size: "sm", className: "gap-2" })}
+                        >
+                          <X className="h-4 w-4" />
+                          {typedLocale === "sq" ? "Anulo" : "Cancel"}
+                        </Link>
+                      </form>
+                    ) : (
+                      <Link
+                        href={`${usersHref(typedLocale, resolvedSearchParams, record.id)}#${record.id}`}
+                        className={buttonClasses({ variant: "secondary", size: "sm", className: "gap-2" })}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        {typedLocale === "sq" ? "Ndrysho" : "Edit"}
+                      </Link>
+                    )
+                  ) : null}
+                  {canDelete && record.id !== user.id && !isProtectedOwner ? (
+                    <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
+                      <button className={buttonClasses({ variant: "danger", size: "sm", className: "gap-2" })}>
+                        <Trash2 className="h-4 w-4" />
+                        {typedLocale === "sq" ? "Fshi" : "Delete"}
+                      </button>
+                    </form>
+                  ) : null}
+                </>
               ),
-              role: record.roleRecord?.name ?? record.role,
-              lastLogin: record.lastLoginAt ? formatDate(record.lastLoginAt, localeString) : "-",
-              createdAt: formatDate(record.createdAt, localeString),
-            },
-            actions: (
-              <>
-                {canEdit ? (
-                  <form action={updateUserRoleAction.bind(null, typedLocale, record.id)} className="flex gap-2">
-                    <select
-                      name="roleId"
-                      defaultValue={record.roleId ?? roles.find((role) => role.key === record.role)?.id}
-                      className="h-10 rounded-full border border-black/10 bg-white/90 px-3 text-sm text-[var(--color-foreground)]"
-                    >
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button className={buttonClasses({ size: "sm" })}>
-                      {typedLocale === "sq" ? "Ruaj" : "Save"}
-                    </button>
-                  </form>
-                ) : null}
-                {canDelete && record.id !== user.id && !record.roleRecord?.isOwner && record.role !== "OWNER" ? (
-                  <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
-                    <button className={buttonClasses({ variant: "danger", size: "sm" })}>
-                      {typedLocale === "sq" ? "Fshi" : "Delete"}
-                    </button>
-                  </form>
-                ) : null}
-              </>
-            ),
-          }))}
+            };
+          })}
         />
       </Card>
     </div>

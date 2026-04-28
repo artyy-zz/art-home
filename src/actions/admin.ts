@@ -17,10 +17,15 @@ import {
   assertOwner,
   assertPermission,
   ensureSystemRoles,
+  getPermissionTemplateForRoleRecord,
   isOwnerUser,
   unauthorizedMessage,
 } from "@/lib/permissions";
-import { permissionActions, permissionModules } from "@/lib/permissions-config";
+import {
+  permissionActions,
+  permissionModules,
+  type PermissionMatrix,
+} from "@/lib/permissions-config";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import {
@@ -34,7 +39,10 @@ import {
   offerSchema,
   productBomItemSchema,
   productSchema,
+  purchaseInvoiceSchema,
+  purchaseInvoiceUpdateSchema,
   roleSchema,
+  supplierSchema,
   userCreateSchema,
   userRoleSchema,
 } from "@/lib/validators";
@@ -46,6 +54,64 @@ function revalidateEveryLocale(path: string) {
 
 function parseCheckbox(formData: FormData, key: string) {
   return formData.get(key) === "on";
+}
+
+async function getActiveClientVatRate(clientId: string) {
+  const client = await prisma.client.findFirst({
+    where: {
+      id: clientId,
+      deletedAt: null,
+    },
+    select: {
+      vatRate: true,
+    },
+  });
+
+  if (!client) {
+    throw new Error("Selected client could not be found.");
+  }
+
+  return client.vatRate;
+}
+
+async function getActiveSupplierVatRate(supplierId: string) {
+  const supplier = await prisma.supplier.findFirst({
+    where: {
+      id: supplierId,
+      deletedAt: null,
+    },
+    select: {
+      vatRate: true,
+    },
+  });
+
+  if (!supplier) {
+    throw new Error("Selected supplier could not be found.");
+  }
+
+  return supplier.vatRate;
+}
+
+function amountPaidForStatus(
+  status: InvoiceStatus,
+  totalCents: number,
+  requestedAmount?: number,
+  fallbackAmountCents = 0,
+) {
+  if (status === InvoiceStatus.PAID) {
+    return totalCents;
+  }
+
+  if (status === InvoiceStatus.UNPAID || status === InvoiceStatus.OVERDUE) {
+    return 0;
+  }
+
+  const requestedAmountCents =
+    requestedAmount == null
+      ? fallbackAmountCents
+      : Math.round(requestedAmount * 100);
+
+  return Math.min(Math.max(requestedAmountCents, 0), totalCents);
 }
 
 async function ensureAllowed(
@@ -96,6 +162,42 @@ function fallbackUserRole(role: { key: string | null; isOwner: boolean }): UserR
   return "STAFF";
 }
 
+function userPermissionRows(userId: string, matrix: PermissionMatrix) {
+  return permissionModules.flatMap((module) =>
+    permissionActions.map((action) => ({
+      userId,
+      module,
+      action,
+      allowed: matrix[module][action],
+    })),
+  );
+}
+
+function userPermissionOperations(userId: string, formData: FormData) {
+  return permissionModules.flatMap((module) =>
+    permissionActions.map((action) =>
+      prisma.userPermission.upsert({
+        where: {
+          userId_module_action: {
+            userId,
+            module,
+            action,
+          },
+        },
+        update: {
+          allowed: formData.get(`${module}:${action}`) === "on",
+        },
+        create: {
+          userId,
+          module,
+          action,
+          allowed: formData.get(`${module}:${action}`) === "on",
+        },
+      }),
+    ),
+  );
+}
+
 export async function createClientAction(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "CLIENTS", "CREATE");
 
@@ -105,6 +207,8 @@ export async function createClientAction(locale: Locale, formData: FormData) {
     email: formData.get("email"),
     phone: formData.get("phone"),
     address: formData.get("address"),
+    nui: formData.get("nui"),
+    vatRate: formData.get("vatRate"),
     notes: formData.get("notes"),
   });
 
@@ -132,6 +236,8 @@ export async function updateClientAction(
     email: formData.get("email"),
     phone: formData.get("phone"),
     address: formData.get("address"),
+    nui: formData.get("nui"),
+    vatRate: formData.get("vatRate"),
     notes: formData.get("notes"),
   });
 
@@ -150,11 +256,121 @@ export async function updateClientAction(
 export async function deleteClientAction(locale: Locale, clientId: string) {
   await ensureAllowed(locale, "CLIENTS", "DELETE");
 
-  await prisma.client.delete({
+  const client = await prisma.client.findUnique({
     where: { id: clientId },
+    select: {
+      id: true,
+      offers: { select: { id: true }, take: 1 },
+      invoices: { select: { id: true }, take: 1 },
+    },
   });
 
+  if (!client) {
+    revalidateEveryLocale("/admin/clients");
+    return;
+  }
+
+  if (client.offers.length > 0 || client.invoices.length > 0) {
+    await prisma.client.update({
+      where: { id: clientId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  } else {
+    await prisma.client.delete({
+      where: { id: clientId },
+    });
+  }
+
   revalidateEveryLocale("/admin/clients");
+}
+
+export async function createSupplierAction(locale: Locale, formData: FormData) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "CREATE");
+
+  const parsed = supplierSchema.safeParse({
+    name: formData.get("name"),
+    contactPerson: formData.get("contactPerson"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    nui: formData.get("nui"),
+    vatRate: formData.get("vatRate"),
+    notes: formData.get("notes"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid supplier payload.");
+  }
+
+  await prisma.supplier.create({
+    data: parsed.data,
+  });
+
+  revalidateEveryLocale("/admin/purchase-invoices");
+}
+
+export async function updateSupplierAction(
+  locale: Locale,
+  supplierId: string,
+  formData: FormData,
+) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "EDIT");
+
+  const parsed = supplierSchema.safeParse({
+    name: formData.get("name"),
+    contactPerson: formData.get("contactPerson"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    nui: formData.get("nui"),
+    vatRate: formData.get("vatRate"),
+    notes: formData.get("notes"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid supplier payload.");
+  }
+
+  await prisma.supplier.update({
+    where: { id: supplierId },
+    data: parsed.data,
+  });
+
+  revalidateEveryLocale("/admin/purchase-invoices");
+}
+
+export async function deleteSupplierAction(locale: Locale, supplierId: string) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "DELETE");
+
+  const supplier = await prisma.supplier.findUnique({
+    where: { id: supplierId },
+    select: {
+      id: true,
+      purchaseInvoices: { select: { id: true }, take: 1 },
+    },
+  });
+
+  if (!supplier) {
+    revalidateEveryLocale("/admin/purchase-invoices");
+    return;
+  }
+
+  if (supplier.purchaseInvoices.length > 0) {
+    await prisma.supplier.update({
+      where: { id: supplierId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  } else {
+    await prisma.supplier.delete({
+      where: { id: supplierId },
+    });
+  }
+
+  revalidateEveryLocale("/admin/purchase-invoices");
 }
 
 export async function convertLeadToClientAction(locale: Locale, leadId: string) {
@@ -253,10 +469,12 @@ export async function createMaterialAction(locale: Locale, formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid material data.");
   }
 
+  const { costPerUnit, ...materialData } = parsed.data;
+
   await prisma.material.create({
     data: {
-      ...parsed.data,
-      costPerUnitCents: Math.round(parsed.data.costPerUnit * 100),
+      ...materialData,
+      costPerUnitCents: Math.round(costPerUnit * 100),
     },
   });
 
@@ -417,19 +635,24 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "OFFERS", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
-    productId: string;
+    materialId: string;
     quantity: number;
     unitPrice: number;
   }>;
+  const rawClientId = formData.get("clientId");
+  const clientVatRate =
+    typeof rawClientId === "string" && rawClientId.length > 0
+      ? await getActiveClientVatRate(rawClientId)
+      : 18;
 
   const parsed = offerSchema.safeParse({
-    clientId: formData.get("clientId"),
+    clientId: rawClientId,
     leadId: formData.get("leadId"),
     status: formData.get("status"),
     validUntil: formData.get("validUntil"),
     notes: formData.get("notes"),
     vatEnabled: parseCheckbox(formData, "vatEnabled"),
-    vatRate: formData.get("vatRate"),
+    vatRate: clientVatRate,
     items: itemsData.map((item) => offerItemSchema.parse(item)),
   });
 
@@ -437,44 +660,30 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid offer payload.");
   }
 
-  const products = await prisma.product.findMany({
+  const materials = await prisma.material.findMany({
     where: {
       id: {
-        in: parsed.data.items.map((item) => item.productId),
-      },
-    },
-    include: {
-      bomItems: {
-        include: {
-          material: true,
-        },
+        in: parsed.data.items.map((item) => item.materialId),
       },
     },
   });
 
-  const productMap = new Map(products.map((product) => [product.id, product]));
+  const materialMap = new Map(materials.map((material) => [material.id, material]));
   const lineItems = parsed.data.items.map((item) => {
-    const product = productMap.get(item.productId);
-    if (!product) {
-      throw new Error("Selected product could not be found.");
+    const material = materialMap.get(item.materialId);
+    if (!material) {
+      throw new Error("Selected inventory item could not be found.");
     }
 
     const unitPriceCents = Math.round(item.unitPrice * 100);
-    const unitCostCents =
-      product.laborCostCents +
-      product.bomItems.reduce(
-        (sum, bomItem) =>
-          sum + Math.round(bomItem.quantity * bomItem.material.costPerUnitCents),
-        0,
-      );
 
     return {
-      productId: product.id,
-      productName: product.nameSq,
-      description: product.summarySq,
+      materialId: material.id,
+      productName: material.name,
+      description: material.sku,
       quantity: item.quantity,
       unitPriceCents,
-      unitCostCents,
+      unitCostCents: material.costPerUnitCents,
       lineTotalCents: unitPriceCents * item.quantity,
     };
   });
@@ -517,10 +726,37 @@ export async function updateOfferStatusAction(
     throw new Error("Invalid offer status.");
   }
 
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: {
+      client: true,
+      items: true,
+    },
+  });
+
+  if (!offer) {
+    throw new Error("Offer not found.");
+  }
+
+  const subtotalCents = offer.items.reduce(
+    (sum, item) => sum + item.lineTotalCents,
+    0,
+  );
+  const totals = calculateTotals(
+    subtotalCents,
+    parseCheckbox(formData, "vatEnabled"),
+    offer.client.vatRate,
+  );
+  const validUntil = String(formData.get("validUntil") ?? "");
+  const notes = String(formData.get("notes") ?? "").trim();
+
   await prisma.offer.update({
     where: { id: offerId },
     data: {
       status: status as OfferStatus,
+      validUntil: validUntil ? new Date(validUntil) : offer.validUntil,
+      notes: notes.length > 0 ? notes : null,
+      ...totals,
     },
   });
 
@@ -539,8 +775,9 @@ export async function deleteOfferAction(locale: Locale, offerId: string) {
 
 async function deductInventoryForInvoice(
   invoiceId: string,
-  items: Array<{ productId: string | null; quantity: number }>,
+  items: Array<{ productId: string | null; materialId: string | null; quantity: number }>,
 ) {
+  const directMaterialItems = items.filter((item) => item.materialId);
   const productIds = items
     .map((item) => item.productId)
     .filter((value): value is string => Boolean(value));
@@ -558,6 +795,34 @@ async function deductInventoryForInvoice(
 
   const productMap = new Map(products.map((product) => [product.id, product]));
   const operations: Prisma.PrismaPromise<unknown>[] = [];
+
+  for (const item of directMaterialItems) {
+    if (!item.materialId) {
+      continue;
+    }
+
+    operations.push(
+      prisma.material.update({
+        where: { id: item.materialId },
+        data: {
+          stockQuantity: {
+            decrement: item.quantity,
+          },
+        },
+      }),
+    );
+    operations.push(
+      prisma.inventoryMovement.create({
+        data: {
+          invoiceId,
+          materialId: item.materialId,
+          kind: InventoryMovementKind.CONSUMPTION,
+          quantity: item.quantity,
+          note: `Auto-deducted from sales invoice ${invoiceId}`,
+        },
+      }),
+    );
+  }
 
   for (const item of items) {
     if (!item.productId) {
@@ -611,18 +876,24 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "INVOICES", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
-    productId: string;
+    materialId: string;
     quantity: number;
     unitPrice: number;
   }>;
+  const rawClientId = formData.get("clientId");
+  const clientVatRate =
+    typeof rawClientId === "string" && rawClientId.length > 0
+      ? await getActiveClientVatRate(rawClientId)
+      : 18;
 
   const parsed = invoiceSchema.safeParse({
-    clientId: formData.get("clientId"),
+    clientId: rawClientId,
     status: formData.get("status"),
     dueDate: formData.get("dueDate"),
     notes: formData.get("notes"),
     vatEnabled: parseCheckbox(formData, "vatEnabled"),
-    vatRate: formData.get("vatRate"),
+    vatRate: clientVatRate,
+    amountPaid: formData.get("amountPaid"),
     items: itemsData.map((item) => offerItemSchema.parse(item)),
   });
 
@@ -630,44 +901,30 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid invoice payload.");
   }
 
-  const products = await prisma.product.findMany({
+  const materials = await prisma.material.findMany({
     where: {
       id: {
-        in: parsed.data.items.map((item) => item.productId),
-      },
-    },
-    include: {
-      bomItems: {
-        include: {
-          material: true,
-        },
+        in: parsed.data.items.map((item) => item.materialId),
       },
     },
   });
 
-  const productMap = new Map(products.map((product) => [product.id, product]));
+  const materialMap = new Map(materials.map((material) => [material.id, material]));
   const lineItems = parsed.data.items.map((item) => {
-    const product = productMap.get(item.productId);
-    if (!product) {
-      throw new Error("Selected product could not be found.");
+    const material = materialMap.get(item.materialId);
+    if (!material) {
+      throw new Error("Selected inventory item could not be found.");
     }
 
     const unitPriceCents = Math.round(item.unitPrice * 100);
-    const unitCostCents =
-      product.laborCostCents +
-      product.bomItems.reduce(
-        (sum, bomItem) =>
-          sum + Math.round(bomItem.quantity * bomItem.material.costPerUnitCents),
-        0,
-      );
 
     return {
-      productId: product.id,
-      productName: locale === "sq" ? product.nameSq : product.nameEn,
-      description: locale === "sq" ? product.summarySq : product.summaryEn,
+      materialId: material.id,
+      productName: material.name,
+      description: material.sku,
       quantity: item.quantity,
       unitPriceCents,
-      unitCostCents,
+      unitCostCents: material.costPerUnitCents,
       lineTotalCents: unitPriceCents * item.quantity,
     };
   });
@@ -686,7 +943,11 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
       status: parsed.data.status,
       dueDate: new Date(parsed.data.dueDate),
       notes: parsed.data.notes,
-      amountPaidCents: parsed.data.status === InvoiceStatus.PAID ? totals.totalCents : 0,
+      amountPaidCents: amountPaidForStatus(
+        parsed.data.status,
+        totals.totalCents,
+        parsed.data.amountPaid,
+      ),
       paidAt: parsed.data.status === InvoiceStatus.PAID ? new Date() : null,
       ...totals,
       items: {
@@ -702,6 +963,7 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
     invoice.id,
     invoice.items.map((item) => ({
       productId: item.productId,
+      materialId: item.materialId,
       quantity: item.quantity,
     })),
   );
@@ -747,6 +1009,7 @@ export async function convertOfferToInvoiceAction(locale: Locale, offerId: strin
       items: {
         create: offer.items.map((item) => ({
           productId: item.productId,
+          materialId: item.materialId,
           productName: item.productName,
           description: item.description,
           quantity: item.quantity,
@@ -765,6 +1028,7 @@ export async function convertOfferToInvoiceAction(locale: Locale, offerId: strin
     invoice.id,
     invoice.items.map((item) => ({
       productId: item.productId,
+      materialId: item.materialId,
       quantity: item.quantity,
     })),
   );
@@ -788,7 +1052,8 @@ export async function updateInvoiceAction(
     dueDate: formData.get("dueDate"),
     notes: formData.get("notes"),
     vatEnabled: parseCheckbox(formData, "vatEnabled"),
-    vatRate: formData.get("vatRate"),
+    vatRate: 18,
+    amountPaid: formData.get("amountPaid"),
   });
 
   if (!parsed.success) {
@@ -798,6 +1063,7 @@ export async function updateInvoiceAction(
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
     include: {
+      client: true,
       items: true,
     },
   });
@@ -813,7 +1079,7 @@ export async function updateInvoiceAction(
   const totals = calculateTotals(
     subtotalCents,
     parsed.data.vatEnabled,
-    parsed.data.vatRate,
+    invoice.client.vatRate,
   );
 
   await prisma.invoice.update({
@@ -823,13 +1089,12 @@ export async function updateInvoiceAction(
       dueDate: new Date(parsed.data.dueDate),
       notes: parsed.data.notes,
       ...totals,
-      amountPaidCents:
-        parsed.data.status === InvoiceStatus.PAID
-          ? totals.totalCents
-          : parsed.data.status === InvoiceStatus.UNPAID ||
-              parsed.data.status === InvoiceStatus.OVERDUE
-            ? 0
-            : invoice.amountPaidCents,
+      amountPaidCents: amountPaidForStatus(
+        parsed.data.status,
+        totals.totalCents,
+        parsed.data.amountPaid,
+        invoice.amountPaidCents,
+      ),
       paidAt: parsed.data.status === InvoiceStatus.PAID ? new Date() : null,
     },
   });
@@ -847,6 +1112,232 @@ export async function deleteInvoiceAction(locale: Locale, invoiceId: string) {
   });
 
   revalidateEveryLocale("/admin/invoices");
+  revalidateEveryLocale("/admin/reports");
+  revalidateEveryLocale("/admin");
+}
+
+async function restockInventoryForPurchaseInvoice(
+  purchaseInvoiceId: string,
+  items: Array<{ materialId: string | null; quantity: number }>,
+) {
+  const operations: Prisma.PrismaPromise<unknown>[] = [];
+
+  for (const item of items) {
+    if (!item.materialId) {
+      continue;
+    }
+
+    operations.push(
+      prisma.material.update({
+        where: { id: item.materialId },
+        data: {
+          stockQuantity: {
+            increment: item.quantity,
+          },
+        },
+      }),
+    );
+    operations.push(
+      prisma.inventoryMovement.create({
+        data: {
+          purchaseInvoiceId,
+          materialId: item.materialId,
+          kind: InventoryMovementKind.RESTOCK,
+          quantity: item.quantity,
+          note: `Auto-restocked from purchase invoice ${purchaseInvoiceId}`,
+        },
+      }),
+    );
+  }
+
+  operations.push(
+    prisma.purchaseInvoice.update({
+      where: { id: purchaseInvoiceId },
+      data: {
+        inventoryRestockedAt: new Date(),
+      },
+    }),
+  );
+
+  await prisma.$transaction(operations);
+}
+
+export async function createPurchaseInvoiceAction(locale: Locale, formData: FormData) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "CREATE");
+
+  const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
+    materialId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  const rawSupplierId = formData.get("supplierId");
+  const supplierVatRate =
+    typeof rawSupplierId === "string" && rawSupplierId.length > 0
+      ? await getActiveSupplierVatRate(rawSupplierId)
+      : 18;
+
+  const parsed = purchaseInvoiceSchema.safeParse({
+    supplierId: rawSupplierId,
+    status: formData.get("status"),
+    dueDate: formData.get("dueDate"),
+    notes: formData.get("notes"),
+    vatEnabled: parseCheckbox(formData, "vatEnabled"),
+    vatRate: supplierVatRate,
+    amountPaid: formData.get("amountPaid"),
+    items: itemsData.map((item) => offerItemSchema.parse(item)),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid purchase invoice payload.");
+  }
+
+  const materials = await prisma.material.findMany({
+    where: {
+      id: {
+        in: parsed.data.items.map((item) => item.materialId),
+      },
+    },
+  });
+
+  const materialMap = new Map(materials.map((material) => [material.id, material]));
+  const lineItems = parsed.data.items.map((item) => {
+    const material = materialMap.get(item.materialId);
+    if (!material) {
+      throw new Error("Selected inventory item could not be found.");
+    }
+
+    const unitPriceCents = Math.round(item.unitPrice * 100);
+
+    return {
+      materialId: material.id,
+      productName: material.name,
+      description: material.sku,
+      quantity: item.quantity,
+      unitPriceCents,
+      lineTotalCents: unitPriceCents * item.quantity,
+    };
+  });
+
+  const totals = calculateTotals(
+    lineItems.reduce((sum, item) => sum + item.lineTotalCents, 0),
+    parsed.data.vatEnabled,
+    parsed.data.vatRate,
+  );
+
+  const purchaseInvoiceCount = await prisma.purchaseInvoice.count();
+  const purchaseInvoice = await prisma.purchaseInvoice.create({
+    data: {
+      number: `PINV-${new Date().getFullYear()}-${String(purchaseInvoiceCount + 1).padStart(3, "0")}`,
+      supplierId: parsed.data.supplierId,
+      status: parsed.data.status,
+      dueDate: new Date(parsed.data.dueDate),
+      notes: parsed.data.notes,
+      amountPaidCents: amountPaidForStatus(
+        parsed.data.status,
+        totals.totalCents,
+        parsed.data.amountPaid,
+      ),
+      paidAt: parsed.data.status === InvoiceStatus.PAID ? new Date() : null,
+      ...totals,
+      items: {
+        create: lineItems,
+      },
+    },
+    include: {
+      items: true,
+    },
+  });
+
+  await restockInventoryForPurchaseInvoice(
+    purchaseInvoice.id,
+    purchaseInvoice.items.map((item) => ({
+      materialId: item.materialId,
+      quantity: item.quantity,
+    })),
+  );
+
+  await createLowStockNotifications();
+  revalidateEveryLocale("/admin/purchase-invoices");
+  revalidateEveryLocale("/admin/inventory");
+  revalidateEveryLocale("/admin/reports");
+  revalidateEveryLocale("/admin");
+}
+
+export async function updatePurchaseInvoiceAction(
+  locale: Locale,
+  purchaseInvoiceId: string,
+  formData: FormData,
+) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "EDIT");
+
+  const parsed = purchaseInvoiceUpdateSchema.safeParse({
+    status: formData.get("status"),
+    dueDate: formData.get("dueDate"),
+    notes: formData.get("notes"),
+    vatEnabled: parseCheckbox(formData, "vatEnabled"),
+    vatRate: 18,
+    amountPaid: formData.get("amountPaid"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid purchase invoice payload.");
+  }
+
+  const purchaseInvoice = await prisma.purchaseInvoice.findUnique({
+    where: { id: purchaseInvoiceId },
+    include: {
+      supplier: true,
+      items: true,
+    },
+  });
+
+  if (!purchaseInvoice) {
+    throw new Error("Purchase invoice not found.");
+  }
+
+  const subtotalCents = purchaseInvoice.items.reduce(
+    (sum, item) => sum + item.lineTotalCents,
+    0,
+  );
+  const totals = calculateTotals(
+    subtotalCents,
+    parsed.data.vatEnabled,
+    purchaseInvoice.supplier.vatRate,
+  );
+
+  await prisma.purchaseInvoice.update({
+    where: { id: purchaseInvoiceId },
+    data: {
+      status: parsed.data.status,
+      dueDate: new Date(parsed.data.dueDate),
+      notes: parsed.data.notes,
+      ...totals,
+      amountPaidCents: amountPaidForStatus(
+        parsed.data.status,
+        totals.totalCents,
+        parsed.data.amountPaid,
+        purchaseInvoice.amountPaidCents,
+      ),
+      paidAt: parsed.data.status === InvoiceStatus.PAID ? new Date() : null,
+    },
+  });
+
+  revalidateEveryLocale("/admin/purchase-invoices");
+  revalidateEveryLocale("/admin/reports");
+  revalidateEveryLocale("/admin");
+}
+
+export async function deletePurchaseInvoiceAction(
+  locale: Locale,
+  purchaseInvoiceId: string,
+) {
+  await ensureAllowed(locale, "PURCHASE_INVOICES", "DELETE");
+
+  await prisma.purchaseInvoice.delete({
+    where: { id: purchaseInvoiceId },
+  });
+
+  revalidateEveryLocale("/admin/purchase-invoices");
   revalidateEveryLocale("/admin/reports");
   revalidateEveryLocale("/admin");
 }
@@ -870,17 +1361,25 @@ export async function createUserAction(locale: Locale, formData: FormData) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      passwordHash,
-      role: fallbackUserRole(role),
-      roleId: role.id,
-    },
+  const rolePermissions = getPermissionTemplateForRoleRecord(role);
+  await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash,
+        role: fallbackUserRole(role),
+        roleId: role.id,
+      },
+    });
+
+    await tx.userPermission.createMany({
+      data: userPermissionRows(createdUser.id, rolePermissions),
+    });
   });
 
   revalidateEveryLocale("/admin/users");
+  revalidateEveryLocale("/admin/roles");
 }
 
 export async function updateUserRoleAction(
@@ -913,19 +1412,58 @@ export async function updateUserRoleAction(
   if (role.isOwner && !isOwnerUser(actor)) {
     throw new Error(unauthorizedMessage(locale));
   }
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      role: fallbackUserRole(role),
-      roleId: role.id,
-    },
-  });
+
+  const rolePermissions = getPermissionTemplateForRoleRecord(role);
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: fallbackUserRole(role),
+        roleId: role.id,
+      },
+    }),
+    prisma.userPermission.deleteMany({
+      where: { userId },
+    }),
+    prisma.userPermission.createMany({
+      data: userPermissionRows(userId, rolePermissions),
+    }),
+  ]);
 
   revalidateEveryLocale("/admin/users");
+  revalidateEveryLocale("/admin/roles");
 }
 
 export async function deleteUserAction(locale: Locale, userId: string) {
-  await ensureAllowed(locale, "USERS", "DELETE");
+  const actor = await ensureAllowed(locale, "USERS", "DELETE");
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { roleRecord: true },
+  });
+
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  if (target.id === actor.id || target.roleRecord?.isOwner || target.role === "OWNER") {
+    throw new Error(unauthorizedMessage(locale));
+  }
+
+  await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  revalidateEveryLocale("/admin/users");
+  revalidateEveryLocale("/admin/roles");
+}
+
+export async function updateUserPermissionsAction(
+  locale: Locale,
+  userId: string,
+  formData: FormData,
+) {
+  await assertOwner(locale);
+
   const target = await prisma.user.findUnique({
     where: { id: userId },
     include: { roleRecord: true },
@@ -939,10 +1477,9 @@ export async function deleteUserAction(locale: Locale, userId: string) {
     throw new Error(unauthorizedMessage(locale));
   }
 
-  await prisma.user.delete({
-    where: { id: userId },
-  });
+  await prisma.$transaction(userPermissionOperations(userId, formData));
 
+  revalidateEveryLocale("/admin/roles");
   revalidateEveryLocale("/admin/users");
 }
 

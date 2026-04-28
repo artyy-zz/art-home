@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  convertOfferToInvoiceAction,
   createOfferAction,
   deleteOfferAction,
   updateOfferStatusAction,
@@ -27,6 +26,9 @@ const statusLabels = {
     REJECTED: "Rejected",
   },
 } as const;
+
+const inputClassName =
+  "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -57,8 +59,7 @@ export default async function OffersPage({
   const canEdit = can(permissions, "OFFERS", "EDIT");
   const canDelete = can(permissions, "OFFERS", "DELETE");
   const canExport = can(permissions, "OFFERS", "EXPORT");
-  const canCreateInvoice = can(permissions, "INVOICES", "CREATE");
-  const canCreateOffer = canCreate && options.clients.length > 0 && options.products.length > 0;
+  const canCreateOffer = canCreate && options.clients.length > 0 && options.items.length > 0;
 
   return (
     <div className="space-y-6">
@@ -71,13 +72,19 @@ export default async function OffersPage({
             <div className="mt-6">
               <OfferBuilderForm
                 locale={typedLocale}
-                clients={options.clients}
+                clients={options.clients.map((client) => ({
+                  id: client.id,
+                  name: client.name,
+                  vatRate: client.vatRate,
+                }))}
                 leads={options.leads}
-                products={options.products.map((product) => ({
-                  id: product.id,
-                  name: product.name,
-                  basePriceCents: product.basePriceCents,
-                  categoryTitle: product.categoryTitle,
+                items={options.items.map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  sku: item.sku,
+                  unit: item.unit,
+                  unitPriceCents: item.unitPriceCents,
+                  categoryTitle: item.categoryTitle,
                 }))}
                 action={createOfferAction.bind(null, typedLocale)}
               />
@@ -86,8 +93,8 @@ export default async function OffersPage({
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-black/8 bg-white/75 p-5">
               <p className="text-sm leading-7 text-[var(--color-muted)]">
                 {typedLocale === "sq"
-                  ? "Shtoni një klient para se të krijoni ofertën e parë."
-                  : "Add a client before creating the first offer."}
+                  ? "Shtoni klient dhe artikull në inventar para se të krijoni ofertën e parë."
+                  : "Add a client and an inventory item before creating the first offer."}
               </p>
               <Link
                 href={`/${typedLocale}/admin/clients`}
@@ -107,7 +114,7 @@ export default async function OffersPage({
           sort={sort}
           direction={direction}
           searchPlaceholder={
-            typedLocale === "sq" ? "Kërko oferta, klientë ose produkte" : "Search offers, clients, or products"
+            typedLocale === "sq" ? "Kërko oferta, klientë ose artikuj" : "Search offers, clients, or items"
           }
           searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
           emptyMessage={
@@ -120,12 +127,13 @@ export default async function OffersPage({
             { key: "number", label: typedLocale === "sq" ? "Oferta" : "Offer", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "status", label: typedLocale === "sq" ? "Statusi" : "Status", sortable: true },
+            { key: "notes", label: typedLocale === "sq" ? "Shënime" : "Notes" },
             { key: "validUntil", label: typedLocale === "sq" ? "Vlen deri" : "Valid until", sortable: true },
             { key: "total", label: typedLocale === "sq" ? "Totali" : "Total", sortable: true, align: "right" },
           ]}
           rows={offers.map((offer) => ({
             id: offer.id,
-            searchText: `${offer.number} ${offer.client.name} ${offer.lead?.name ?? ""} ${offer.status} ${offer.items.map((item) => item.productName).join(" ")}`,
+            searchText: `${offer.number} ${offer.client.name} ${offer.lead?.name ?? ""} ${offer.status} ${offer.notes ?? ""} ${offer.items.map((item) => item.productName).join(" ")}`,
             sortValues: {
               number: offer.number,
               client: offer.client.name,
@@ -145,6 +153,11 @@ export default async function OffersPage({
               ),
               client: offer.client.name,
               status: <Badge tone={statusTone(offer.status)}>{statusLabels[typedLocale][offer.status]}</Badge>,
+              notes: (
+                <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
+                  {offer.notes || "-"}
+                </p>
+              ),
               validUntil: formatDate(offer.validUntil ?? offer.createdAt, localeString),
               total: formatCurrency(offer.totalCents, localeString),
             },
@@ -171,30 +184,41 @@ export default async function OffersPage({
                   </Link>
                 ) : null}
                 {canEdit ? (
-                  <form
-                    action={updateOfferStatusAction.bind(null, typedLocale, offer.id)}
-                    className="flex gap-2"
-                  >
-                    <select
-                      name="status"
-                      defaultValue={offer.status}
-                      className="h-10 rounded-full border border-black/10 bg-white/90 px-3 text-sm text-[var(--color-foreground)]"
+                  <details className="w-full min-w-[320px] text-left">
+                    <summary
+                      className={buttonClasses({
+                        variant: "secondary",
+                        size: "sm",
+                        className: "ml-auto cursor-pointer list-none",
+                      })}
                     >
-                      <option value="PENDING">{statusLabels[typedLocale].PENDING}</option>
-                      <option value="ACCEPTED">{statusLabels[typedLocale].ACCEPTED}</option>
-                      <option value="REJECTED">{statusLabels[typedLocale].REJECTED}</option>
-                    </select>
-                    <button className={buttonClasses({ size: "sm" })}>
-                      {typedLocale === "sq" ? "Ruaj" : "Save"}
-                    </button>
-                  </form>
-                ) : null}
-                {canEdit && canCreateInvoice && !offer.invoice ? (
-                  <form action={convertOfferToInvoiceAction.bind(null, typedLocale, offer.id)}>
-                    <button className={buttonClasses({ variant: "secondary", size: "sm" })}>
-                      {typedLocale === "sq" ? "Konverto" : "Convert"}
-                    </button>
-                  </form>
+                      {typedLocale === "sq" ? "Ndrysho" : "Edit"}
+                    </summary>
+                    <form
+                      action={updateOfferStatusAction.bind(null, typedLocale, offer.id)}
+                      className="mt-3 grid gap-3 rounded-2xl border border-black/8 bg-white/85 p-3"
+                    >
+                      <select name="status" defaultValue={offer.status} className={inputClassName}>
+                        <option value="PENDING">{statusLabels[typedLocale].PENDING}</option>
+                        <option value="ACCEPTED">{statusLabels[typedLocale].ACCEPTED}</option>
+                        <option value="REJECTED">{statusLabels[typedLocale].REJECTED}</option>
+                      </select>
+                      <input
+                        name="validUntil"
+                        type="date"
+                        defaultValue={(offer.validUntil ?? offer.createdAt).toISOString().slice(0, 10)}
+                        className={inputClassName}
+                      />
+                      <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-muted)]">
+                        <input type="checkbox" name="vatEnabled" defaultChecked={offer.vatEnabled} className="h-4 w-4" />
+                        {typedLocale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({offer.client.vatRate}%)
+                      </label>
+                      <textarea name="notes" defaultValue={offer.notes ?? ""} className={inputClassName} />
+                      <button className={buttonClasses({ size: "sm" })}>
+                        {typedLocale === "sq" ? "Përditëso" : "Update"}
+                      </button>
+                    </form>
+                  </details>
                 ) : null}
                 {canDelete ? (
                   <form action={deleteOfferAction.bind(null, typedLocale, offer.id)}>

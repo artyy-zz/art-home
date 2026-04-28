@@ -1,34 +1,34 @@
-import { generateSalesPdf } from "@/lib/pdf";
-import { getInvoiceDocumentData } from "@/lib/erp";
 import { getCurrentUser } from "@/lib/auth";
+import { getPurchaseInvoiceDocumentData } from "@/lib/erp";
+import { generatePurchasePdf } from "@/lib/pdf";
 import { userCan } from "@/lib/permissions";
 
 export async function GET(
   _request: Request,
-  context: RouteContext<"/api/invoices/[id]/pdf">,
+  context: RouteContext<"/api/purchase-invoices/[id]/pdf">,
 ) {
   const user = await getCurrentUser();
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  if (!(await userCan(user, "INVOICES", "EXPORT"))) {
+  if (!(await userCan(user, "PURCHASE_INVOICES", "EXPORT"))) {
     return new Response("You do not have permission for this action.", { status: 403 });
   }
 
   const { id } = await context.params;
-  const invoice = await getInvoiceDocumentData(id);
+  const invoice = await getPurchaseInvoiceDocumentData(id);
 
   if (!invoice) {
-    return new Response("Invoice not found", { status: 404 });
+    return new Response("Purchase invoice not found", { status: 404 });
   }
 
-  const pdfBytes = await generateSalesPdf({
-    title: "Sales Invoice",
+  const pdfBytes = await generatePurchasePdf({
+    title: "Purchase Invoice",
     number: invoice.number,
-    clientName: invoice.client.name,
-    clientEmail: invoice.client.email,
-    clientPhone: invoice.client.phone,
+    supplierName: invoice.supplier.name,
+    supplierEmail: invoice.supplier.email,
+    supplierPhone: invoice.supplier.phone,
     createdAt: invoice.issuedAt,
     dueDate: invoice.dueDate,
     notes: invoice.notes,

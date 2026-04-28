@@ -5,10 +5,12 @@ import { Card } from "@/components/shared/card";
 import { getClientOverview } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
+const fieldLabelClassName =
+  "grid gap-1.5 text-xs font-semibold text-[var(--color-muted)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -46,9 +48,19 @@ export default async function ClientsPage({
           <form action={createClientAction.bind(null, typedLocale)} className="mt-6 grid gap-4 md:grid-cols-3">
             <input name="name" required className={inputClassName} placeholder={typedLocale === "sq" ? "Emri i klientit" : "Client name"} />
             <input name="contactPerson" className={inputClassName} placeholder={typedLocale === "sq" ? "Personi kontaktues" : "Contact person"} />
+            <input name="nui" className={inputClassName} placeholder="NUI" />
             <input name="email" className={inputClassName} placeholder="Email" />
             <input name="phone" className={inputClassName} placeholder={typedLocale === "sq" ? "Telefoni" : "Phone"} />
-            <input name="address" className={`${inputClassName} md:col-span-2`} placeholder={typedLocale === "sq" ? "Adresa" : "Address"} />
+            <input
+              name="vatRate"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={18}
+              className={inputClassName}
+              placeholder={typedLocale === "sq" ? "TVSH %" : "VAT %"}
+            />
+            <input name="address" className={`${inputClassName} md:col-span-3`} placeholder={typedLocale === "sq" ? "Adresa" : "Address"} />
             <textarea name="notes" className={`${inputClassName} md:col-span-3`} placeholder={typedLocale === "sq" ? "Shënime" : "Notes"} />
             <button className={buttonClasses({ className: "md:col-span-3 md:w-fit" })}>
               {typedLocale === "sq" ? "Ruaj klientin" : "Save client"}
@@ -76,13 +88,15 @@ export default async function ClientsPage({
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "contact", label: "Contact" },
+            { key: "tax", label: typedLocale === "sq" ? "NUI / TVSH" : "NUI / VAT" },
+            { key: "notes", label: typedLocale === "sq" ? "Shënime" : "Notes" },
             { key: "activity", label: typedLocale === "sq" ? "Aktiviteti" : "Activity", sortable: true },
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
           rows={clients.map((client) => ({
             id: client.id,
-            searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.notes ?? ""}`,
+            searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatRate} ${client.notes ?? ""}`,
             sortValues: {
               name: client.name,
               activity: client.invoiceCount + client.offerCount,
@@ -105,32 +119,80 @@ export default async function ClientsPage({
                   <p className="max-w-[220px] truncate">{client.address || "-"}</p>
                 </div>
               ),
+              tax: (
+                <div className="space-y-1 text-[var(--color-muted)]">
+                  <p>{client.nui || "-"}</p>
+                  <p>
+                    {typedLocale === "sq" ? "TVSH" : "VAT"}{" "}
+                    {formatNumber(client.vatRate, localeString)}%
+                  </p>
+                </div>
+              ),
+              notes: (
+                <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
+                  {client.notes || "-"}
+                </p>
+              ),
               activity: `${client.invoiceCount} ${typedLocale === "sq" ? "fatura" : "invoices"} / ${client.offerCount} ${typedLocale === "sq" ? "oferta" : "offers"}`,
               debt: formatCurrency(client.outstandingDebtCents, localeString),
               lastInvoice: client.lastInvoiceAt ? formatDate(client.lastInvoiceAt, localeString) : "-",
             },
             actions: (
               <>
-                <details className="w-full min-w-[260px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                    {typedLocale === "sq" ? "Shiko" : "View"}
-                  </summary>
-                  <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                    {client.notes || (typedLocale === "sq" ? "Pa shënime shtesë." : "No additional notes.")}
-                  </p>
-                </details>
                 {canEdit ? (
-                  <details className="w-full min-w-[300px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                    <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
+                  <details className="w-full min-w-[320px] text-left">
+                    <summary
+                      className={buttonClasses({
+                        variant: "secondary",
+                        size: "sm",
+                        className: "ml-auto cursor-pointer list-none",
+                      })}
+                    >
                       {typedLocale === "sq" ? "Ndrysho" : "Edit"}
                     </summary>
-                    <form action={updateClientAction.bind(null, typedLocale, client.id)} className="mt-3 grid gap-2">
-                      <input name="name" required defaultValue={client.name} className={inputClassName} />
-                      <input name="contactPerson" defaultValue={client.contactPerson ?? ""} className={inputClassName} />
-                      <input name="email" defaultValue={client.email ?? ""} className={inputClassName} />
-                      <input name="phone" defaultValue={client.phone ?? ""} className={inputClassName} />
-                      <input name="address" defaultValue={client.address ?? ""} className={inputClassName} />
-                      <textarea name="notes" defaultValue={client.notes ?? ""} className={inputClassName} />
+                    <form
+                      action={updateClientAction.bind(null, typedLocale, client.id)}
+                      className="mt-3 grid gap-3 rounded-2xl border border-black/8 bg-white/85 p-3"
+                    >
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "Emri i klientit" : "Client name"}
+                        <input name="name" required defaultValue={client.name} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "Personi kontaktues" : "Contact person"}
+                        <input name="contactPerson" defaultValue={client.contactPerson ?? ""} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        NUI
+                        <input name="nui" defaultValue={client.nui ?? ""} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        Email
+                        <input name="email" defaultValue={client.email ?? ""} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "Telefoni" : "Phone"}
+                        <input name="phone" defaultValue={client.phone ?? ""} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "TVSH %" : "VAT %"}
+                        <input
+                          name="vatRate"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          defaultValue={client.vatRate}
+                          className={inputClassName}
+                        />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "Adresa" : "Address"}
+                        <input name="address" defaultValue={client.address ?? ""} className={inputClassName} />
+                      </label>
+                      <label className={fieldLabelClassName}>
+                        {typedLocale === "sq" ? "Shënime" : "Notes"}
+                        <textarea name="notes" defaultValue={client.notes ?? ""} className={inputClassName} />
+                      </label>
                       <button className={buttonClasses({ size: "sm" })}>
                         {typedLocale === "sq" ? "Ruaj" : "Save"}
                       </button>

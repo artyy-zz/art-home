@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
@@ -11,39 +11,64 @@ type FormAction = (formData: FormData) => void | Promise<void>;
 const inputClassName =
   "w-full rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.12)]";
 
-type ProductOption = {
+type InventoryItemOption = {
   id: string;
   name: string;
-  basePriceCents: number;
+  sku: string;
+  unit: string;
+  unitPriceCents: number;
   categoryTitle: string;
+};
+
+type ClientOption = {
+  id: string;
+  name: string;
+  vatRate: number;
+};
+
+type OfferRow = {
+  materialId: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+const emptyRow: OfferRow = {
+  materialId: "",
+  quantity: 1,
+  unitPrice: 0,
 };
 
 export function OfferBuilderForm({
   locale,
   clients,
   leads,
-  products,
+  items,
   action,
 }: {
   locale: Locale;
-  clients: Array<{ id: string; name: string }>;
+  clients: ClientOption[];
   leads: Array<{ id: string; name: string }>;
-  products: ProductOption[];
+  items: InventoryItemOption[];
   action: FormAction;
 }) {
+  const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id ?? "");
   const [vatEnabled, setVatEnabled] = useState(true);
-  const [rows, setRows] = useState([
-    {
-      productId: products[0]?.id ?? "",
-      quantity: 1,
-      unitPrice: products[0] ? products[0].basePriceCents / 100 : 0,
-    },
-  ]);
+  const [rows, setRows] = useState<OfferRow[]>([{ ...emptyRow }]);
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === selectedClientId),
+    [clients, selectedClientId],
+  );
 
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <select name="clientId" className={inputClassName} defaultValue={clients[0]?.id} required>
+        <select
+          name="clientId"
+          className={inputClassName}
+          value={selectedClientId}
+          onChange={(event) => setSelectedClientId(event.target.value)}
+          required
+        >
           {clients.map((client) => (
             <option key={client.id} value={client.id}>
               {client.name}
@@ -59,7 +84,7 @@ export function OfferBuilderForm({
           ))}
         </select>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <select name="status" className={inputClassName} defaultValue="PENDING">
           <option value="PENDING">{locale === "sq" ? "Në pritje" : "Pending"}</option>
           <option value="ACCEPTED">{locale === "sq" ? "E pranuar" : "Accepted"}</option>
@@ -71,21 +96,25 @@ export function OfferBuilderForm({
           className={inputClassName}
           required
         />
-        <input name="vatRate" type="number" step="0.01" className={inputClassName} defaultValue={18} />
       </div>
       <textarea name="notes" className={inputClassName} placeholder={locale === "sq" ? "Shënime" : "Notes"} />
-      <label className="flex items-center gap-3 text-sm text-[var(--color-muted)]">
-        <input
-          type="checkbox"
-          name="vatEnabled"
-          checked={vatEnabled}
-          onChange={(event) => setVatEnabled(event.target.checked)}
-          className="h-4 w-4"
-        />
-        {locale === "sq" ? "Apliko TVSH" : "Apply VAT"}
-      </label>
+      <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-muted)]">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            name="vatEnabled"
+            checked={vatEnabled}
+            onChange={(event) => setVatEnabled(event.target.checked)}
+            className="h-4 w-4"
+          />
+          {locale === "sq" ? "Apliko TVSH" : "Apply VAT"}
+        </label>
+        <span>
+          {locale === "sq" ? "TVSH e klientit" : "Client VAT"}: {selectedClient?.vatRate ?? 18}%
+        </span>
+      </div>
       <div className="rounded-[26px] border border-black/8 bg-white/70 p-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <h3 className="font-display text-2xl text-[var(--color-foreground)]">
             {locale === "sq" ? "Artikujt" : "Items"}
           </h3>
@@ -95,11 +124,7 @@ export function OfferBuilderForm({
             onClick={() =>
               setRows((current) => [
                 ...current,
-                {
-                  productId: products[0]?.id ?? "",
-                  quantity: 1,
-                  unitPrice: products[0] ? products[0].basePriceCents / 100 : 0,
-                },
+                { ...emptyRow },
               ])
             }
           >
@@ -109,9 +134,9 @@ export function OfferBuilderForm({
         </div>
         <div className="mt-4 space-y-3">
           {rows.map((row, index) => (
-            <div key={`${row.productId}-${index}`} className="grid gap-3 md:grid-cols-[1fr_140px_160px_56px]">
+            <div key={index} className="grid gap-3 md:grid-cols-[1fr_140px_160px_56px]">
               <select
-                value={row.productId}
+                value={row.materialId}
                 onChange={(event) =>
                   setRows((current) =>
                     current.map((item, itemIndex) => {
@@ -119,20 +144,21 @@ export function OfferBuilderForm({
                         return item;
                       }
 
-                      const product = products.find((option) => option.id === event.target.value);
+                      const inventoryItem = items.find((option) => option.id === event.target.value);
                       return {
                         ...item,
-                        productId: event.target.value,
-                        unitPrice: product ? product.basePriceCents / 100 : item.unitPrice,
+                        materialId: event.target.value,
+                        unitPrice: inventoryItem ? inventoryItem.unitPriceCents / 100 : 0,
                       };
                     }),
                   )
                 }
                 className={inputClassName}
               >
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} - {product.categoryTitle}
+                <option value="">{locale === "sq" ? "Zgjidh artikull" : "Choose item"}</option>
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name} - {item.categoryTitle} - {item.sku}
                   </option>
                 ))}
               </select>
@@ -179,7 +205,7 @@ export function OfferBuilderForm({
           ))}
         </div>
       </div>
-      <input type="hidden" name="itemsData" value={JSON.stringify(rows.filter((row) => row.productId))} />
+      <input type="hidden" name="itemsData" value={JSON.stringify(rows.filter((row) => row.materialId))} />
       <SubmitButton>{locale === "sq" ? "Krijo ofertë" : "Create offer"}</SubmitButton>
     </form>
   );

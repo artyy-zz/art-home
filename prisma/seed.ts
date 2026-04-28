@@ -10,57 +10,72 @@ const toCents = (amount: number) => Math.round(amount * 100);
 const productSeeds = [
   {
     slug: "studio-oak-kitchen",
-    nameSq: "Kuzhinë Studio Oak",
-    nameEn: "Studio Oak Kitchen",
+    nameSq: "Kuzhinë Noir Marble",
+    nameEn: "Noir Marble Kitchen",
     category: FurnitureCategory.KITCHENS,
-    summarySq: "Kuzhinë modulare me linja të pastra dhe organizim praktik.",
-    summaryEn: "Modular kitchen with clean lines and practical organization.",
+    summarySq:
+      "Kuzhinë moderne me dizajn minimalist dhe tone të errëta elegante, e kombinuar me ndriçim ambienti dhe sipërfaqe mermeri për një pamje luksoze dhe funksionale.",
+    summaryEn:
+      "Modern kitchen with minimalist design and elegant dark tones, combined with ambient lighting and marble surfaces for a luxurious and functional look.",
     descriptionSq:
-      "Projektuar për apartamente dhe shtëpi moderne, me ruajtje të zgjuar, ndriçim të integruar dhe punim të saktë.",
+      "Kuzhinë moderne me dizajn minimalist dhe tone të errëta elegante, e kombinuar me ndriçim ambienti dhe sipërfaqe mermeri për një pamje luksoze dhe funksionale.",
     descriptionEn:
-      "Designed for modern apartments and homes with smart storage, integrated lighting, and precise detailing.",
-    dimensions: "Sipas projektit",
-    materialNotesSq: "Lisi, panele cilësore dhe furnitura soft-close.",
-    materialNotesEn: "Oak, quality panels, and soft-close hardware.",
+      "Modern kitchen with minimalist design and elegant dark tones, combined with ambient lighting and marble surfaces for a luxurious and functional look.",
+    dimensions: "320 × 240 × 90 cm",
+    materialNotesSq:
+      "MDF i lyer mat, sipërfaqe mermeri, elemente druri natyral, xham i errët, ndriçim LED integruar",
+    materialNotesEn:
+      "Matte painted MDF, marble surface, natural wood elements, dark glass, integrated LED lighting",
     featured: true,
     basePriceCents: toCents(5400),
     laborCostCents: toCents(980),
+    createdAt: new Date("2026-04-26T20:31:03.000Z"),
   },
   {
     slug: "arber-dining-table",
-    nameSq: "Tavolinë Arbër",
-    nameEn: "Arber Dining Table",
-    category: FurnitureCategory.TABLES,
-    summarySq: "Tavolinë ngrënieje me sipërfaqe druri dhe bazë të qëndrueshme.",
-    summaryEn: "Dining table with a wood surface and durable base.",
+    nameSq: "Kuzhinë Elegant Linea",
+    nameEn: "Elegant Linea Kitchen",
+    category: FurnitureCategory.KITCHENS,
+    summarySq:
+      "Kuzhinë moderne me linja të pastra dhe kombinim harmonik të ngjyrave të lehta me elemente të errëta, e pasuruar me ndriçim dekorativ dhe hapësirë ngrënieje elegante.",
+    summaryEn:
+      "Modern kitchen with clean lines and a harmonious combination of light colors with dark elements, enriched with decorative lighting and an elegant dining space.",
     descriptionSq:
-      "Tavolinë e fortë dhe elegante për zona ngrënieje, me përmasa dhe përfundim sipas hapësirës.",
+      "Kuzhinë moderne me linja të pastra dhe kombinim harmonik të ngjyrave të lehta me elemente të errëta, e pasuruar me ndriçim dekorativ dhe hapësirë ngrënieje elegante.",
     descriptionEn:
-      "A strong, elegant table for dining areas, with dimensions and finish adapted to the space.",
-    dimensions: "Sipas projektit",
-    materialNotesSq: "Dru cilësor, bazë metalike dhe llak mbrojtës.",
-    materialNotesEn: "Quality wood, metal base, and protective lacquer.",
+      "Modern kitchen with clean lines and a harmonious combination of light colors with dark elements, enriched with decorative lighting and an elegant dining space.",
+    dimensions: "360 × 260 × 90 cm",
+    materialNotesSq:
+      "MDF i lyer me shkëlqim, sipërfaqe graniti, elemente metalike, xham i temperuar, ndriçim LED integruar",
+    materialNotesEn:
+      "Gloss painted MDF, granite surface, metal elements, tempered glass, integrated LED lighting",
     featured: true,
     basePriceCents: toCents(1480),
     laborCostCents: toCents(260),
+    createdAt: new Date("2026-04-26T20:31:02.000Z"),
   },
   {
     slug: "linea-wardrobe",
-    nameSq: "Garderobë Linea",
-    nameEn: "Linea Wardrobe",
-    category: FurnitureCategory.WARDROBES,
-    summarySq: "Garderobë me organizim të brendshëm të personalizuar.",
-    summaryEn: "Wardrobe with a personalized interior organization system.",
+    nameSq: "Kuzhinë Natural Wood Luxe",
+    nameEn: "Natural Wood Luxe Kitchen",
+    category: FurnitureCategory.KITCHENS,
+    summarySq:
+      "Kuzhinë elegante me dizajn natyral dhe tone të ngrohta druri, e kombinuar me detaje metalike dhe sipërfaqe mermeri për një ambient të sofistikuar dhe mikpritës.",
+    summaryEn:
+      "Elegant kitchen with a natural design and warm wood tones, combined with metal details and marble surfaces for a sophisticated and welcoming interior.",
     descriptionSq:
-      "Zgjidhje praktike për dhoma gjumi dhe korridore, me ndarje efikase dhe pamje të pastër.",
+      "Kuzhinë elegante me dizajn natyral dhe tone të ngrohta druri, e kombinuar me detaje metalike dhe sipërfaqe mermeri për një ambient të sofistikuar dhe mikpritës.",
     descriptionEn:
-      "A practical solution for bedrooms and corridors, with efficient compartments and a clean look.",
-    dimensions: "Sipas projektit",
-    materialNotesSq: "Panele cilësore, ndriçim opsional dhe mekanizma të qëndrueshëm.",
-    materialNotesEn: "Quality panels, optional lighting, and durable mechanisms.",
+      "Elegant kitchen with a natural design and warm wood tones, combined with metal details and marble surfaces for a sophisticated and welcoming interior.",
+    dimensions: "340 × 250 × 90 cm",
+    materialNotesSq:
+      "Dru natyral ose MDF i veshur me furnir druri, sipërfaqe mermeri, elemente metalike në ngjyrë ari, pajisje premium",
+    materialNotesEn:
+      "Natural wood or wood veneer MDF, marble surface, gold-tone metal elements, premium appliances",
     featured: true,
     basePriceCents: toCents(3120),
     laborCostCents: toCents(620),
+    createdAt: new Date("2026-04-26T20:31:01.000Z"),
   },
   {
     slug: "atelier-media-wall",
@@ -84,6 +99,8 @@ const productSeeds = [
 
 async function main() {
   await prisma.inventoryMovement.deleteMany();
+  await prisma.purchaseInvoiceItem.deleteMany();
+  await prisma.purchaseInvoice.deleteMany();
   await prisma.invoiceItem.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.offerItem.deleteMany();
@@ -93,6 +110,7 @@ async function main() {
   await prisma.notification.deleteMany();
   await prisma.lead.deleteMany();
   await prisma.client.deleteMany();
+  await prisma.supplier.deleteMany();
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
 

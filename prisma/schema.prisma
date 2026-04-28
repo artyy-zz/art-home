@@ -25,6 +25,7 @@ enum PermissionModule {
   INVENTORY
   OFFERS
   INVOICES
+  PURCHASE_INVOICES
   REPORTS
   USERS
   ROLES
@@ -97,16 +98,17 @@ enum NotificationType {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String    @unique
   passwordHash String
-  role         UserRole @default(STAFF)
+  role         UserRole  @default(STAFF)
   roleId       String?
-  roleRecord   Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleRecord   Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
   lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  permissions  UserPermission[]
 
   @@index([roleId])
 }
@@ -125,14 +127,14 @@ model Role {
 }
 
 model RolePermission {
-  id        String           @id @default(cuid())
-  role      UserRole?
-  roleId    String?
-  module    PermissionModule
-  action    PermissionAction
-  allowed   Boolean          @default(false)
-  updatedAt DateTime         @updatedAt
-  roleRecord Role?           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id         String           @id @default(cuid())
+  role       UserRole?
+  roleId     String?
+  module     PermissionModule
+  action     PermissionAction
+  allowed    Boolean          @default(false)
+  updatedAt  DateTime         @updatedAt
+  roleRecord Role?            @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([role, module, action])
   @@unique([roleId, module, action])
@@ -140,19 +142,55 @@ model RolePermission {
   @@index([roleId])
 }
 
+model UserPermission {
+  id        String           @id @default(cuid())
+  userId    String
+  module    PermissionModule
+  action    PermissionAction
+  allowed   Boolean          @default(false)
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, module, action])
+  @@index([userId])
+}
+
 model Client {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
   contactPerson String?
   email         String?
   phone         String?
   address       String?
+  nui           String?
+  vatRate       Float     @default(18)
   notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   leads         Lead[]
   offers        Offer[]
   invoices      Invoice[]
+
+  @@index([deletedAt])
+}
+
+model Supplier {
+  id               String            @id @default(cuid())
+  name             String
+  contactPerson    String?
+  email            String?
+  phone            String?
+  address          String?
+  nui              String?
+  vatRate          Float             @default(18)
+  notes            String?
+  deletedAt        DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  purchaseInvoices PurchaseInvoice[]
+
+  @@index([deletedAt])
 }
 
 model Lead {
@@ -173,44 +211,47 @@ model Lead {
 }
 
 model Material {
-  id                String              @id @default(cuid())
+  id                String                @id @default(cuid())
   name              String
-  sku               String              @unique
+  sku               String                @unique
   type              MaterialType
   unit              Unit
   stockQuantity     Float
   lowStockThreshold Float
   costPerUnitCents  Int
   notes             String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
   bomItems          ProductBomItem[]
+  offerItems        OfferItem[]
+  invoiceItems      InvoiceItem[]
+  purchaseItems     PurchaseInvoiceItem[]
   movements         InventoryMovement[]
 
   @@index([type, name])
 }
 
 model Product {
-  id               String             @id @default(cuid())
-  slug             String             @unique
-  nameSq           String
-  nameEn           String
-  category         FurnitureCategory
-  summarySq        String
-  summaryEn        String
-  descriptionSq    String
-  descriptionEn    String
-  dimensions       String?
-  materialNotesSq  String?
-  materialNotesEn  String?
-  featured         Boolean            @default(false)
-  basePriceCents   Int
-  laborCostCents   Int                @default(0)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  bomItems         ProductBomItem[]
-  offerItems       OfferItem[]
-  invoiceItems     InvoiceItem[]
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  nameSq          String
+  nameEn          String
+  category        FurnitureCategory
+  summarySq       String
+  summaryEn       String
+  descriptionSq   String
+  descriptionEn   String
+  dimensions      String?
+  materialNotesSq String?
+  materialNotesEn String?
+  featured        Boolean           @default(false)
+  basePriceCents  Int
+  laborCostCents  Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  bomItems        ProductBomItem[]
+  offerItems      OfferItem[]
+  invoiceItems    InvoiceItem[]
 
   @@index([category, featured])
 }
@@ -252,38 +293,42 @@ model Offer {
 }
 
 model OfferItem {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   productName    String
   description    String?
   quantity       Int
   unitPriceCents Int
-  unitCostCents  Int      @default(0)
+  unitCostCents  Int       @default(0)
   lineTotalCents Int
   offerId        String
   productId      String?
-  offer          Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  materialId     String?
+  offer          Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  material       Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  @@index([materialId])
 }
 
 model Invoice {
-  id                  String        @id @default(cuid())
-  number              String        @unique
-  status              InvoiceStatus @default(UNPAID)
+  id                  String              @id @default(cuid())
+  number              String              @unique
+  status              InvoiceStatus       @default(UNPAID)
   notes               String?
   subtotalCents       Int
-  vatEnabled          Boolean       @default(true)
-  vatRate             Float         @default(18)
+  vatEnabled          Boolean             @default(true)
+  vatRate             Float               @default(18)
   vatAmountCents      Int
   totalCents          Int
-  amountPaidCents     Int           @default(0)
+  amountPaidCents     Int                 @default(0)
   dueDate             DateTime
-  issuedAt            DateTime      @default(now())
+  issuedAt            DateTime            @default(now())
   paidAt              DateTime?
   inventoryDeductedAt DateTime?
   clientId            String
-  offerId             String?       @unique
-  client              Client        @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  offer               Offer?        @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  offerId             String?             @unique
+  client              Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  offer               Offer?              @relation(fields: [offerId], references: [id], onDelete: SetNull)
   items               InvoiceItem[]
   movements           InventoryMovement[]
 
@@ -291,31 +336,77 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   productName    String
   description    String?
   quantity       Int
   unitPriceCents Int
-  unitCostCents  Int      @default(0)
+  unitCostCents  Int       @default(0)
   lineTotalCents Int
   invoiceId      String
   productId      String?
-  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  materialId     String?
+  invoice        Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  material       Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  @@index([materialId])
+}
+
+model PurchaseInvoice {
+  id                   String                @id @default(cuid())
+  number               String                @unique
+  status               InvoiceStatus         @default(UNPAID)
+  notes                String?
+  subtotalCents        Int
+  vatEnabled           Boolean               @default(true)
+  vatRate              Float                 @default(18)
+  vatAmountCents       Int
+  totalCents           Int
+  amountPaidCents      Int                   @default(0)
+  dueDate              DateTime
+  issuedAt             DateTime              @default(now())
+  paidAt               DateTime?
+  inventoryRestockedAt DateTime?
+  supplierId           String
+  supplier             Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items                PurchaseInvoiceItem[]
+  movements            InventoryMovement[]
+
+  @@index([status, dueDate])
+  @@index([supplierId])
+}
+
+model PurchaseInvoiceItem {
+  id                String          @id @default(cuid())
+  productName       String
+  description       String?
+  quantity          Int
+  unitPriceCents    Int
+  lineTotalCents    Int
+  purchaseInvoiceId String
+  materialId        String?
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  material          Material?       @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  @@index([materialId])
 }
 
 model InventoryMovement {
-  id         String                @id @default(cuid())
-  kind       InventoryMovementKind
-  quantity   Float
-  note       String?
-  createdAt  DateTime              @default(now())
-  materialId String
-  invoiceId  String?
-  material   Material              @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  invoice    Invoice?              @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  id                String                @id @default(cuid())
+  kind              InventoryMovementKind
+  quantity          Float
+  note              String?
+  createdAt         DateTime              @default(now())
+  materialId        String
+  invoiceId         String?
+  purchaseInvoiceId String?
+  material          Material              @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  invoice           Invoice?              @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  purchaseInvoice   PurchaseInvoice?      @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
 
   @@index([kind, createdAt])
+  @@index([purchaseInvoiceId])
 }
 
 model Notification {

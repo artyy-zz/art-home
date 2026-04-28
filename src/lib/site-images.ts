@@ -1,14 +1,14 @@
 import type { FurnitureCategory } from "@prisma/client";
 
 export const siteImages = {
-  hero: "/images/art-home/living-room-showcase.jpg",
-  about: "/images/art-home/lounge-workshop-showcase.jpg",
+  hero: "/images/art-home/hero-kitchen.jpg",
+  about: "/images/art-home/about-workshop.jpg",
 } as const;
 
 const productImages: Record<string, string> = {
-  "studio-oak-kitchen": "/images/art-home/stone-island-kitchen.jpg",
-  "arber-dining-table": "/images/art-home/dining-wardrobe-wall.jpg",
-  "linea-wardrobe": "/images/art-home/oak-storage-kitchen.jpg",
+  "studio-oak-kitchen": "/images/art-home/dark-marble-kitchen.jpg",
+  "arber-dining-table": "/images/art-home/open-plan-dining-kitchen.jpg",
+  "linea-wardrobe": "/images/art-home/walnut-wall-kitchen.jpg",
   "atelier-media-wall": "/images/art-home/custom-breakfast-corner.jpg",
 };
 

@@ -6,6 +6,7 @@ import {
   NotificationType,
   OfferStatus,
   Prisma,
+  type Material,
 } from "@prisma/client";
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { categoryCopy } from "@/lib/company";
@@ -111,6 +112,9 @@ export async function getLeadsOverview() {
 
 export async function getClientOverview() {
   const clients = await prisma.client.findMany({
+    where: {
+      deletedAt: null,
+    },
     include: {
       offers: true,
       invoices: true,
@@ -158,6 +162,21 @@ export async function getInventoryOverview() {
   });
 }
 
+export function localizeInventoryItem(
+  material: Pick<Material, "id" | "name" | "sku" | "type" | "unit" | "costPerUnitCents">,
+  locale: Locale,
+) {
+  return {
+    id: material.id,
+    name: material.name,
+    sku: material.sku,
+    unit: material.unit,
+    categoryTitle: materialTypeLabel(material.type, locale),
+    unitPriceCents: material.costPerUnitCents,
+    costPerUnitCents: material.costPerUnitCents,
+  };
+}
+
 export async function getOfferOverview() {
   return prisma.offer.findMany({
     include: {
@@ -185,6 +204,32 @@ export async function getInvoiceOverview() {
   });
 }
 
+export async function getPurchaseInvoiceOverview() {
+  return prisma.purchaseInvoice.findMany({
+    include: {
+      supplier: true,
+      items: true,
+    },
+    orderBy: {
+      issuedAt: "desc",
+    },
+  });
+}
+
+export async function getSupplierOverview() {
+  return prisma.supplier.findMany({
+    where: {
+      deletedAt: null,
+    },
+    include: {
+      purchaseInvoices: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
+
 export async function getProductOverview(locale: Locale) {
   const products = await prisma.product.findMany({
     ...productWithBomArgs,
@@ -195,8 +240,13 @@ export async function getProductOverview(locale: Locale) {
 }
 
 export async function getOfferBuilderOptions(locale: Locale) {
-  const [clients, leads, products] = await Promise.all([
-    prisma.client.findMany({ orderBy: { name: "asc" } }),
+  const [clients, leads, materials] = await Promise.all([
+    prisma.client.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
     prisma.lead.findMany({
       where: {
         status: {
@@ -205,31 +255,53 @@ export async function getOfferBuilderOptions(locale: Locale) {
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.product.findMany({
-      ...productWithBomArgs,
-      orderBy: [{ category: "asc" }, { nameSq: "asc" }],
+    prisma.material.findMany({
+      orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
   ]);
 
   return {
     clients,
     leads,
-    products: products.map((product) => localizeProduct(product, locale)),
+    items: materials.map((material) => localizeInventoryItem(material, locale)),
   };
 }
 
 export async function getInvoiceBuilderOptions(locale: Locale) {
-  const [clients, products] = await Promise.all([
-    prisma.client.findMany({ orderBy: { name: "asc" } }),
-    prisma.product.findMany({
-      ...productWithBomArgs,
-      orderBy: [{ category: "asc" }, { nameSq: "asc" }],
+  const [clients, materials] = await Promise.all([
+    prisma.client.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.material.findMany({
+      orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
   ]);
 
   return {
     clients,
-    products: products.map((product) => localizeProduct(product, locale)),
+    items: materials.map((material) => localizeInventoryItem(material, locale)),
+  };
+}
+
+export async function getPurchaseInvoiceBuilderOptions(locale: Locale) {
+  const [suppliers, materials] = await Promise.all([
+    prisma.supplier.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.material.findMany({
+      orderBy: [{ type: "asc" }, { name: "asc" }],
+    }),
+  ]);
+
+  return {
+    suppliers,
+    items: materials.map((material) => localizeInventoryItem(material, locale)),
   };
 }
 
@@ -509,8 +581,8 @@ export function statusTone(status: string) {
 export function materialTypeLabel(type: MaterialType, locale: Locale) {
   const labels: Record<MaterialType, [string, string]> = {
     WOOD: ["Dru", "Wood"],
-    HARDWARE: ["Furnitura", "Hardware"],
-    COMPONENT: ["Komponente", "Component"],
+    HARDWARE: ["Pajisje / Aksesorë", "Hardware"],
+    COMPONENT: ["Komponent", "Component"],
     FINISH: ["Përfundim", "Finish"],
     ACCESSORY: ["Aksesor", "Accessory"],
   };
@@ -533,6 +605,16 @@ export async function getInvoiceDocumentData(id: string) {
       client: true,
       items: true,
       offer: true,
+    },
+  });
+}
+
+export async function getPurchaseInvoiceDocumentData(id: string) {
+  return prisma.purchaseInvoice.findUnique({
+    where: { id },
+    include: {
+      supplier: true,
+      items: true,
     },
   });
 }

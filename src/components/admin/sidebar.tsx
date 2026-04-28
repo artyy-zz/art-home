@@ -10,6 +10,7 @@ import {
   Mail,
   Receipt,
   Settings,
+  ShoppingCart,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -55,6 +56,7 @@ export function AdminSidebar({
     { href: `/${locale}/admin/inventory`, label: dict.admin.inventory, icon: Boxes, module: "INVENTORY" as const },
     { href: `/${locale}/admin/offers`, label: dict.admin.offers, icon: FileText, module: "OFFERS" as const },
     { href: `/${locale}/admin/invoices`, label: dict.admin.invoices, icon: Receipt, module: "INVOICES" as const },
+    { href: `/${locale}/admin/purchase-invoices`, label: dict.admin.purchaseInvoices, icon: ShoppingCart, module: "PURCHASE_INVOICES" as const },
     { href: `/${locale}/admin/reports`, label: dict.admin.reports, icon: BarChart3, module: "REPORTS" as const },
     { href: `/${locale}/admin/users`, label: dict.admin.users, icon: Users, module: "USERS" as const },
     { href: `/${locale}/admin/roles`, label: dict.admin.roles, icon: ShieldCheck, module: "ROLES" as const },

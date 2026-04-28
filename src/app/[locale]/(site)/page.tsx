@@ -17,12 +17,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   return (
     <div className="animate-fade">
       <section className="px-6 pb-12 pt-10 md:px-10 md:pb-20">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card className="industrial-grid relative overflow-hidden rounded-[36px] px-7 py-8 md:px-10 md:py-12">
+        <div className="mx-auto grid max-w-7xl min-w-0 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="industrial-grid relative min-w-0 overflow-hidden rounded-[36px] px-7 py-8 md:px-10 md:py-12">
             <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">
               {dict.home.eyebrow}
             </p>
-            <h1 className="mt-6 max-w-3xl font-display text-5xl leading-none text-[var(--color-foreground)] md:text-7xl">
+            <h1 className="mt-6 max-w-3xl break-words font-display text-4xl leading-none text-[var(--color-foreground)] sm:text-5xl md:text-7xl">
               {dict.home.title}
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--color-muted)] md:text-lg">
@@ -39,15 +39,13 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 {dict.common.exploreCollection}
               </Link>
             </div>
-            <p className="mt-12 text-sm leading-7 text-[var(--color-muted)]">
-              ..............
-            </p>
+            <div className="mt-12 h-7" aria-hidden="true" />
           </Card>
           <PlaceholderMedia
             label={typedLocale === "sq" ? "Kuzhina Art Home" : "Art Home Kitchens"}
             src={siteImages.hero}
             priority
-            className="h-full min-h-[420px]"
+            className="h-full min-h-[420px] min-w-0"
           />
         </div>
       </section>
@@ -80,11 +78,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                   <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
                     {product.summary}
                   </p>
-                  <div className="mt-5">
-                    <ComingSoonButton variant="ghost" size="sm">
-                      {dict.common.requestQuote}
-                    </ComingSoonButton>
-                  </div>
                 </div>
               </Card>
             ))}
