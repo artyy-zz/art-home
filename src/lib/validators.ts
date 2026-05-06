@@ -1,4 +1,8 @@
 import {
+  DebitNoteReason,
+  DeliveryNoteStatus,
+  DeliveryNoteType,
+  ExpenseCategory,
   FurnitureCategory,
   InvoiceStatus,
   LeadStatus,
@@ -13,17 +17,6 @@ const optionalText = z
   .trim()
   .transform((value) => (value.length ? value : undefined))
   .optional();
-
-const defaultVatRate = z.preprocess(
-  (value) => {
-    if (value == null || String(value).trim() === "") {
-      return 18;
-    }
-
-    return value;
-  },
-  z.coerce.number().min(0),
-);
 
 const optionalAmount = z.preprocess(
   (value) => {
@@ -55,7 +48,7 @@ export const clientSchema = z.object({
   phone: optionalText,
   address: optionalText,
   nui: optionalText,
-  vatRate: defaultVatRate,
+  vatNumber: optionalText,
   notes: optionalText,
 });
 
@@ -81,9 +74,43 @@ export const inventoryAdjustmentSchema = z.object({
   note: optionalText,
 });
 
+export const assetInventorySchema = z.object({
+  name: z.string().min(2).trim(),
+  quantity: z.coerce.number().positive(),
+  value: z.coerce.number().min(0),
+  purchaseDate: z.string().min(1),
+});
+
 export const productBomItemSchema = z.object({
   materialId: z.string().min(1),
   quantity: z.coerce.number().positive(),
+});
+
+export const stokArtikullSchema = z.object({
+  materialId: z.string().min(1),
+  quantity: z.coerce.number().positive(),
+});
+
+export const stokSchema = z.object({
+  name: z.string().min(2).trim(),
+  price: z.coerce.number().min(0),
+  items: z.array(stokArtikullSchema).min(1),
+});
+
+export const workerSchema = z.object({
+  name: z.string().min(2).trim(),
+  role: z.string().min(2).trim(),
+});
+
+export const workerTimeEntrySchema = z.object({
+  date: z.string().min(1),
+  startTime: z.string().min(1),
+  finishTime: z.string().min(1),
+});
+
+export const workerAdvanceSchema = z.object({
+  date: z.string().min(1),
+  amount: z.coerce.number().positive(),
 });
 
 export const productSchema = z.object({
@@ -161,10 +188,83 @@ export const purchaseInvoiceUpdateSchema = z.object({
   amountPaid: optionalAmount,
 });
 
+export const deliveryNoteItemSchema = z.object({
+  materialId: z.string().min(1),
+  quantity: z.coerce.number().int().positive(),
+});
+
+export const deliveryNoteSchema = z
+  .object({
+    type: z.nativeEnum(DeliveryNoteType),
+    clientId: optionalText,
+    supplierId: optionalText,
+    status: z.nativeEnum(DeliveryNoteStatus),
+    issuedAt: z.string().min(1),
+    notes: optionalText,
+    items: z.array(deliveryNoteItemSchema).min(1),
+  })
+  .superRefine((value, context) => {
+    if (value.type === DeliveryNoteType.SALES && !value.clientId) {
+      context.addIssue({
+        code: "custom",
+        path: ["clientId"],
+        message: "Client is required for sales delivery notes.",
+      });
+    }
+
+    if (value.type === DeliveryNoteType.PURCHASE && !value.supplierId) {
+      context.addIssue({
+        code: "custom",
+        path: ["supplierId"],
+        message: "Supplier is required for purchase delivery notes.",
+      });
+    }
+  });
+
+export const deliveryNoteUpdateSchema = z.object({
+  status: z.nativeEnum(DeliveryNoteStatus),
+  issuedAt: z.string().min(1),
+  notes: optionalText,
+});
+
+export const expenseSchema = z.object({
+  name: z.string().min(2).trim(),
+  category: z.nativeEnum(ExpenseCategory),
+  amount: z.coerce.number().min(0),
+  vatEnabled: z.boolean().default(true),
+  vatRate: z.coerce.number().min(0).default(18),
+  date: z.string().min(1),
+  supplierName: optionalText,
+  description: optionalText,
+});
+
+export const debitNoteItemSchema = z.object({
+  invoiceItemId: z.string().min(1),
+  quantity: z.coerce.number().int().positive(),
+  unitPrice: z.coerce.number().positive(),
+});
+
+export const debitNoteSchema = z.object({
+  clientId: z.string().min(1),
+  invoiceId: z.string().min(1),
+  issuedAt: z.string().min(1),
+  reason: z.nativeEnum(DebitNoteReason),
+  notes: optionalText,
+  vatEnabled: z.boolean().default(true),
+  vatRate: z.coerce.number().min(0).default(18),
+  items: z.array(debitNoteItemSchema).min(1),
+});
+
+export const debitNoteUpdateSchema = z.object({
+  issuedAt: z.string().min(1),
+  reason: z.nativeEnum(DebitNoteReason),
+  notes: optionalText,
+});
+
 export const userCreateSchema = z.object({
   name: z.string().min(2).trim(),
   email: z.email("Invalid email address").trim().toLowerCase(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(1, "Password is required"),
   roleId: z.string().min(1),
 });
 

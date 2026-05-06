@@ -1,6 +1,13 @@
-import { updateUserPermissionsAction } from "@/actions/admin";
+import {
+  createRoleAction,
+  deleteRoleAction,
+  updateRoleAction,
+  updateUserPermissionsAction,
+} from "@/actions/admin";
+import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
+import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
 import {
   ensureSystemRoles,
@@ -20,12 +27,15 @@ import { prisma } from "@/lib/prisma";
 import { Check, ChevronDown, ShieldCheck } from "lucide-react";
 
 const checkboxClassName = "h-4 w-4 accent-[var(--color-accent-strong)]";
+const visiblePermissionModules = permissionModules.filter(
+  (permissionModule) => permissionModule !== "LEADS",
+);
 
 function permissionStats(matrix: PermissionMatrix) {
   let allowed = 0;
-  const total = permissionModules.length * permissionActions.length;
+  const total = visiblePermissionModules.length * permissionActions.length;
 
-  for (const permissionModule of permissionModules) {
+  for (const permissionModule of visiblePermissionModules) {
     for (const action of permissionActions) {
       if (matrix[permissionModule][action]) {
         allowed += 1;
@@ -47,7 +57,7 @@ function PermissionChecklist({
 }) {
   return (
     <div className="grid gap-3">
-      {permissionModules.map((permissionModule) => (
+      {visiblePermissionModules.map((permissionModule) => (
         <div key={permissionModule} className="rounded-2xl border border-black/8 bg-white/72 p-3">
           <div className="grid gap-3 lg:grid-cols-[minmax(170px,0.75fr)_1.7fr] lg:items-center">
             <div>
@@ -82,6 +92,16 @@ function PermissionChecklist({
   );
 }
 
+function createEmptyPermissionMatrix() {
+  return permissionModules.reduce((matrix, permissionModule) => {
+    matrix[permissionModule] = permissionActions.reduce((actions, action) => {
+      actions[action] = false;
+      return actions;
+    }, {} as PermissionMatrix[typeof permissionModule]);
+    return matrix;
+  }, {} as PermissionMatrix);
+}
+
 export default async function RolesPage({
   params,
 }: PageProps<"/[locale]/admin/roles">) {
@@ -91,13 +111,18 @@ export default async function RolesPage({
   await ensureSystemRoles();
 
   const roles = await prisma.role.findMany({
-    where: { isSystem: true },
     select: {
       id: true,
       key: true,
       name: true,
+      description: true,
       isOwner: true,
       isSystem: true,
+      users: {
+        select: {
+          id: true,
+        },
+      },
     },
     orderBy: [{ isOwner: "desc" }, { name: "asc" }],
   });
@@ -172,7 +197,23 @@ export default async function RolesPage({
 
           return (
             <div key={role.id} className="rounded-2xl border border-black/8 bg-white/82 p-4">
-              <p className="text-sm font-semibold text-[var(--color-foreground)]">{role.name}</p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-[var(--color-foreground)]">{role.name}</p>
+                <span className="rounded-full bg-[#f4f0ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5a4b40]">
+                  {role.isSystem
+                    ? typedLocale === "sq"
+                      ? "Sistem"
+                      : "System"
+                    : typedLocale === "sq"
+                      ? "Custom"
+                      : "Custom"}
+                </span>
+              </div>
+              {role.description ? (
+                <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
+                  {role.description}
+                </p>
+              ) : null}
               <p className="mt-2 text-xs uppercase tracking-[0.14em] text-[var(--color-muted)]">
                 {stats.allowed}/{stats.total} {typedLocale === "sq" ? "leje" : "permissions"}
               </p>
@@ -180,6 +221,151 @@ export default async function RolesPage({
           );
         })}
       </div>
+
+      <CreateFormPanel
+        title={typedLocale === "sq" ? "Shto rol" : "Add role"}
+        buttonLabel={typedLocale === "sq" ? "Shto rol" : "Add role"}
+        cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+      >
+        <CreateActionForm
+          action={createRoleAction.bind(null, typedLocale)}
+          submitLabel={typedLocale === "sq" ? "Ruaj rolin" : "Save role"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+          errorMessage={typedLocale === "sq" ? "Roli nuk u ruajt." : "Role could not be saved."}
+          className="space-y-4"
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <input
+              name="name"
+              required
+              className="rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
+              placeholder={typedLocale === "sq" ? "Emri i rolit" : "Role name"}
+            />
+            <input
+              name="description"
+              className="rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
+              placeholder={typedLocale === "sq" ? "Pershkrimi" : "Description"}
+            />
+          </div>
+          <div className="max-h-[280px] overflow-y-auto pr-1">
+            <PermissionChecklist locale={typedLocale} matrix={createEmptyPermissionMatrix()} />
+          </div>
+        </CreateActionForm>
+      </CreateFormPanel>
+
+      <Card className="p-6">
+        <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+          {typedLocale === "sq" ? "Menaxho rolet" : "Manage roles"}
+        </h2>
+        <div className="mt-5 space-y-3">
+          {roles.map((role) => {
+            const matrix = roleMatrices.get(role.id);
+            if (!matrix) {
+              return null;
+            }
+
+            return (
+              <details
+                key={role.id}
+                className="group overflow-hidden rounded-2xl border border-black/8 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+              >
+                <summary className="grid cursor-pointer list-none gap-3 p-4 text-left transition hover:bg-white md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden">
+                  <div>
+                    <p className="font-semibold text-[var(--color-foreground)]">{role.name}</p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {role.isSystem
+                        ? typedLocale === "sq"
+                          ? "Rol sistemi"
+                          : "System role"
+                        : typedLocale === "sq"
+                          ? "Rol i personalizuar"
+                          : "Custom role"}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[#f4f0ea] px-3 py-1.5 text-xs font-semibold text-[#5a4b40]">
+                    {role.users.length} {typedLocale === "sq" ? "perdorues" : "users"}
+                  </span>
+                  <ChevronDown className="h-5 w-5 justify-self-end text-[var(--color-muted)] transition group-open:rotate-180" />
+                </summary>
+
+                <div className="border-t border-black/8 p-4">
+                  {role.isOwner ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-black/8 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
+                        {typedLocale === "sq"
+                          ? "Owner eshte i mbrojtur dhe ka gjithmone qasje te plote."
+                          : "Owner is protected and always has full access."}
+                      </div>
+                      <PermissionChecklist locale={typedLocale} matrix={matrix} locked />
+                    </div>
+                  ) : role.isSystem ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-black/8 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
+                        {typedLocale === "sq"
+                          ? "Rolet e sistemit mund te shikohen, ndersa lejet baze ruhen nga sistemi."
+                          : "System roles can be reviewed, while their base permissions are maintained by the system."}
+                      </div>
+                      <PermissionChecklist locale={typedLocale} matrix={matrix} locked />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <form action={updateRoleAction.bind(null, typedLocale, role.id)} className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <input
+                            name="name"
+                            required
+                            defaultValue={role.name}
+                            className="rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
+                          />
+                          <input
+                            name="description"
+                            defaultValue={role.description ?? ""}
+                            className="rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
+                            placeholder={typedLocale === "sq" ? "Pershkrimi" : "Description"}
+                          />
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button className={buttonClasses({ className: "gap-2" })}>
+                            <Check className="h-4 w-4" />
+                            {typedLocale === "sq" ? "Ndrysho" : "Edit"}
+                          </button>
+                        </div>
+                        <div className="max-h-[280px] overflow-y-auto pr-1">
+                          <PermissionChecklist locale={typedLocale} matrix={matrix} />
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button className={buttonClasses({ className: "gap-2" })}>
+                            <Check className="h-4 w-4" />
+                            {typedLocale === "sq" ? "Ndrysho" : "Edit"}
+                          </button>
+                        </div>
+                      </form>
+                      {role.users.length === 0 ? (
+                        <form
+                          action={deleteRoleAction.bind(null, typedLocale, role.id)}
+                          className="flex justify-end"
+                        >
+                          <ConfirmDeleteButton
+                            label={typedLocale === "sq" ? "Fshi" : "Delete"}
+                            title={typedLocale === "sq" ? "Konfirmo fshirjen" : "Confirm delete"}
+                            cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+                            closeLabel={typedLocale === "sq" ? "Mbyll" : "Close"}
+                            message={
+                              typedLocale === "sq"
+                                ? `A je i sigurt qe deshiron ta fshish rolin "${role.name}"?`
+                                : `Are you sure you want to delete role "${role.name}"?`
+                            }
+                          />
+                        </form>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </Card>
 
       <div className="space-y-3">
         {users.map((person) => {

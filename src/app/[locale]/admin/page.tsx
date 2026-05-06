@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { X } from "lucide-react";
+import { deleteNotificationAction } from "@/actions/admin";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
 import { DashboardCharts } from "@/components/admin/dashboard-charts";
 import { buttonClasses } from "@/components/shared/button";
 import { getDashboardSnapshot, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
-import { requirePermission } from "@/lib/permissions";
+import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
 export default async function AdminDashboardPage({
@@ -13,9 +15,11 @@ export default async function AdminDashboardPage({
 }: PageProps<"/[locale]/admin">) {
   const { locale } = await params;
   const typedLocale = locale as Locale;
-  await requirePermission(typedLocale, "DASHBOARD", "VIEW");
+  const user = await requirePermission(typedLocale, "DASHBOARD", "VIEW");
+  const permissions = await getUserPermissionMatrix(user);
   const snapshot = await getDashboardSnapshot(typedLocale);
   const localeString = snapshot.intlLocale;
+  const canDeleteNotifications = can(permissions, "DASHBOARD", "DELETE");
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,30 @@ export default async function AdminDashboardPage({
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.notifications.map((notification) => (
-              <div key={notification.id} className="rounded-[22px] border border-black/8 bg-white/75 p-4">
+              <div key={notification.id} className="relative rounded-[22px] border border-black/8 bg-white/75 p-4 pr-11">
+                {canDeleteNotifications ? (
+                  <form
+                    action={deleteNotificationAction.bind(null, typedLocale, notification.id)}
+                    className="absolute right-3 top-3"
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(140,47,43,0.22)] bg-[rgba(140,47,43,0.08)] text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(140,47,43,0.18)]"
+                      aria-label={
+                        typedLocale === "sq"
+                          ? "Fshi njoftimin"
+                          : "Delete notification"
+                      }
+                      title={
+                        typedLocale === "sq"
+                          ? "Fshi njoftimin"
+                          : "Delete notification"
+                      }
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                ) : null}
                 <Badge tone="accent">{notification.type}</Badge>
                 <p className="mt-3 font-semibold text-[var(--color-foreground)]">
                   {notification.title}

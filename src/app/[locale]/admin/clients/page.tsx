@@ -1,16 +1,15 @@
-import { createClientAction, deleteClientAction, updateClientAction } from "@/actions/admin";
+import { createClientAction } from "@/actions/admin";
+import { ClientActions } from "@/components/admin/client-actions";
+import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { getClientOverview } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
-const fieldLabelClassName =
-  "grid gap-1.5 text-xs font-semibold text-[var(--color-muted)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -41,32 +40,33 @@ export default async function ClientsPage({
   return (
     <div className="space-y-6">
       {canCreate ? (
-        <Card className="rounded-[28px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Shto klient të ri" : "Add new client"}
-          </h2>
-          <form action={createClientAction.bind(null, typedLocale)} className="mt-6 grid gap-4 md:grid-cols-3">
+        <CreateFormPanel
+          title={typedLocale === "sq" ? "Shto klient te ri" : "Add new client"}
+          buttonLabel={typedLocale === "sq" ? "Shto klient" : "Add client"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+        >
+          <CreateActionForm
+            action={createClientAction.bind(null, typedLocale)}
+            className="grid gap-4 md:grid-cols-3"
+            submitLabel={typedLocale === "sq" ? "Ruaj klientin" : "Save client"}
+            cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+            errorMessage={typedLocale === "sq" ? "Klienti nuk u ruajt." : "Client could not be saved."}
+            footerClassName="md:col-span-3"
+          >
             <input name="name" required className={inputClassName} placeholder={typedLocale === "sq" ? "Emri i klientit" : "Client name"} />
             <input name="contactPerson" className={inputClassName} placeholder={typedLocale === "sq" ? "Personi kontaktues" : "Contact person"} />
             <input name="nui" className={inputClassName} placeholder="NUI" />
             <input name="email" className={inputClassName} placeholder="Email" />
             <input name="phone" className={inputClassName} placeholder={typedLocale === "sq" ? "Telefoni" : "Phone"} />
             <input
-              name="vatRate"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={18}
+              name="vatNumber"
               className={inputClassName}
-              placeholder={typedLocale === "sq" ? "TVSH %" : "VAT %"}
+              placeholder={typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}
             />
             <input name="address" className={`${inputClassName} md:col-span-3`} placeholder={typedLocale === "sq" ? "Adresa" : "Address"} />
-            <textarea name="notes" className={`${inputClassName} md:col-span-3`} placeholder={typedLocale === "sq" ? "Shënime" : "Notes"} />
-            <button className={buttonClasses({ className: "md:col-span-3 md:w-fit" })}>
-              {typedLocale === "sq" ? "Ruaj klientin" : "Save client"}
-            </button>
-          </form>
-        </Card>
+            <textarea name="notes" className={`${inputClassName} md:col-span-3`} placeholder={typedLocale === "sq" ? "Shenime" : "Notes"} />
+          </CreateActionForm>
+        </CreateFormPanel>
       ) : null}
 
       <Card className="rounded-[28px] p-6">
@@ -76,12 +76,12 @@ export default async function ClientsPage({
           sort={sort}
           direction={direction}
           searchPlaceholder={
-            typedLocale === "sq" ? "Kërko klientë, email, telefon" : "Search clients, email, phone"
+            typedLocale === "sq" ? "Kerko kliente, email, telefon" : "Search clients, email, phone"
           }
-          searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
+          searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
           emptyMessage={
             typedLocale === "sq"
-              ? "Nuk ka klientë për këtë kërkim."
+              ? "Nuk ka kliente per kete kerkim."
               : "No clients match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
@@ -89,14 +89,14 @@ export default async function ClientsPage({
             { key: "name", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "contact", label: "Contact" },
             { key: "tax", label: typedLocale === "sq" ? "NUI / TVSH" : "NUI / VAT" },
-            { key: "notes", label: typedLocale === "sq" ? "Shënime" : "Notes" },
+            { key: "notes", label: typedLocale === "sq" ? "Shenime" : "Notes" },
             { key: "activity", label: typedLocale === "sq" ? "Aktiviteti" : "Activity", sortable: true },
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
           rows={clients.map((client) => ({
             id: client.id,
-            searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatRate} ${client.notes ?? ""}`,
+            searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatNumber ?? ""} ${client.notes ?? ""}`,
             sortValues: {
               name: client.name,
               activity: client.invoiceCount + client.offerCount,
@@ -123,8 +123,8 @@ export default async function ClientsPage({
                 <div className="space-y-1 text-[var(--color-muted)]">
                   <p>{client.nui || "-"}</p>
                   <p>
-                    {typedLocale === "sq" ? "TVSH" : "VAT"}{" "}
-                    {formatNumber(client.vatRate, localeString)}%
+                    {typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}{" "}
+                    {client.vatNumber || "-"}
                   </p>
                 </div>
               ),
@@ -138,75 +138,22 @@ export default async function ClientsPage({
               lastInvoice: client.lastInvoiceAt ? formatDate(client.lastInvoiceAt, localeString) : "-",
             },
             actions: (
-              <>
-                {canEdit ? (
-                  <details className="w-full min-w-[320px] text-left">
-                    <summary
-                      className={buttonClasses({
-                        variant: "secondary",
-                        size: "sm",
-                        className: "ml-auto cursor-pointer list-none",
-                      })}
-                    >
-                      {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                    </summary>
-                    <form
-                      action={updateClientAction.bind(null, typedLocale, client.id)}
-                      className="mt-3 grid gap-3 rounded-2xl border border-black/8 bg-white/85 p-3"
-                    >
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "Emri i klientit" : "Client name"}
-                        <input name="name" required defaultValue={client.name} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "Personi kontaktues" : "Contact person"}
-                        <input name="contactPerson" defaultValue={client.contactPerson ?? ""} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        NUI
-                        <input name="nui" defaultValue={client.nui ?? ""} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        Email
-                        <input name="email" defaultValue={client.email ?? ""} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "Telefoni" : "Phone"}
-                        <input name="phone" defaultValue={client.phone ?? ""} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "TVSH %" : "VAT %"}
-                        <input
-                          name="vatRate"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          defaultValue={client.vatRate}
-                          className={inputClassName}
-                        />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "Adresa" : "Address"}
-                        <input name="address" defaultValue={client.address ?? ""} className={inputClassName} />
-                      </label>
-                      <label className={fieldLabelClassName}>
-                        {typedLocale === "sq" ? "Shënime" : "Notes"}
-                        <textarea name="notes" defaultValue={client.notes ?? ""} className={inputClassName} />
-                      </label>
-                      <button className={buttonClasses({ size: "sm" })}>
-                        {typedLocale === "sq" ? "Ruaj" : "Save"}
-                      </button>
-                    </form>
-                  </details>
-                ) : null}
-                {canDelete ? (
-                  <form action={deleteClientAction.bind(null, typedLocale, client.id)}>
-                    <button className={buttonClasses({ variant: "danger", size: "sm" })}>
-                      {typedLocale === "sq" ? "Fshi" : "Delete"}
-                    </button>
-                  </form>
-                ) : null}
-              </>
+              <ClientActions
+                locale={typedLocale}
+                client={{
+                  id: client.id,
+                  name: client.name,
+                  contactPerson: client.contactPerson,
+                  nui: client.nui,
+                  vatNumber: client.vatNumber,
+                  email: client.email,
+                  phone: client.phone,
+                  address: client.address,
+                  notes: client.notes,
+                }}
+                canEdit={canEdit}
+                canDelete={canDelete}
+              />
             ),
           }))}
         />

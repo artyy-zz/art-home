@@ -1,16 +1,14 @@
 import type { FurnitureCategory } from "@prisma/client";
+import { publicProductCatalog } from "@/data/product-catalog";
 
 export const siteImages = {
   hero: "/images/art-home/hero-kitchen.jpg",
   about: "/images/art-home/about-workshop.jpg",
 } as const;
 
-const productImages: Record<string, string> = {
-  "studio-oak-kitchen": "/images/art-home/dark-marble-kitchen.jpg",
-  "arber-dining-table": "/images/art-home/open-plan-dining-kitchen.jpg",
-  "linea-wardrobe": "/images/art-home/walnut-wall-kitchen.jpg",
-  "atelier-media-wall": "/images/art-home/custom-breakfast-corner.jpg",
-};
+const productImages = Object.fromEntries(
+  publicProductCatalog.map((product) => [product.slug, product.imageSrc]),
+) as Record<string, string>;
 
 const categoryImages: Record<FurnitureCategory, string> = {
   KITCHENS: "/images/art-home/classic-wood-kitchen.jpg",

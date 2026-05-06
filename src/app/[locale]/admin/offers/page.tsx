@@ -1,9 +1,7 @@
 import Link from "next/link";
-import {
-  createOfferAction,
-  deleteOfferAction,
-  updateOfferStatusAction,
-} from "@/actions/admin";
+import { createOfferAction } from "@/actions/admin";
+import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { OfferActions } from "@/components/admin/offer-actions";
 import { RecordTable } from "@/components/admin/record-table";
 import { OfferBuilderForm } from "@/components/forms/offer-builder-form";
 import { Badge } from "@/components/shared/badge";
@@ -16,7 +14,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 const statusLabels = {
   sq: {
-    PENDING: "Në pritje",
+    PENDING: "Ne pritje",
     ACCEPTED: "E pranuar",
     REJECTED: "E refuzuar",
   },
@@ -26,9 +24,6 @@ const statusLabels = {
     REJECTED: "Rejected",
   },
 } as const;
-
-const inputClassName =
-  "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -60,24 +55,43 @@ export default async function OffersPage({
   const canDelete = can(permissions, "OFFERS", "DELETE");
   const canExport = can(permissions, "OFFERS", "EXPORT");
   const canCreateOffer = canCreate && options.clients.length > 0 && options.items.length > 0;
+  const missingSetupHref =
+    options.clients.length === 0
+      ? `/${typedLocale}/admin/clients`
+      : `/${typedLocale}/admin/inventory`;
+  const missingSetupLabel =
+    options.clients.length === 0
+      ? typedLocale === "sq"
+        ? "Shto klient"
+        : "Add client"
+      : typedLocale === "sq"
+        ? "Shto artikull"
+        : "Add item";
+  const missingSetupMessage =
+    options.clients.length === 0
+      ? typedLocale === "sq"
+        ? "Shtoni nje klient para se te krijoni oferten e pare."
+        : "Add a client before creating the first offer."
+      : typedLocale === "sq"
+        ? "Shtoni nje artikull para se te krijoni oferten e pare."
+        : "Add an item before creating the first offer.";
 
   return (
     <div className="space-y-6">
       {canCreate ? (
-        <Card className="rounded-[28px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Krijo ofertë" : "Create offer"}
-          </h2>
+        <CreateFormPanel
+          title={typedLocale === "sq" ? "Krijo oferte" : "Create offer"}
+          buttonLabel={typedLocale === "sq" ? "Shto oferte" : "Add offer"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+        >
           {canCreateOffer ? (
-            <div className="mt-6">
+            <div>
               <OfferBuilderForm
                 locale={typedLocale}
                 clients={options.clients.map((client) => ({
                   id: client.id,
                   name: client.name,
-                  vatRate: client.vatRate,
                 }))}
-                leads={options.leads}
                 items={options.items.map((item) => ({
                   id: item.id,
                   name: item.name,
@@ -92,19 +106,17 @@ export default async function OffersPage({
           ) : (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-black/8 bg-white/75 p-5">
               <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {typedLocale === "sq"
-                  ? "Shtoni klient dhe artikull në inventar para se të krijoni ofertën e parë."
-                  : "Add a client and an inventory item before creating the first offer."}
+                {missingSetupMessage}
               </p>
               <Link
-                href={`/${typedLocale}/admin/clients`}
+                href={missingSetupHref}
                 className={buttonClasses({ variant: "secondary" })}
               >
-                {typedLocale === "sq" ? "Shto klient" : "Add client"}
+                {missingSetupLabel}
               </Link>
             </div>
           )}
-        </Card>
+        </CreateFormPanel>
       ) : null}
 
       <Card className="rounded-[28px] p-6">
@@ -114,12 +126,12 @@ export default async function OffersPage({
           sort={sort}
           direction={direction}
           searchPlaceholder={
-            typedLocale === "sq" ? "Kërko oferta, klientë ose artikuj" : "Search offers, clients, or items"
+            typedLocale === "sq" ? "Kerko oferta, kliente ose artikuj" : "Search offers, clients, or items"
           }
-          searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
+          searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
           emptyMessage={
             typedLocale === "sq"
-              ? "Nuk ka oferta për këtë kërkim."
+              ? "Nuk ka oferta per kete kerkim."
               : "No offers match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
@@ -127,7 +139,7 @@ export default async function OffersPage({
             { key: "number", label: typedLocale === "sq" ? "Oferta" : "Offer", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "status", label: typedLocale === "sq" ? "Statusi" : "Status", sortable: true },
-            { key: "notes", label: typedLocale === "sq" ? "Shënime" : "Notes" },
+            { key: "notes", label: typedLocale === "sq" ? "Shenime" : "Notes" },
             { key: "validUntil", label: typedLocale === "sq" ? "Vlen deri" : "Valid until", sortable: true },
             { key: "total", label: typedLocale === "sq" ? "Totali" : "Total", sortable: true, align: "right" },
           ]}
@@ -147,7 +159,7 @@ export default async function OffersPage({
                 <div>
                   <p className="font-semibold">{offer.number}</p>
                   <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    {offer.lead?.name || (typedLocale === "sq" ? "Ofertë manuale" : "Manual offer")}
+                    {typedLocale === "sq" ? "Oferte" : "Offer"}
                   </p>
                 </div>
               ),
@@ -162,72 +174,21 @@ export default async function OffersPage({
               total: formatCurrency(offer.totalCents, localeString),
             },
             actions: (
-              <>
-                <details className="w-full min-w-[260px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                    {typedLocale === "sq" ? "Shiko" : "View"}
-                  </summary>
-                  <div className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
-                    {offer.items.map((item) => (
-                      <p key={item.id}>
-                        {item.productName}: {item.quantity} x {formatCurrency(item.unitPriceCents, localeString)}
-                      </p>
-                    ))}
-                  </div>
-                </details>
-                {canExport ? (
-                  <Link
-                    href={`/api/offers/${offer.id}/pdf`}
-                    className={buttonClasses({ variant: "secondary", size: "sm" })}
-                  >
-                    PDF
-                  </Link>
-                ) : null}
-                {canEdit ? (
-                  <details className="w-full min-w-[320px] text-left">
-                    <summary
-                      className={buttonClasses({
-                        variant: "secondary",
-                        size: "sm",
-                        className: "ml-auto cursor-pointer list-none",
-                      })}
-                    >
-                      {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                    </summary>
-                    <form
-                      action={updateOfferStatusAction.bind(null, typedLocale, offer.id)}
-                      className="mt-3 grid gap-3 rounded-2xl border border-black/8 bg-white/85 p-3"
-                    >
-                      <select name="status" defaultValue={offer.status} className={inputClassName}>
-                        <option value="PENDING">{statusLabels[typedLocale].PENDING}</option>
-                        <option value="ACCEPTED">{statusLabels[typedLocale].ACCEPTED}</option>
-                        <option value="REJECTED">{statusLabels[typedLocale].REJECTED}</option>
-                      </select>
-                      <input
-                        name="validUntil"
-                        type="date"
-                        defaultValue={(offer.validUntil ?? offer.createdAt).toISOString().slice(0, 10)}
-                        className={inputClassName}
-                      />
-                      <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-muted)]">
-                        <input type="checkbox" name="vatEnabled" defaultChecked={offer.vatEnabled} className="h-4 w-4" />
-                        {typedLocale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({offer.client.vatRate}%)
-                      </label>
-                      <textarea name="notes" defaultValue={offer.notes ?? ""} className={inputClassName} />
-                      <button className={buttonClasses({ size: "sm" })}>
-                        {typedLocale === "sq" ? "Përditëso" : "Update"}
-                      </button>
-                    </form>
-                  </details>
-                ) : null}
-                {canDelete ? (
-                  <form action={deleteOfferAction.bind(null, typedLocale, offer.id)}>
-                    <button className={buttonClasses({ variant: "danger", size: "sm" })}>
-                      {typedLocale === "sq" ? "Fshi" : "Delete"}
-                    </button>
-                  </form>
-                ) : null}
-              </>
+              <OfferActions
+                locale={typedLocale}
+                offer={{
+                  id: offer.id,
+                  number: offer.number,
+                  status: offer.status,
+                  validUntil: offer.validUntil,
+                  createdAt: offer.createdAt,
+                  vatEnabled: offer.vatEnabled,
+                  notes: offer.notes,
+                }}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                canExport={canExport}
+              />
             ),
           }))}
         />

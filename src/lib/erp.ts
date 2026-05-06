@@ -1,4 +1,5 @@
 import {
+  DeliveryNoteStatus,
   FurnitureCategory,
   InventoryMovementKind,
   InvoiceStatus,
@@ -42,6 +43,31 @@ export function calculateTotals(
     vatAmountCents,
     totalCents: subtotalCents + vatAmountCents,
   };
+}
+
+type InvoiceDebtInput = {
+  status: InvoiceStatus;
+  totalCents: number;
+  amountPaidCents: number;
+  debitNotes?: Array<{ totalCents: number }>;
+};
+
+export function getInvoiceAdjustmentCents(invoice: InvoiceDebtInput) {
+  return (invoice.debitNotes ?? []).reduce(
+    (sum, debitNote) => sum + debitNote.totalCents,
+    0,
+  );
+}
+
+export function getAdjustedInvoiceOutstandingCents(invoice: InvoiceDebtInput) {
+  if (invoice.status === InvoiceStatus.PAID) {
+    return 0;
+  }
+
+  return Math.max(
+    invoice.totalCents - invoice.amountPaidCents - getInvoiceAdjustmentCents(invoice),
+    0,
+  );
 }
 
 export function computeProductUnitCost(product: ProductWithBom) {
@@ -96,7 +122,7 @@ export async function getPublicProducts(locale: Locale) {
 
 export async function getFeaturedProducts(locale: Locale) {
   const products = await getPublicProducts(locale);
-  return products.filter((product) => product.featured).slice(0, 3);
+  return products.filter((product) => product.featured).slice(0, 6);
 }
 
 export async function getLeadsOverview() {
@@ -117,7 +143,11 @@ export async function getClientOverview() {
     },
     include: {
       offers: true,
-      invoices: true,
+      invoices: {
+        include: {
+          debitNotes: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -125,13 +155,10 @@ export async function getClientOverview() {
   });
 
   return clients.map((client) => {
-    const outstandingDebtCents = client.invoices.reduce((sum, invoice) => {
-      if (invoice.status === InvoiceStatus.PAID) {
-        return sum;
-      }
-
-      return sum + (invoice.totalCents - invoice.amountPaidCents);
-    }, 0);
+    const outstandingDebtCents = client.invoices.reduce(
+      (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
+      0,
+    );
 
     return {
       ...client,
@@ -197,6 +224,7 @@ export async function getInvoiceOverview() {
       client: true,
       offer: true,
       items: true,
+      debitNotes: true,
     },
     orderBy: {
       issuedAt: "desc",
@@ -216,8 +244,50 @@ export async function getPurchaseInvoiceOverview() {
   });
 }
 
+export async function getDeliveryNoteOverview() {
+  return prisma.deliveryNote.findMany({
+    include: {
+      client: true,
+      supplier: true,
+      items: true,
+    },
+    orderBy: {
+      issuedAt: "desc",
+    },
+  });
+}
+
+export async function getExpenseOverview() {
+  return prisma.expense.findMany({
+    orderBy: {
+      date: "desc",
+    },
+  });
+}
+
+export async function getDebitNoteOverview() {
+  return prisma.debitNote.findMany({
+    include: {
+      client: true,
+      invoice: {
+        include: {
+          debitNotes: true,
+        },
+      },
+      items: {
+        include: {
+          invoiceItem: true,
+        },
+      },
+    },
+    orderBy: {
+      issuedAt: "desc",
+    },
+  });
+}
+
 export async function getSupplierOverview() {
-  return prisma.supplier.findMany({
+  const suppliers = await prisma.supplier.findMany({
     where: {
       deletedAt: null,
     },
@@ -227,6 +297,27 @@ export async function getSupplierOverview() {
     orderBy: {
       name: "asc",
     },
+  });
+
+  return suppliers.map((supplier) => {
+    const outstandingDebtCents = supplier.purchaseInvoices.reduce((sum, invoice) => {
+      if (invoice.status === InvoiceStatus.PAID) {
+        return sum;
+      }
+
+      return sum + (invoice.totalCents - invoice.amountPaidCents);
+    }, 0);
+
+    return {
+      ...supplier,
+      outstandingDebtCents,
+      purchaseInvoiceCount: supplier.purchaseInvoices.length,
+      lastPurchaseInvoiceAt:
+        supplier.purchaseInvoices.sort(
+          (left, right) =>
+            new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
+        )[0]?.issuedAt ?? null,
+    };
   });
 }
 
@@ -305,6 +396,87 @@ export async function getPurchaseInvoiceBuilderOptions(locale: Locale) {
   };
 }
 
+export async function getDeliveryNoteBuilderOptions(locale: Locale) {
+  const [clients, suppliers, materials] = await Promise.all([
+    prisma.client.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.supplier.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.material.findMany({
+      orderBy: [{ type: "asc" }, { name: "asc" }],
+    }),
+  ]);
+
+  return {
+    clients,
+    suppliers,
+    items: materials.map((material) => localizeInventoryItem(material, locale)),
+  };
+}
+
+export async function getDebitNoteBuilderOptions() {
+  const [clients, invoices] = await Promise.all([
+    prisma.client.findMany({
+      where: {
+        deletedAt: null,
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.invoice.findMany({
+      include: {
+        client: true,
+        items: true,
+        debitNotes: {
+          include: {
+            items: true,
+          },
+        },
+      },
+      orderBy: { issuedAt: "desc" },
+    }),
+  ]);
+
+  return {
+    clients,
+    invoices: invoices.map((invoice) => ({
+      id: invoice.id,
+      number: invoice.number,
+      clientId: invoice.clientId,
+      issuedAt: invoice.issuedAt.toISOString(),
+      totalCents: invoice.totalCents,
+      amountPaidCents: invoice.amountPaidCents,
+      adjustedOutstandingCents: getAdjustedInvoiceOutstandingCents(invoice),
+      items: invoice.items.map((item) => {
+        const adjustedQuantity = invoice.debitNotes.reduce(
+          (sum, debitNote) =>
+            sum +
+            debitNote.items
+              .filter((debitItem) => debitItem.invoiceItemId === item.id)
+              .reduce((inner, debitItem) => inner + debitItem.quantity, 0),
+          0,
+        );
+
+        return {
+          id: item.id,
+          name: item.productName,
+          description: item.description,
+          quantity: item.quantity,
+          remainingQuantity: Math.max(item.quantity - adjustedQuantity, 0),
+          unitPriceCents: item.unitPriceCents,
+        };
+      }),
+    })),
+  };
+}
+
 export async function getProductBuilderOptions() {
   return prisma.material.findMany({
     orderBy: [{ type: "asc" }, { name: "asc" }],
@@ -317,6 +489,7 @@ export async function getDashboardSnapshot(locale: Locale) {
       include: {
         client: true,
         items: true,
+        debitNotes: true,
       },
       orderBy: {
         issuedAt: "desc",
@@ -381,13 +554,10 @@ export async function getDashboardSnapshot(locale: Locale) {
       ),
     0,
   );
-  const outstandingDebtCents = invoices.reduce((sum, invoice) => {
-    if (invoice.status === InvoiceStatus.PAID) {
-      return sum;
-    }
-
-    return sum + (invoice.totalCents - invoice.amountPaidCents);
-  }, 0);
+  const outstandingDebtCents = invoices.reduce(
+    (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
+    0,
+  );
 
   const topProductsMap = new Map<
     string,
@@ -463,7 +633,7 @@ export async function getDashboardSnapshot(locale: Locale) {
       client: invoice.client.name,
       dueDate: invoice.dueDate,
       totalCents: invoice.totalCents,
-      outstandingCents: invoice.totalCents - invoice.amountPaidCents,
+      outstandingCents: getAdjustedInvoiceOutstandingCents(invoice),
       status: invoice.status,
     }));
 
@@ -492,12 +662,22 @@ export async function getDashboardSnapshot(locale: Locale) {
 }
 
 export async function getReportsSnapshot(locale: Locale) {
-  const [dashboard, invoices, materials, clients, products] = await Promise.all([
+  const [
+    dashboard,
+    invoices,
+    materials,
+    clients,
+    products,
+    expenses,
+    debitNotes,
+    deliveryNotes,
+  ] = await Promise.all([
     getDashboardSnapshot(locale),
     prisma.invoice.findMany({
       include: {
         items: true,
         client: true,
+        debitNotes: true,
       },
       orderBy: { issuedAt: "desc" },
     }),
@@ -512,6 +692,18 @@ export async function getReportsSnapshot(locale: Locale) {
     }),
     getClientOverview(),
     getProductOverview(locale),
+    prisma.expense.findMany({
+      orderBy: { date: "desc" },
+    }),
+    prisma.debitNote.findMany({
+      include: {
+        client: true,
+      },
+      orderBy: { issuedAt: "desc" },
+    }),
+    prisma.deliveryNote.findMany({
+      orderBy: { issuedAt: "desc" },
+    }),
   ]);
 
   const profitByProductMap = new Map<
@@ -546,6 +738,70 @@ export async function getReportsSnapshot(locale: Locale) {
     materialUsageMap.set(movement.material.name, current);
   }
 
+  const expenseByCategoryMap = new Map<
+    string,
+    { category: string; totalCents: number; count: number }
+  >();
+  for (const expense of expenses) {
+    const current = expenseByCategoryMap.get(expense.category) ?? {
+      category: expense.category,
+      totalCents: 0,
+      count: 0,
+    };
+
+    current.totalCents += expense.totalCents;
+    current.count += 1;
+    expenseByCategoryMap.set(expense.category, current);
+  }
+
+  const expensesByMonth = Array.from({ length: 6 }, (_, index) => {
+    const month = subMonths(new Date(), 5 - index);
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
+    const monthExpenses = expenses.filter((expense) => {
+      const date = new Date(expense.date);
+      return date >= start && date <= end;
+    });
+
+    return {
+      month: format(month, "MMM"),
+      totalCents: monthExpenses.reduce(
+        (sum, expense) => sum + expense.totalCents,
+        0,
+      ),
+    };
+  });
+
+  const debitNotesByClientMap = new Map<
+    string,
+    { id: string; name: string; totalCents: number; count: number }
+  >();
+  for (const debitNote of debitNotes) {
+    const current = debitNotesByClientMap.get(debitNote.clientId) ?? {
+      id: debitNote.clientId,
+      name: debitNote.client.name,
+      totalCents: 0,
+      count: 0,
+    };
+
+    current.totalCents += debitNote.totalCents;
+    current.count += 1;
+    debitNotesByClientMap.set(debitNote.clientId, current);
+  }
+
+  const deliveryNoteCounts = {
+    total: deliveryNotes.length,
+    delivered: deliveryNotes.filter(
+      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.DELIVERED,
+    ).length,
+    cancelled: deliveryNotes.filter(
+      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.CANCELLED,
+    ).length,
+    draft: deliveryNotes.filter(
+      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.DRAFT,
+    ).length,
+  };
+
   return {
     dashboard,
     productMargins: products.map((product) => ({
@@ -561,17 +817,37 @@ export async function getReportsSnapshot(locale: Locale) {
     clientDebt: clients
       .filter((client) => client.outstandingDebtCents > 0)
       .sort((left, right) => right.outstandingDebtCents - left.outstandingDebtCents),
+    expensesByMonth,
+    expensesByCategory: Array.from(expenseByCategoryMap.values()).sort(
+      (left, right) => right.totalCents - left.totalCents,
+    ),
+    debitNoteTotalCents: debitNotes.reduce(
+      (sum, debitNote) => sum + debitNote.totalCents,
+      0,
+    ),
+    debitNotesByClient: Array.from(debitNotesByClientMap.values()).sort(
+      (left, right) => right.totalCents - left.totalCents,
+    ),
+    deliveryNoteCounts,
   };
 }
 
 export function statusTone(status: string) {
-  if (status === OfferStatus.ACCEPTED || status === InvoiceStatus.PAID) {
+  if (
+    status === OfferStatus.ACCEPTED ||
+    status === InvoiceStatus.PAID ||
+    status === DeliveryNoteStatus.DELIVERED
+  ) {
     return "success" as const;
   }
-  if (status === OfferStatus.REJECTED || status === InvoiceStatus.OVERDUE) {
+  if (
+    status === OfferStatus.REJECTED ||
+    status === InvoiceStatus.OVERDUE ||
+    status === DeliveryNoteStatus.CANCELLED
+  ) {
     return "danger" as const;
   }
-  if (status === InvoiceStatus.PARTIAL) {
+  if (status === InvoiceStatus.PARTIAL || status === DeliveryNoteStatus.DRAFT) {
     return "warning" as const;
   }
 
@@ -614,6 +890,28 @@ export async function getPurchaseInvoiceDocumentData(id: string) {
     where: { id },
     include: {
       supplier: true,
+      items: true,
+    },
+  });
+}
+
+export async function getDeliveryNoteDocumentData(id: string) {
+  return prisma.deliveryNote.findUnique({
+    where: { id },
+    include: {
+      client: true,
+      supplier: true,
+      items: true,
+    },
+  });
+}
+
+export async function getDebitNoteDocumentData(id: string) {
+  return prisma.debitNote.findUnique({
+    where: { id },
+    include: {
+      client: true,
+      invoice: true,
       items: true,
     },
   });

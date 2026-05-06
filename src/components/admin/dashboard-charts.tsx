@@ -27,8 +27,14 @@ export function DashboardCharts({
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Të ardhura / fitim" : "Revenue / Profit"}
         </p>
-        <div className="mt-5 h-72">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-5 h-72 min-w-0">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={288}
+            initialDimension={{ width: 600, height: 288 }}
+          >
             <LineChart data={revenueSeries}>
               <CartesianGrid stroke="rgba(22,20,18,0.08)" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
@@ -56,8 +62,14 @@ export function DashboardCharts({
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Përdorimi i materialit" : "Material usage"}
         </p>
-        <div className="mt-5 h-72">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-5 h-72 min-w-0">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={288}
+            initialDimension={{ width: 600, height: 288 }}
+          >
             <BarChart data={materialUsage}>
               <CartesianGrid stroke="rgba(22,20,18,0.08)" vertical={false} />
               <XAxis dataKey="name" hide />

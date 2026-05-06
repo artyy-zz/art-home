@@ -22,11 +22,18 @@ enum PermissionModule {
   DASHBOARD
   LEADS
   CLIENTS
+  SUPPLIERS
   INVENTORY
+  ASSETS_INVENTORY
+  STOQET
   OFFERS
   INVOICES
   PURCHASE_INVOICES
+  DELIVERY_NOTES
+  EXPENSES
+  DEBIT_NOTES
   REPORTS
+  WORKER_HOURS
   USERS
   ROLES
   SETTINGS
@@ -90,6 +97,34 @@ enum InvoiceStatus {
   OVERDUE
 }
 
+enum DeliveryNoteType {
+  SALES
+  PURCHASE
+}
+
+enum DeliveryNoteStatus {
+  DRAFT
+  DELIVERED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  FUEL
+  FOOD
+  TRANSPORT
+  MAINTENANCE
+  OFFICE
+  OTHER
+}
+
+enum DebitNoteReason {
+  ITEM_RETURNED
+  PRICE_CORRECTION
+  DAMAGED_ITEM
+  ORDER_ADJUSTMENT
+  OTHER
+}
+
 enum NotificationType {
   LOW_STOCK
   UNPAID_INVOICE
@@ -98,16 +133,16 @@ enum NotificationType {
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           String           @id @default(cuid())
   name         String
-  email        String    @unique
+  email        String           @unique
   passwordHash String
-  role         UserRole  @default(STAFF)
+  role         UserRole         @default(STAFF)
   roleId       String?
-  roleRecord   Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleRecord   Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
   lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   permissions  UserPermission[]
 
   @@index([roleId])
@@ -156,21 +191,24 @@ model UserPermission {
 }
 
 model Client {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
   contactPerson String?
   email         String?
   phone         String?
   address       String?
   nui           String?
-  vatRate       Float     @default(18)
+  vatNumber     String?
+  vatRate       Float          @default(18)
   notes         String?
   deletedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   leads         Lead[]
   offers        Offer[]
   invoices      Invoice[]
+  deliveryNotes DeliveryNote[]
+  debitNotes    DebitNote[]
 
   @@index([deletedAt])
 }
@@ -183,12 +221,14 @@ model Supplier {
   phone            String?
   address          String?
   nui              String?
+  vatNumber        String?
   vatRate          Float             @default(18)
   notes            String?
   deletedAt        DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   purchaseInvoices PurchaseInvoice[]
+  deliveryNotes    DeliveryNote[]
 
   @@index([deletedAt])
 }
@@ -226,9 +266,48 @@ model Material {
   offerItems        OfferItem[]
   invoiceItems      InvoiceItem[]
   purchaseItems     PurchaseInvoiceItem[]
+  deliveryNoteItems DeliveryNoteItem[]
   movements         InventoryMovement[]
+  stokItems         StokArtikull[]
 
   @@index([type, name])
+}
+
+model Stok {
+  id         String         @id @default(cuid())
+  name       String
+  priceCents Int
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  items      StokArtikull[]
+
+  @@index([name])
+}
+
+model StokArtikull {
+  id         String   @id @default(cuid())
+  quantity   Float
+  createdAt  DateTime @default(now())
+  stokId     String
+  materialId String
+  stok       Stok     @relation(fields: [stokId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@unique([stokId, materialId])
+  @@index([materialId])
+}
+
+model AssetInventory {
+  id           String   @id @default(cuid())
+  name         String
+  quantity     Float
+  valueCents   Int
+  purchaseDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([name])
+  @@index([purchaseDate])
 }
 
 model Product {
@@ -331,24 +410,26 @@ model Invoice {
   offer               Offer?              @relation(fields: [offerId], references: [id], onDelete: SetNull)
   items               InvoiceItem[]
   movements           InventoryMovement[]
+  debitNotes          DebitNote[]
 
   @@index([status, dueDate])
 }
 
 model InvoiceItem {
-  id             String    @id @default(cuid())
+  id             String          @id @default(cuid())
   productName    String
   description    String?
   quantity       Int
   unitPriceCents Int
-  unitCostCents  Int       @default(0)
+  unitCostCents  Int             @default(0)
   lineTotalCents Int
   invoiceId      String
   productId      String?
   materialId     String?
-  invoice        Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
-  material       Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  invoice        Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product        Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  material       Material?       @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  debitNoteItems DebitNoteItem[]
 
   @@index([materialId])
 }
@@ -392,6 +473,97 @@ model PurchaseInvoiceItem {
   @@index([materialId])
 }
 
+model DeliveryNote {
+  id         String             @id @default(cuid())
+  number     String             @unique
+  type       DeliveryNoteType
+  status     DeliveryNoteStatus @default(DRAFT)
+  notes      String?
+  issuedAt   DateTime           @default(now())
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  clientId   String?
+  supplierId String?
+  client     Client?            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  supplier   Supplier?          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items      DeliveryNoteItem[]
+
+  @@index([type, status, issuedAt])
+  @@index([clientId])
+  @@index([supplierId])
+}
+
+model DeliveryNoteItem {
+  id             String       @id @default(cuid())
+  productName    String
+  description    String?
+  quantity       Int
+  deliveryNoteId String
+  materialId     String?
+  deliveryNote   DeliveryNote @relation(fields: [deliveryNoteId], references: [id], onDelete: Cascade)
+  material       Material?    @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
+  @@index([deliveryNoteId])
+  @@index([materialId])
+}
+
+model Expense {
+  id             String          @id @default(cuid())
+  name           String
+  category       ExpenseCategory
+  amountCents    Int
+  vatEnabled     Boolean         @default(true)
+  vatRate        Float           @default(18)
+  vatAmountCents Int
+  totalCents     Int
+  date           DateTime
+  supplierName   String?
+  description    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([category, date])
+}
+
+model DebitNote {
+  id             String          @id @default(cuid())
+  number         String          @unique
+  reason         DebitNoteReason
+  notes          String?
+  subtotalCents  Int
+  vatEnabled     Boolean         @default(true)
+  vatRate        Float           @default(18)
+  vatAmountCents Int
+  totalCents     Int
+  issuedAt       DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  clientId       String
+  invoiceId      String
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  invoice        Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  items          DebitNoteItem[]
+
+  @@index([clientId, issuedAt])
+  @@index([invoiceId])
+}
+
+model DebitNoteItem {
+  id             String       @id @default(cuid())
+  productName    String
+  description    String?
+  quantity       Int
+  unitPriceCents Int
+  lineTotalCents Int
+  debitNoteId    String
+  invoiceItemId  String?
+  debitNote      DebitNote    @relation(fields: [debitNoteId], references: [id], onDelete: Cascade)
+  invoiceItem    InvoiceItem? @relation(fields: [invoiceItemId], references: [id], onDelete: SetNull)
+
+  @@index([debitNoteId])
+  @@index([invoiceItemId])
+}
+
 model InventoryMovement {
   id                String                @id @default(cuid())
   kind              InventoryMovementKind
@@ -419,4 +591,42 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([isRead, createdAt])
+}
+
+model Worker {
+  id        String            @id @default(cuid())
+  name      String
+  role      String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  entries   WorkerTimeEntry[]
+  advances  WorkerAdvance[]
+
+  @@index([name])
+}
+
+model WorkerTimeEntry {
+  id         String   @id @default(cuid())
+  workerId   String
+  startedAt  DateTime
+  finishedAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  worker     Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([startedAt])
+  @@index([workerId])
+}
+
+model WorkerAdvance {
+  id          String   @id @default(cuid())
+  workerId    String
+  date        DateTime
+  amountCents Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  worker      Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@index([workerId])
 }

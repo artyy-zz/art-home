@@ -1,13 +1,9 @@
-import {
-  adjustInventoryAction,
-  createMaterialAction,
-  deleteMaterialAction,
-  updateMaterialAction,
-} from "@/actions/admin";
+import { createMaterialAction } from "@/actions/admin";
 import { MaterialType } from "@prisma/client";
+import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
+import { InventoryActions } from "@/components/admin/inventory-actions";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { getInventoryOverview, materialTypeLabel } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
@@ -53,11 +49,19 @@ export default async function InventoryPage({
   return (
     <div className="space-y-6">
       {canCreate ? (
-        <Card className="rounded-[28px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Shto artikull" : "Add item"}
-          </h2>
-          <form action={createMaterialAction.bind(null, typedLocale)} className="mt-6 grid gap-4 md:grid-cols-3">
+        <CreateFormPanel
+          title={typedLocale === "sq" ? "Shto artikull" : "Add item"}
+          buttonLabel={typedLocale === "sq" ? "Shto artikull" : "Add item"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+        >
+          <CreateActionForm
+            action={createMaterialAction.bind(null, typedLocale)}
+            className="grid gap-4 md:grid-cols-3"
+            submitLabel={typedLocale === "sq" ? "Ruaj artikullin" : "Save item"}
+            cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+            errorMessage={typedLocale === "sq" ? "Artikulli nuk u ruajt." : "Item could not be saved."}
+            footerClassName="md:col-span-3"
+          >
             <input name="name" required className={inputClassName} placeholder={typedLocale === "sq" ? "Emri" : "Name"} />
             <input name="sku" required className={inputClassName} placeholder="SKU" />
             <select name="type" required className={inputClassName}>
@@ -75,14 +79,11 @@ export default async function InventoryPage({
               <option value="KG">KG</option>
             </select>
             <input name="stockQuantity" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Stoku" : "Stock"} />
-            <input name="lowStockThreshold" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Pragu i stokut të ulët" : "Low-stock threshold"} />
-            <input name="costPerUnit" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Kosto / njësi EUR" : "Cost / unit EUR"} />
-            <textarea name="notes" className={`${inputClassName} md:col-span-2`} placeholder={typedLocale === "sq" ? "Shënime" : "Notes"} />
-            <button className={buttonClasses({ className: "md:w-fit" })}>
-              {typedLocale === "sq" ? "Ruaj artikullin" : "Save item"}
-            </button>
-          </form>
-        </Card>
+            <input name="lowStockThreshold" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Pragu i stokut te ulet" : "Low-stock threshold"} />
+            <input name="costPerUnit" type="number" min="0" step="0.01" required className={inputClassName} placeholder={typedLocale === "sq" ? "Çmimi" : "Price"} />
+            <textarea name="notes" className={`${inputClassName} md:col-span-2`} placeholder={typedLocale === "sq" ? "Shenime" : "Notes"} />
+          </CreateActionForm>
+        </CreateFormPanel>
       ) : null}
 
       <Card className="rounded-[28px] p-6">
@@ -92,12 +93,12 @@ export default async function InventoryPage({
           sort={sort}
           direction={direction}
           searchPlaceholder={
-            typedLocale === "sq" ? "Kërko artikull, SKU ose lloj" : "Search item, SKU, or type"
+            typedLocale === "sq" ? "Kerko artikull, SKU ose lloj" : "Search item, SKU, or type"
           }
-          searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
+          searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
           emptyMessage={
             typedLocale === "sq"
-              ? "Nuk ka artikuj për këtë kërkim."
+              ? "Nuk ka artikuj per kete kerkim."
               : "No items match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
@@ -106,7 +107,8 @@ export default async function InventoryPage({
             { key: "type", label: typedLocale === "sq" ? "Lloji" : "Type", sortable: true },
             { key: "stock", label: typedLocale === "sq" ? "Stoku" : "Stock", sortable: true },
             { key: "threshold", label: typedLocale === "sq" ? "Pragu" : "Threshold", sortable: true },
-            { key: "cost", label: typedLocale === "sq" ? "Kosto" : "Cost", sortable: true, align: "right" },
+            { key: "cost", label: typedLocale === "sq" ? "Çmimi" : "Price", sortable: true, align: "right" },
+            { key: "notes", label: typedLocale === "sq" ? "Shenime" : "Notes" },
           ]}
           rows={materials.map((material) => ({
             id: material.id,
@@ -133,66 +135,29 @@ export default async function InventoryPage({
               ),
               threshold: `${formatNumber(material.lowStockThreshold, localeString)} ${material.unit}`,
               cost: formatCurrency(material.costPerUnitCents, localeString),
+              notes: (
+                <p className="max-w-[240px] whitespace-pre-wrap text-[var(--color-muted)]">
+                  {material.notes || (typedLocale === "sq" ? "Pa shenime." : "No notes.")}
+                </p>
+              ),
             },
             actions: (
-              <>
-                <details className="w-full min-w-[260px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                    {typedLocale === "sq" ? "Shiko" : "View"}
-                  </summary>
-                  <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                    {material.notes || (typedLocale === "sq" ? "Pa shënime shtesë." : "No additional notes.")}
-                  </p>
-                </details>
-                {canEdit ? (
-                  <form action={adjustInventoryAction.bind(null, typedLocale, material.id)} className="flex flex-wrap gap-2">
-                    <input name="quantity" type="number" step="0.01" className="h-10 w-28 rounded-full border border-black/10 bg-white/90 px-3 text-sm" placeholder={typedLocale === "sq" ? "+ Sasia" : "+ Qty"} />
-                    <input name="note" className="h-10 w-40 rounded-full border border-black/10 bg-white/90 px-3 text-sm" placeholder={typedLocale === "sq" ? "Shënim" : "Note"} />
-                    <button className={buttonClasses({ size: "sm" })}>
-                      {typedLocale === "sq" ? "Shto" : "Restock"}
-                    </button>
-                  </form>
-                ) : null}
-                {canEdit ? (
-                  <details className="w-full min-w-[300px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                    <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                      {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                    </summary>
-                    <form action={updateMaterialAction.bind(null, typedLocale, material.id)} className="mt-3 grid gap-2">
-                      <input name="name" required defaultValue={material.name} className={inputClassName} />
-                      <input name="sku" required defaultValue={material.sku} className={inputClassName} />
-                      <select name="type" defaultValue={material.type} className={inputClassName}>
-                        {materialTypeOptions.map((type) => (
-                          <option key={type} value={type}>
-                            {materialTypeLabel(type, typedLocale)}
-                          </option>
-                        ))}
-                      </select>
-                      <select name="unit" defaultValue={material.unit} className={inputClassName}>
-                        <option value="PCS">PCS</option>
-                        <option value="SET">SET</option>
-                        <option value="METER">METER</option>
-                        <option value="SQM">SQM</option>
-                        <option value="KG">KG</option>
-                      </select>
-                      <input name="stockQuantity" type="number" min="0" step="0.01" required defaultValue={material.stockQuantity} className={inputClassName} />
-                      <input name="lowStockThreshold" type="number" min="0" step="0.01" required defaultValue={material.lowStockThreshold} className={inputClassName} />
-                      <input name="costPerUnit" type="number" min="0" step="0.01" required defaultValue={material.costPerUnitCents / 100} className={inputClassName} />
-                      <textarea name="notes" defaultValue={material.notes ?? ""} className={inputClassName} />
-                      <button className={buttonClasses({ size: "sm" })}>
-                        {typedLocale === "sq" ? "Ruaj" : "Save"}
-                      </button>
-                    </form>
-                  </details>
-                ) : null}
-                {canDelete ? (
-                  <form action={deleteMaterialAction.bind(null, typedLocale, material.id)}>
-                    <button className={buttonClasses({ variant: "danger", size: "sm" })}>
-                      {typedLocale === "sq" ? "Fshi" : "Delete"}
-                    </button>
-                  </form>
-                ) : null}
-              </>
+              <InventoryActions
+                locale={typedLocale}
+                material={{
+                  id: material.id,
+                  name: material.name,
+                  sku: material.sku,
+                  type: material.type,
+                  unit: material.unit,
+                  stockQuantity: material.stockQuantity,
+                  lowStockThreshold: material.lowStockThreshold,
+                  costPerUnitCents: material.costPerUnitCents,
+                  notes: material.notes,
+                }}
+                canEdit={canEdit}
+                canDelete={canDelete}
+              />
             ),
           }))}
         />

@@ -48,15 +48,16 @@ export function LanguageSwitcher({
           <Link
             key={target}
             href={href}
+            aria-current={locale === target ? "page" : undefined}
             className={cn(
               "rounded-full px-3 py-2 transition",
               locale === target
                 ? inverse
-                  ? "bg-[#fff7eb] text-[#1e1a16]"
-                  : "bg-[#1e1a16] text-[#fffaf2]"
+                  ? "!bg-[#fff7eb] !text-[#1e1a16]"
+                  : "!bg-[#1e1a16] !text-[#fffaf2]"
                 : inverse
-                  ? "text-white/78 hover:bg-white/12 hover:text-white"
-                  : "text-[#5a4b40] hover:bg-[#eadfce] hover:text-[#1e1a16]",
+                  ? "!text-white/78 hover:bg-white/12 hover:!text-white"
+                  : "!text-[#5a4b40] hover:bg-[#eadfce] hover:!text-[#1e1a16]",
             )}
           >
             {label}

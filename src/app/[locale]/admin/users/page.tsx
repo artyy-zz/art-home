@@ -1,17 +1,16 @@
 import { createUserAction, deleteUserAction, updateUserRoleAction } from "@/actions/admin";
+import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
-import { PasswordInput } from "@/components/forms/password-input";
+import { UserCreateForm } from "@/components/forms/user-create-form";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
+import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
 import { can, getAssignableRoles, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import Link from "next/link";
-
-const inputClassName =
-  "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -82,30 +81,26 @@ export default async function UsersPage({
   const canCreate = can(permissions, "USERS", "CREATE");
   const canEdit = can(permissions, "USERS", "EDIT");
   const canDelete = can(permissions, "USERS", "DELETE");
+  const currentUserIsOwner = user.role === "OWNER" || Boolean(user.roleRecord?.isOwner);
 
   return (
     <div className="space-y-6">
       {canCreate ? (
-        <Card className="rounded-[28px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Shto përdorues" : "Add user"}
-          </h2>
-          <form action={createUserAction.bind(null, typedLocale)} className="mt-6 grid gap-4 md:grid-cols-4">
-            <input name="name" required className={inputClassName} placeholder={typedLocale === "sq" ? "Emri" : "Name"} />
-            <input name="email" required type="email" className={inputClassName} placeholder="Email" />
-            <PasswordInput className={inputClassName} placeholder={typedLocale === "sq" ? "Fjalëkalimi" : "Password"} buttonClassName="hover:bg-black/5" />
-            <select name="roleId" defaultValue={roles.find((role) => role.key === "STAFF")?.id} className={inputClassName}>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-            <button className={buttonClasses({ className: "md:col-span-4 md:w-fit" })}>
-              {typedLocale === "sq" ? "Ruaj përdoruesin" : "Save user"}
-            </button>
-          </form>
-        </Card>
+        <CreateFormPanel
+          title={typedLocale === "sq" ? "Shto përdorues" : "Add user"}
+          buttonLabel={typedLocale === "sq" ? "Shto përdorues" : "Add user"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+        >
+          <UserCreateForm
+            locale={typedLocale}
+            roles={roles.map((role) => ({
+              id: role.id,
+              name: role.name,
+              key: role.key,
+            }))}
+            action={createUserAction.bind(null, typedLocale)}
+          />
+        </CreateFormPanel>
       ) : null}
 
       <Card className="rounded-[28px] p-6">
@@ -198,12 +193,17 @@ export default async function UsersPage({
                       </Link>
                     )
                   ) : null}
-                  {canDelete && record.id !== user.id && !isProtectedOwner ? (
+                  {canDelete && record.id !== user.id && (!isProtectedOwner || currentUserIsOwner) ? (
                     <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
-                      <button className={buttonClasses({ variant: "danger", size: "sm", className: "gap-2" })}>
-                        <Trash2 className="h-4 w-4" />
-                        {typedLocale === "sq" ? "Fshi" : "Delete"}
-                      </button>
+                      <ConfirmDeleteButton
+                        label={typedLocale === "sq" ? "Fshi" : "Delete"}
+                        message={
+                          typedLocale === "sq"
+                            ? `A je i sigurt qe deshiron ta fshish perdoruesin "${record.name}"?`
+                            : `Are you sure you want to delete user "${record.name}"?`
+                        }
+                        className="gap-2"
+                      />
                     </form>
                   ) : null}
                 </>

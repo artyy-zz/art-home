@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
@@ -20,7 +21,6 @@ type InventoryItemOption = {
 type SupplierOption = {
   id: string;
   name: string;
-  vatRate: number;
 };
 
 type PurchaseInvoiceRow = {
@@ -36,13 +36,7 @@ const emptyRow: PurchaseInvoiceRow = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.12)]";
-
-function defaultDueDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 14);
-  return date.toISOString().slice(0, 10);
-}
+  "w-full rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.12)]";
 
 export function PurchaseInvoiceBuilderForm({
   locale,
@@ -55,16 +49,23 @@ export function PurchaseInvoiceBuilderForm({
   items: InventoryItemOption[];
   action: FormAction;
 }) {
-  const [selectedSupplierId, setSelectedSupplierId] = useState(suppliers[0]?.id ?? "");
+  const formRef = useRef<HTMLFormElement>(null);
+  const closeCreateFormPanel = useCreateFormPanel();
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [vatEnabled, setVatEnabled] = useState(true);
   const [rows, setRows] = useState<PurchaseInvoiceRow[]>([{ ...emptyRow }]);
-  const selectedSupplier = useMemo(
-    () => suppliers.find((supplier) => supplier.id === selectedSupplierId),
-    [suppliers, selectedSupplierId],
-  );
+
+  async function handleSubmit(formData: FormData) {
+    await action(formData);
+    formRef.current?.reset();
+    setSelectedSupplierId("");
+    setVatEnabled(true);
+    setRows([{ ...emptyRow }]);
+    closeCreateFormPanel?.();
+  }
 
   return (
-    <form action={action} className="space-y-4">
+    <form ref={formRef} action={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <select
           name="supplierId"
@@ -73,13 +74,15 @@ export function PurchaseInvoiceBuilderForm({
           onChange={(event) => setSelectedSupplierId(event.target.value)}
           required
         >
+          <option value="">{locale === "sq" ? "Zgjidh furnitorin" : "Choose supplier"}</option>
           {suppliers.map((supplier) => (
             <option key={supplier.id} value={supplier.id}>
               {supplier.name}
             </option>
           ))}
         </select>
-        <select name="status" className={inputClassName} defaultValue="UNPAID">
+        <select name="status" className={inputClassName} defaultValue="" required>
+          <option value="" disabled>{locale === "sq" ? "Statusi" : "Status"}</option>
           <option value="UNPAID">{locale === "sq" ? "E papaguar" : "Unpaid"}</option>
           <option value="PARTIAL">{locale === "sq" ? "Pjesërisht" : "Partial"}</option>
           <option value="PAID">{locale === "sq" ? "E paguar" : "Paid"}</option>
@@ -89,7 +92,6 @@ export function PurchaseInvoiceBuilderForm({
           name="dueDate"
           type="date"
           className={inputClassName}
-          defaultValue={defaultDueDate()}
           required
         />
       </div>
@@ -110,7 +112,7 @@ export function PurchaseInvoiceBuilderForm({
             onChange={(event) => setVatEnabled(event.target.checked)}
             className="h-4 w-4"
           />
-          {locale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({selectedSupplier?.vatRate ?? 18}%)
+          {locale === "sq" ? "Apliko TVSH" : "Apply VAT"} (18%)
         </label>
       </div>
       <textarea
@@ -217,7 +219,16 @@ export function PurchaseInvoiceBuilderForm({
         </div>
       </div>
       <input type="hidden" name="itemsData" value={JSON.stringify(rows.filter((row) => row.materialId))} />
-      <SubmitButton>{locale === "sq" ? "Krijo faturë blerjeje" : "Create purchase invoice"}</SubmitButton>
+      <div className="flex flex-wrap justify-end gap-2">
+        {closeCreateFormPanel ? (
+          <Button type="button" variant="secondary" onClick={closeCreateFormPanel}>
+            {locale === "sq" ? "Anulo" : "Cancel"}
+          </Button>
+        ) : null}
+        <SubmitButton>
+          {locale === "sq" ? "Krijo faturë blerjeje" : "Create purchase invoice"}
+        </SubmitButton>
+      </div>
     </form>
   );
 }

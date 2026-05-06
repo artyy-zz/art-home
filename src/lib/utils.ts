@@ -43,6 +43,15 @@ export function formatDate(date: Date | string, locale = "sq-AL") {
   }).format(new Date(date));
 }
 
+export function formatDateInputValue(date: Date | string = new Date()) {
+  const parsedDate = date instanceof Date ? date : new Date(date);
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export function clampText(value: string, length: number) {
   return value.length > length ? `${value.slice(0, length - 1)}…` : value;
 }

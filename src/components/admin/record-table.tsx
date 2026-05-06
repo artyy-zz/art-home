@@ -39,18 +39,25 @@ function normalizeSortValue(value: SortValue) {
 
 function buildSortHref({
   currentPath,
+  preservedParams,
   query,
   sort,
   direction,
   target,
 }: {
   currentPath: string;
+  preservedParams?: Record<string, string>;
   query: string;
   sort?: string;
   direction: "asc" | "desc";
   target: string;
 }) {
   const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(preservedParams ?? {})) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
   if (query) {
     params.set("q", query);
   }
@@ -63,6 +70,7 @@ export function RecordTable({
   columns,
   rows,
   currentPath,
+  preservedParams,
   query,
   sort,
   direction,
@@ -74,6 +82,7 @@ export function RecordTable({
   columns: Column[];
   rows: Row[];
   currentPath: string;
+  preservedParams?: Record<string, string>;
   query: string;
   sort?: string;
   direction: "asc" | "desc";
@@ -103,6 +112,9 @@ export function RecordTable({
   return (
     <div className="space-y-4">
       <form action={currentPath} className="flex flex-col gap-3 sm:flex-row">
+        {Object.entries(preservedParams ?? {}).map(([key, value]) => (
+          <input key={key} type="hidden" name={key} value={value} />
+        ))}
         <label className="relative flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
           <input
@@ -137,6 +149,7 @@ export function RecordTable({
                       <Link
                         href={buildSortHref({
                           currentPath,
+                          preservedParams,
                           query,
                           sort,
                           direction,

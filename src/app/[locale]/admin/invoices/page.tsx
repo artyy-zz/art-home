@@ -1,11 +1,19 @@
 import Link from "next/link";
-import { createInvoiceAction, deleteInvoiceAction, updateInvoiceAction } from "@/actions/admin";
+import { createInvoiceAction } from "@/actions/admin";
+import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { InvoiceActions } from "@/components/admin/invoice-actions";
 import { RecordTable } from "@/components/admin/record-table";
 import { InvoiceBuilderForm } from "@/components/forms/invoice-builder-form";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
-import { getInvoiceBuilderOptions, getInvoiceOverview, statusTone } from "@/lib/erp";
+import {
+  getAdjustedInvoiceOutstandingCents,
+  getInvoiceAdjustmentCents,
+  getInvoiceBuilderOptions,
+  getInvoiceOverview,
+  statusTone,
+} from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -13,7 +21,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 const statusLabels = {
   sq: {
     UNPAID: "E papaguar",
-    PARTIAL: "Pjesërisht",
+    PARTIAL: "Pjeserisht",
     PAID: "E paguar",
     OVERDUE: "E vonuar",
   },
@@ -24,9 +32,6 @@ const statusLabels = {
     OVERDUE: "Overdue",
   },
 } as const;
-
-const inputClassName =
-  "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -58,22 +63,42 @@ export default async function InvoicesPage({
   const canDelete = can(permissions, "INVOICES", "DELETE");
   const canExport = can(permissions, "INVOICES", "EXPORT");
   const canCreateInvoice = canCreate && options.clients.length > 0 && options.items.length > 0;
+  const missingSetupHref =
+    options.clients.length === 0
+      ? `/${typedLocale}/admin/clients`
+      : `/${typedLocale}/admin/inventory`;
+  const missingSetupLabel =
+    options.clients.length === 0
+      ? typedLocale === "sq"
+        ? "Shto klient"
+        : "Add client"
+      : typedLocale === "sq"
+        ? "Shto artikull"
+        : "Add item";
+  const missingSetupMessage =
+    options.clients.length === 0
+      ? typedLocale === "sq"
+        ? "Shtoni nje klient para se te krijoni faturen e pare."
+        : "Add a client before creating the first invoice."
+      : typedLocale === "sq"
+        ? "Shtoni nje artikull para se te krijoni faturen e pare."
+        : "Add an item before creating the first invoice.";
 
   return (
     <div className="space-y-6">
       {canCreate ? (
-        <Card className="rounded-[28px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
-            {typedLocale === "sq" ? "Krijo faturë shitjeje" : "Create sales invoice"}
-          </h2>
+        <CreateFormPanel
+          title={typedLocale === "sq" ? "Krijo fature shitjeje" : "Create sales invoice"}
+          buttonLabel={typedLocale === "sq" ? "Shto fature" : "Add invoice"}
+          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+        >
           {canCreateInvoice ? (
-            <div className="mt-6">
+            <div>
               <InvoiceBuilderForm
                 locale={typedLocale}
                 clients={options.clients.map((client) => ({
                   id: client.id,
                   name: client.name,
-                  vatRate: client.vatRate,
                 }))}
                 items={options.items.map((item) => ({
                   id: item.id,
@@ -89,19 +114,17 @@ export default async function InvoicesPage({
           ) : (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-black/8 bg-white/75 p-5">
               <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {typedLocale === "sq"
-                  ? "Shtoni klient dhe artikull në inventar para se të krijoni faturën e parë."
-                  : "Add a client and an inventory item before creating the first invoice."}
+                {missingSetupMessage}
               </p>
               <Link
-                href={`/${typedLocale}/admin/clients`}
+                href={missingSetupHref}
                 className={buttonClasses({ variant: "secondary" })}
               >
-                {typedLocale === "sq" ? "Shto klient" : "Add client"}
+                {missingSetupLabel}
               </Link>
             </div>
           )}
-        </Card>
+        </CreateFormPanel>
       ) : null}
 
       <Card className="rounded-[28px] p-6">
@@ -112,13 +135,13 @@ export default async function InvoicesPage({
           direction={direction}
           searchPlaceholder={
             typedLocale === "sq"
-              ? "Kërko fatura shitjeje, klientë ose artikuj"
+              ? "Kerko fatura shitjeje, kliente ose artikuj"
               : "Search sales invoices, clients, or items"
           }
-          searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
+          searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
           emptyMessage={
             typedLocale === "sq"
-              ? "Nuk ka fatura shitjeje për këtë kërkim."
+              ? "Nuk ka fatura shitjeje per kete kerkim."
               : "No sales invoices match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
@@ -126,11 +149,14 @@ export default async function InvoicesPage({
             { key: "number", label: typedLocale === "sq" ? "Fatura e shitjes" : "Sales invoice", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "status", label: typedLocale === "sq" ? "Statusi" : "Status", sortable: true },
+            { key: "items", label: typedLocale === "sq" ? "Artikujt" : "Items" },
+            { key: "notes", label: typedLocale === "sq" ? "Shenime" : "Notes" },
             { key: "dueDate", label: typedLocale === "sq" ? "Afati" : "Due date", sortable: true },
             { key: "total", label: typedLocale === "sq" ? "Totali / Borxhi" : "Total / Debt", sortable: true, align: "right" },
           ]}
           rows={invoices.map((invoice) => {
-            const outstandingCents = invoice.totalCents - invoice.amountPaidCents;
+            const adjustmentCents = getInvoiceAdjustmentCents(invoice);
+            const outstandingCents = getAdjustedInvoiceOutstandingCents(invoice);
 
             return {
               id: invoice.id,
@@ -154,6 +180,20 @@ export default async function InvoicesPage({
                 ),
                 client: invoice.client.name,
                 status: <Badge tone={statusTone(invoice.status)}>{statusLabels[typedLocale][invoice.status]}</Badge>,
+                items: (
+                  <div className="space-y-1 text-sm text-[var(--color-muted)]">
+                    {invoice.items.map((item) => (
+                      <p key={item.id}>
+                        {item.productName}: {item.quantity} x {formatCurrency(item.unitPriceCents, localeString)}
+                      </p>
+                    ))}
+                  </div>
+                ),
+                notes: (
+                  <p className="max-w-[240px] whitespace-pre-wrap text-[var(--color-muted)]">
+                    {invoice.notes || "-"}
+                  </p>
+                ),
                 dueDate: formatDate(invoice.dueDate, localeString),
                 total: (
                   <div className="space-y-1">
@@ -163,6 +203,9 @@ export default async function InvoicesPage({
                       {formatCurrency(invoice.amountPaidCents, localeString)}
                     </p>
                     <p className="text-xs text-[var(--color-muted)]">
+                      Debit Note: {formatCurrency(adjustmentCents, localeString)}
+                    </p>
+                    <p className="text-xs text-[var(--color-muted)]">
                       {typedLocale === "sq" ? "Borxh" : "Debt"}:{" "}
                       {formatCurrency(outstandingCents, localeString)}
                     </p>
@@ -170,79 +213,21 @@ export default async function InvoicesPage({
                 ),
               },
               actions: (
-                <>
-                  <details className="w-full min-w-[260px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                    <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                      {typedLocale === "sq" ? "Shiko" : "View"}
-                    </summary>
-                    <div className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
-                      {invoice.items.map((item) => (
-                        <p key={item.id}>
-                          {item.productName}: {item.quantity} x {formatCurrency(item.unitPriceCents, localeString)}
-                        </p>
-                      ))}
-                      {invoice.notes ? (
-                        <p className="whitespace-pre-wrap pt-2">{invoice.notes}</p>
-                      ) : null}
-                    </div>
-                  </details>
-                  {canExport ? (
-                    <Link
-                      href={`/api/invoices/${invoice.id}/pdf`}
-                      className={buttonClasses({ variant: "secondary", size: "sm" })}
-                    >
-                      PDF
-                    </Link>
-                  ) : null}
-                  {canEdit ? (
-                    <details className="w-full min-w-[320px] rounded-2xl border border-black/8 bg-white/80 p-2 text-left">
-                      <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-foreground)]">
-                        {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                      </summary>
-                      <form
-                        action={updateInvoiceAction.bind(null, typedLocale, invoice.id)}
-                        className="mt-3 grid gap-2"
-                      >
-                        <select name="status" defaultValue={invoice.status} className={inputClassName}>
-                          <option value="UNPAID">{statusLabels[typedLocale].UNPAID}</option>
-                          <option value="PARTIAL">{statusLabels[typedLocale].PARTIAL}</option>
-                          <option value="PAID">{statusLabels[typedLocale].PAID}</option>
-                          <option value="OVERDUE">{statusLabels[typedLocale].OVERDUE}</option>
-                        </select>
-                        <input
-                          name="dueDate"
-                          type="date"
-                          defaultValue={invoice.dueDate.toISOString().slice(0, 10)}
-                          className={inputClassName}
-                        />
-                        <input
-                          name="amountPaid"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          defaultValue={invoice.amountPaidCents / 100}
-                          className={inputClassName}
-                          placeholder={typedLocale === "sq" ? "Paguar EUR" : "Paid EUR"}
-                        />
-                        <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-muted)]">
-                          <input type="checkbox" name="vatEnabled" defaultChecked={invoice.vatEnabled} className="h-4 w-4" />
-                          {typedLocale === "sq" ? "Apliko TVSH" : "Apply VAT"} ({invoice.client.vatRate}%)
-                        </label>
-                        <textarea name="notes" defaultValue={invoice.notes ?? ""} className={inputClassName} />
-                        <button className={buttonClasses({ size: "sm" })}>
-                          {typedLocale === "sq" ? "Përditëso" : "Update"}
-                        </button>
-                      </form>
-                    </details>
-                  ) : null}
-                  {canDelete ? (
-                    <form action={deleteInvoiceAction.bind(null, typedLocale, invoice.id)}>
-                      <button className={buttonClasses({ variant: "danger", size: "sm" })}>
-                        {typedLocale === "sq" ? "Fshi" : "Delete"}
-                      </button>
-                    </form>
-                  ) : null}
-                </>
+                <InvoiceActions
+                  locale={typedLocale}
+                  invoice={{
+                    id: invoice.id,
+                    number: invoice.number,
+                    status: invoice.status,
+                    dueDate: invoice.dueDate,
+                    amountPaidCents: invoice.amountPaidCents,
+                    vatEnabled: invoice.vatEnabled,
+                    notes: invoice.notes,
+                  }}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  canExport={canExport}
+                />
               ),
             };
           })}

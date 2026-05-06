@@ -38,6 +38,10 @@ function createEmptyMatrix() {
   ) as PermissionMatrix;
 }
 
+function isPermissionModuleKey(value: string): value is PermissionModuleKey {
+  return (permissionModules as readonly string[]).includes(value);
+}
+
 function createFullMatrix() {
   return Object.fromEntries(
     permissionModules.map((module) => [
@@ -125,12 +129,18 @@ export function getDefaultPermissionMatrix(role: UserRole | null | undefined) {
     allow(matrix, "DASHBOARD", ["VIEW", "EXPORT"]);
     allow(matrix, "LEADS", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "CLIENTS", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "SUPPLIERS", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "INVENTORY", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "ASSETS_INVENTORY", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "STOQET", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "OFFERS", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "INVOICES", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "PURCHASE_INVOICES", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "DELIVERY_NOTES", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "EXPENSES", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
+    allow(matrix, "DEBIT_NOTES", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     allow(matrix, "REPORTS", ["VIEW", "EXPORT"]);
-    allow(matrix, "SETTINGS", ["VIEW"]);
+    allow(matrix, "WORKER_HOURS", ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"]);
     return matrix;
   }
 
@@ -152,7 +162,25 @@ export function getPermissionTemplateForRoleRecord(
 }
 
 export async function getPermissionMatrixForRoleRecord(role: RoleRecord) {
-  return getPermissionTemplateForRoleRecord(role);
+  const matrix = getPermissionTemplateForRoleRecord(role);
+
+  if (role.isOwner || asSystemRole(role.key)) {
+    return matrix;
+  }
+
+  const storedPermissions = await prisma.rolePermission.findMany({
+    where: { roleId: role.id },
+  });
+
+  for (const permission of storedPermissions) {
+    if (!isPermissionModuleKey(permission.module)) {
+      continue;
+    }
+
+    matrix[permission.module][permission.action] = permission.allowed;
+  }
+
+  return matrix;
 }
 
 export async function getPermissionMatrixForRole(role: UserRole) {
@@ -171,10 +199,7 @@ export async function getPermissionMatrixForRole(role: UserRole) {
 
 async function getPermissionTemplateForUser(user: PermissionUser) {
   if (user.roleRecord) {
-    const systemRole = asSystemRole(user.roleRecord.key);
-    if (user.roleRecord.isOwner || systemRole) {
-      return getPermissionMatrixForRoleRecord(user.roleRecord);
-    }
+    return getPermissionMatrixForRoleRecord(user.roleRecord);
   }
 
   if (user.roleId) {
@@ -184,10 +209,7 @@ async function getPermissionTemplateForUser(user: PermissionUser) {
     });
 
     if (roleRecord) {
-      const systemRole = asSystemRole(roleRecord.key);
-      if (roleRecord.isOwner || systemRole) {
-        return getPermissionMatrixForRoleRecord(roleRecord);
-      }
+      return getPermissionMatrixForRoleRecord(roleRecord);
     }
   }
 
@@ -205,6 +227,10 @@ export async function getUserPermissionMatrix(user: PermissionUser) {
   });
 
   for (const permission of storedPermissions) {
+    if (!isPermissionModuleKey(permission.module)) {
+      continue;
+    }
+
     matrix[permission.module][permission.action] = permission.allowed;
   }
 
@@ -287,7 +313,6 @@ export async function getAssignableRoles() {
   await ensureSystemRoles();
 
   return prisma.role.findMany({
-    where: { isSystem: true },
     orderBy: [{ isOwner: "desc" }, { isSystem: "desc" }, { name: "asc" }],
   });
 }

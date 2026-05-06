@@ -30,8 +30,14 @@ export function ReportsCharts({
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Marzhi i produktit" : "Product margin"}
         </p>
-        <div className="mt-5 h-72">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-5 h-72 min-w-0">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={288}
+            initialDimension={{ width: 600, height: 288 }}
+          >
             <BarChart data={margins.slice(0, 6).map((item) => ({ ...item, margin: item.marginCents / 100 }))}>
               <CartesianGrid stroke="rgba(22,20,18,0.08)" vertical={false} />
               <XAxis dataKey="name" hide />
@@ -46,8 +52,14 @@ export function ReportsCharts({
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Borxhi i klientëve" : "Client debt"}
         </p>
-        <div className="mt-5 h-72">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-5 h-72 min-w-0">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={288}
+            initialDimension={{ width: 600, height: 288 }}
+          >
             <PieChart>
               <Pie
                 data={debts.slice(0, 5).map((item) => ({

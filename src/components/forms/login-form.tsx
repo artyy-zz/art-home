@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type ActionState } from "@/actions/auth";
 import { PasswordInput } from "@/components/forms/password-input";
+import { buttonClasses } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
 
@@ -18,11 +20,11 @@ export function LoginForm({ locale }: { locale: Locale }) {
   return (
     <form action={formAction} className="space-y-4">
       <label className="space-y-2 text-sm text-white/88">
-        <span>{locale === "sq" ? "Email" : "Email"}</span>
+        <span>Email</span>
         <input type="email" name="email" required className={inputClassName} />
       </label>
       <label className="space-y-2 text-sm text-white/88">
-        <span>{locale === "sq" ? "Fjalëkalimi" : "Password"}</span>
+        <span>{locale === "sq" ? "Fjalekalimi" : "Password"}</span>
         <PasswordInput className={inputClassName} buttonClassName="text-white" />
       </label>
       {state?.error ? (
@@ -30,9 +32,20 @@ export function LoginForm({ locale }: { locale: Locale }) {
           {state.error}
         </p>
       ) : null}
-      <SubmitButton variant="secondary">
-        {locale === "sq" ? "Hyr në sistem" : "Access ERP"}
-      </SubmitButton>
+      <div className="flex flex-wrap items-center gap-3 pt-3">
+        <SubmitButton variant="secondary">
+          {locale === "sq" ? "Hyr ne sistem" : "Access ERP"}
+        </SubmitButton>
+        <Link
+          href={`/${locale}`}
+          className={buttonClasses({
+            variant: "ghost",
+            className: "!text-white hover:!bg-white/10",
+          })}
+        >
+          {locale === "sq" ? "Kthehu" : "Back"}
+        </Link>
+      </div>
     </form>
   );
 }
