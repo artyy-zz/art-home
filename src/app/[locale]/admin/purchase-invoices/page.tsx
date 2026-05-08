@@ -14,10 +14,11 @@ import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
   getPurchaseInvoiceBuilderOptions,
-  getPurchaseInvoiceOverview,
+  getPurchaseInvoiceOverviewPage,
   statusTone,
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -60,7 +61,12 @@ export default async function PurchaseInvoicesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const [purchaseInvoices, options] = await Promise.all([
-    getPurchaseInvoiceOverview(),
+    getPurchaseInvoiceOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+    }),
     getPurchaseInvoiceBuilderOptions(typedLocale),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -146,6 +152,19 @@ export default async function PurchaseInvoicesPage({
               : "No purchase invoices match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: purchaseInvoices.page,
+            totalPages: purchaseInvoices.totalPages,
+            totalItems: purchaseInvoices.totalItems,
+            pageSize: purchaseInvoices.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} fatura blerjeje"
+                : "Page {page} of {totalPages} - {totalItems} purchase invoices",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "number", label: typedLocale === "sq" ? "Fatura e blerjes" : "Purchase invoice", sortable: true },
             { key: "supplier", label: typedLocale === "sq" ? "Furnitori" : "Supplier", sortable: true },
@@ -154,7 +173,7 @@ export default async function PurchaseInvoicesPage({
             { key: "total", label: typedLocale === "sq" ? "Totali / Borxhi" : "Total / Debt", sortable: true, align: "right" },
             { key: "description", label: typedLocale === "sq" ? "Përshkrimi" : "Description" },
           ]}
-          rows={purchaseInvoices.map((invoice) => {
+          rows={purchaseInvoices.items.map((invoice) => {
             const outstandingCents = invoice.totalCents - invoice.amountPaidCents;
 
             return {

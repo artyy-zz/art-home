@@ -14,9 +14,10 @@ import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
   getAdjustedInvoiceOutstandingCents,
   getDebitNoteBuilderOptions,
-  getDebitNoteOverview,
+  getDebitNoteOverviewPage,
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -69,7 +70,12 @@ export default async function DebitNotesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const [debitNotes, options] = await Promise.all([
-    getDebitNoteOverview(),
+    getDebitNoteOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+    }),
     getDebitNoteBuilderOptions(),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -132,6 +138,19 @@ export default async function DebitNotesPage({
               : "No debit notes match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: debitNotes.page,
+            totalPages: debitNotes.totalPages,
+            totalItems: debitNotes.totalItems,
+            pageSize: debitNotes.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} debit note"
+                : "Page {page} of {totalPages} - {totalItems} debit notes",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "number", label: typedLocale === "sq" ? "Numri" : "Number", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
@@ -142,7 +161,7 @@ export default async function DebitNotesPage({
             { key: "adjustedDebt", label: typedLocale === "sq" ? "Borxhi i rregulluar" : "Adjusted debt", sortable: true, align: "right" },
             { key: "description", label: typedLocale === "sq" ? "Përshkrimi" : "Description" },
           ]}
-          rows={debitNotes.map((note) => {
+          rows={debitNotes.items.map((note) => {
             const adjustedDebtCents = getAdjustedInvoiceOutstandingCents(note.invoice);
 
             return {

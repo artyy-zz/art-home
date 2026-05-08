@@ -23,6 +23,16 @@ type Row = {
   actions?: ReactNode;
 };
 
+type Pagination = {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  label: string;
+  previousLabel: string;
+  nextLabel: string;
+};
+
 function normalizeSearch(value: string) {
   return value.toLocaleLowerCase();
 }
@@ -68,6 +78,38 @@ function buildSortHref({
   return `${currentPath}?${params.toString()}`;
 }
 
+function buildPageHref({
+  currentPath,
+  preservedParams,
+  query,
+  sort,
+  direction,
+  page,
+}: {
+  currentPath: string;
+  preservedParams?: Record<string, string>;
+  query: string;
+  sort?: string;
+  direction: "asc" | "desc";
+  page: number;
+}) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(preservedParams ?? {})) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+  if (query) {
+    params.set("q", query);
+  }
+  if (sort) {
+    params.set("sort", sort);
+  }
+  params.set("dir", direction);
+  params.set("page", String(page));
+  return `${currentPath}?${params.toString()}`;
+}
+
 export function RecordTable({
   columns,
   rows,
@@ -80,6 +122,8 @@ export function RecordTable({
   searchLabel,
   emptyMessage,
   actionsLabel,
+  serverControlled = false,
+  pagination,
 }: {
   columns: Column[];
   rows: Row[];
@@ -92,15 +136,17 @@ export function RecordTable({
   searchLabel: string;
   emptyMessage: string;
   actionsLabel?: string;
+  serverControlled?: boolean;
+  pagination?: Pagination;
 }) {
   const [selectionMode, setSelectionMode] = useState(false);
   const normalizedQuery = normalizeSearch(query.trim());
-  const filteredRows = normalizedQuery
+  const filteredRows = !serverControlled && normalizedQuery
     ? rows.filter((row) => normalizeSearch(row.searchText).includes(normalizedQuery))
     : rows;
 
   const sortedRows =
-    sort && columns.some((column) => column.key === sort && column.sortable)
+    !serverControlled && sort && columns.some((column) => column.key === sort && column.sortable)
       ? [...filteredRows].sort((left, right) => {
           const leftValue = normalizeSortValue(left.sortValues?.[sort]);
           const rightValue = normalizeSortValue(right.sortValues?.[sort]);
@@ -235,6 +281,53 @@ export function RecordTable({
           </table>
         </div>
       </div>
+
+      {pagination ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
+          <span>
+            {pagination.label
+              .replace("{page}", String(pagination.page))
+              .replace("{totalPages}", String(pagination.totalPages))
+              .replace("{totalItems}", String(pagination.totalItems))}
+          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href={buildPageHref({
+                currentPath,
+                preservedParams,
+                query,
+                sort,
+                direction,
+                page: Math.max(1, pagination.page - 1),
+              })}
+              aria-disabled={pagination.page <= 1}
+              className={cn(
+                "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
+                pagination.page <= 1 && "pointer-events-none opacity-45",
+              )}
+            >
+              {pagination.previousLabel}
+            </Link>
+            <Link
+              href={buildPageHref({
+                currentPath,
+                preservedParams,
+                query,
+                sort,
+                direction,
+                page: Math.min(pagination.totalPages, pagination.page + 1),
+              })}
+              aria-disabled={pagination.page >= pagination.totalPages}
+              className={cn(
+                "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
+                pagination.page >= pagination.totalPages && "pointer-events-none opacity-45",
+              )}
+            >
+              {pagination.nextLabel}
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

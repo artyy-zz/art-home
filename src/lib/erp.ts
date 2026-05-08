@@ -1,5 +1,6 @@
 import {
   DeliveryNoteStatus,
+  DeliveryNoteType,
   FurnitureCategory,
   InventoryMovementKind,
   InvoiceStatus,
@@ -13,6 +14,12 @@ import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { categoryCopy } from "@/lib/company";
 import type { Locale } from "@/lib/i18n";
 import { localeToIntl, pickLocale } from "@/lib/i18n";
+import {
+  DEFAULT_PAGE_SIZE,
+  paginatedResult,
+  paginationArgs,
+  type PaginatedResult,
+} from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 
 const productWithBomArgs = Prisma.validator<Prisma.ProductDefaultArgs>()({
@@ -26,6 +33,22 @@ const productWithBomArgs = Prisma.validator<Prisma.ProductDefaultArgs>()({
 });
 
 type ProductWithBom = Prisma.ProductGetPayload<typeof productWithBomArgs>;
+
+type ListQuery = {
+  page?: number;
+  pageSize?: number;
+  query?: string;
+  sort?: string;
+  direction?: "asc" | "desc";
+};
+
+function contains(value: string | undefined) {
+  return value?.trim() ? { contains: value.trim(), mode: "insensitive" as const } : undefined;
+}
+
+function sortDirection(direction: ListQuery["direction"]) {
+  return direction === "asc" ? "asc" : "desc";
+}
 
 export function calculateTotals(
   subtotalCents: number,
@@ -244,6 +267,241 @@ export async function getPurchaseInvoiceOverview() {
   });
 }
 
+type OfferOverview = Awaited<ReturnType<typeof getOfferOverview>>[number];
+
+export async function getOfferOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "createdAt",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<OfferOverview>> {
+  const search = contains(query);
+  const where: Prisma.OfferWhereInput = search
+    ? {
+        OR: [
+          { number: search },
+          { notes: search },
+          { client: { name: search } },
+          { lead: { name: search } },
+          { items: { some: { productName: search } } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.OfferOrderByWithRelationInput =
+    sort === "client"
+      ? { client: { name: direction } }
+      : sort === "status"
+        ? { status: direction }
+        : sort === "validUntil"
+          ? { validUntil: sortDirection(direction) }
+          : sort === "total"
+            ? { totalCents: sortDirection(direction) }
+            : sort === "number"
+              ? { number: direction }
+              : { createdAt: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.offer.findMany({
+      where,
+      include: {
+        client: true,
+        lead: true,
+        invoice: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.offer.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
+}
+
+type InvoiceOverview = Awaited<ReturnType<typeof getInvoiceOverview>>[number];
+
+export async function getInvoiceOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "issuedAt",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<InvoiceOverview>> {
+  const search = contains(query);
+  const where: Prisma.InvoiceWhereInput = search
+    ? {
+        OR: [
+          { number: search },
+          { notes: search },
+          { client: { name: search } },
+          { items: { some: { productName: search } } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.InvoiceOrderByWithRelationInput =
+    sort === "client"
+      ? { client: { name: direction } }
+      : sort === "status"
+        ? { status: direction }
+        : sort === "dueDate"
+          ? { dueDate: sortDirection(direction) }
+          : sort === "total"
+            ? { totalCents: sortDirection(direction) }
+            : sort === "number"
+              ? { number: direction }
+              : { issuedAt: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.invoice.findMany({
+      where,
+      include: {
+        client: true,
+        offer: true,
+        items: true,
+        debitNotes: true,
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.invoice.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
+}
+
+type PurchaseInvoiceOverview = Awaited<ReturnType<typeof getPurchaseInvoiceOverview>>[number];
+
+export async function getPurchaseInvoiceOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "issuedAt",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<PurchaseInvoiceOverview>> {
+  const search = contains(query);
+  const where: Prisma.PurchaseInvoiceWhereInput = search
+    ? {
+        OR: [
+          { number: search },
+          { notes: search },
+          { supplier: { name: search } },
+          { items: { some: { productName: search } } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.PurchaseInvoiceOrderByWithRelationInput =
+    sort === "supplier"
+      ? { supplier: { name: direction } }
+      : sort === "status"
+        ? { status: direction }
+        : sort === "dueDate"
+          ? { dueDate: sortDirection(direction) }
+          : sort === "total"
+            ? { totalCents: sortDirection(direction) }
+            : sort === "number"
+              ? { number: direction }
+              : { issuedAt: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.purchaseInvoice.findMany({
+      where,
+      include: {
+        supplier: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.purchaseInvoice.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
+}
+
+export async function getClientOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "name",
+  direction = "asc",
+}: ListQuery) {
+  const search = contains(query);
+  const where: Prisma.ClientWhereInput = {
+    deletedAt: null,
+    ...(search
+      ? {
+          OR: [
+            { name: search },
+            { contactPerson: search },
+            { email: search },
+            { phone: search },
+            { address: search },
+            { nui: search },
+            { vatNumber: search },
+            { notes: search },
+          ],
+        }
+      : {}),
+  };
+  const orderBy: Prisma.ClientOrderByWithRelationInput =
+    sort === "activity"
+      ? { invoices: { _count: sortDirection(direction) } }
+      : sort === "lastInvoice"
+        ? { invoices: { _count: sortDirection(direction) } }
+        : { name: direction };
+
+  const [clients, totalItems] = await Promise.all([
+    prisma.client.findMany({
+      where,
+      include: {
+        offers: { select: { id: true } },
+        invoices: {
+          select: {
+            issuedAt: true,
+            status: true,
+            totalCents: true,
+            amountPaidCents: true,
+            debitNotes: { select: { totalCents: true } },
+          },
+        },
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.client.count({ where }),
+  ]);
+
+  const items = clients.map((client) => {
+    const outstandingDebtCents = client.invoices.reduce(
+      (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
+      0,
+    );
+
+    return {
+      ...client,
+      outstandingDebtCents,
+      offerCount: client.offers.length,
+      invoiceCount: client.invoices.length,
+      lastInvoiceAt:
+        client.invoices.sort(
+          (left, right) =>
+            new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
+        )[0]?.issuedAt ?? null,
+    };
+  });
+
+  if (sort === "debt") {
+    items.sort((left, right) =>
+      direction === "asc"
+        ? left.outstandingDebtCents - right.outstandingDebtCents
+        : right.outstandingDebtCents - left.outstandingDebtCents,
+    );
+  }
+
+  return paginatedResult({ items, totalItems, page, pageSize });
+}
+
 export async function getDeliveryNoteOverview() {
   return prisma.deliveryNote.findMany({
     include: {
@@ -257,12 +515,105 @@ export async function getDeliveryNoteOverview() {
   });
 }
 
+type DeliveryNoteOverview = Awaited<ReturnType<typeof getDeliveryNoteOverview>>[number];
+
+export async function getDeliveryNoteOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "issuedAt",
+  direction = "desc",
+  type,
+}: ListQuery & { type?: string }): Promise<PaginatedResult<DeliveryNoteOverview>> {
+  const search = contains(query);
+  const noteType =
+    type === DeliveryNoteType.SALES || type === DeliveryNoteType.PURCHASE
+      ? type
+      : undefined;
+  const where: Prisma.DeliveryNoteWhereInput = {
+    ...(noteType ? { type: noteType } : {}),
+    ...(search
+      ? {
+          OR: [
+            { number: search },
+            { notes: search },
+            { client: { name: search } },
+            { supplier: { name: search } },
+            { items: { some: { productName: search } } },
+          ],
+        }
+      : {}),
+  };
+  const orderBy: Prisma.DeliveryNoteOrderByWithRelationInput =
+    sort === "number"
+      ? { number: direction }
+      : sort === "status"
+        ? { status: direction }
+        : { issuedAt: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.deliveryNote.findMany({
+      where,
+      include: {
+        client: true,
+        supplier: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.deliveryNote.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
+}
+
 export async function getExpenseOverview() {
   return prisma.expense.findMany({
     orderBy: {
       date: "desc",
     },
   });
+}
+
+type ExpenseOverview = Awaited<ReturnType<typeof getExpenseOverview>>[number];
+
+export async function getExpenseOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "date",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<ExpenseOverview>> {
+  const search = contains(query);
+  const where: Prisma.ExpenseWhereInput = search
+    ? {
+        OR: [
+          { name: search },
+          { supplierName: search },
+          { description: search },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.ExpenseOrderByWithRelationInput =
+    sort === "name"
+      ? { name: direction }
+      : sort === "category"
+        ? { category: direction }
+        : sort === "total"
+          ? { totalCents: sortDirection(direction) }
+          : { date: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.expense.findMany({
+      where,
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.expense.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
 }
 
 export async function getDebitNoteOverview() {
@@ -284,6 +635,61 @@ export async function getDebitNoteOverview() {
       issuedAt: "desc",
     },
   });
+}
+
+type DebitNoteOverview = Awaited<ReturnType<typeof getDebitNoteOverview>>[number];
+
+export async function getDebitNoteOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "issuedAt",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<DebitNoteOverview>> {
+  const search = contains(query);
+  const where: Prisma.DebitNoteWhereInput = search
+    ? {
+        OR: [
+          { number: search },
+          { notes: search },
+          { client: { name: search } },
+          { invoice: { number: search } },
+          { items: { some: { productName: search } } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.DebitNoteOrderByWithRelationInput =
+    sort === "number"
+      ? { number: direction }
+      : sort === "client"
+        ? { client: { name: direction } }
+        : sort === "total"
+          ? { totalCents: sortDirection(direction) }
+          : { issuedAt: sortDirection(direction) };
+
+  const [items, totalItems] = await Promise.all([
+    prisma.debitNote.findMany({
+      where,
+      include: {
+        client: true,
+        invoice: {
+          include: {
+            debitNotes: true,
+          },
+        },
+        items: {
+          include: {
+            invoiceItem: true,
+          },
+        },
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.debitNote.count({ where }),
+  ]);
+
+  return paginatedResult({ items, totalItems, page, pageSize });
 }
 
 export async function getSupplierOverview() {
@@ -319,6 +725,87 @@ export async function getSupplierOverview() {
         )[0]?.issuedAt ?? null,
     };
   });
+}
+
+export async function getSupplierOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "name",
+  direction = "asc",
+}: ListQuery) {
+  const search = contains(query);
+  const where: Prisma.SupplierWhereInput = {
+    deletedAt: null,
+    ...(search
+      ? {
+          OR: [
+            { name: search },
+            { contactPerson: search },
+            { email: search },
+            { phone: search },
+            { address: search },
+            { nui: search },
+            { vatNumber: search },
+            { notes: search },
+          ],
+        }
+      : {}),
+  };
+  const orderBy: Prisma.SupplierOrderByWithRelationInput =
+    sort === "activity"
+      ? { purchaseInvoices: { _count: sortDirection(direction) } }
+      : { name: direction };
+
+  const [suppliers, totalItems] = await Promise.all([
+    prisma.supplier.findMany({
+      where,
+      include: {
+        purchaseInvoices: {
+          select: {
+            issuedAt: true,
+            status: true,
+            totalCents: true,
+            amountPaidCents: true,
+          },
+        },
+      },
+      orderBy,
+      ...paginationArgs(page, pageSize),
+    }),
+    prisma.supplier.count({ where }),
+  ]);
+
+  const items = suppliers.map((supplier) => {
+    const outstandingDebtCents = supplier.purchaseInvoices.reduce((sum, invoice) => {
+      if (invoice.status === InvoiceStatus.PAID) {
+        return sum;
+      }
+
+      return sum + (invoice.totalCents - invoice.amountPaidCents);
+    }, 0);
+
+    return {
+      ...supplier,
+      outstandingDebtCents,
+      purchaseInvoiceCount: supplier.purchaseInvoices.length,
+      lastPurchaseInvoiceAt:
+        supplier.purchaseInvoices.sort(
+          (left, right) =>
+            new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
+        )[0]?.issuedAt ?? null,
+    };
+  });
+
+  if (sort === "debt") {
+    items.sort((left, right) =>
+      direction === "asc"
+        ? left.outstandingDebtCents - right.outstandingDebtCents
+        : right.outstandingDebtCents - left.outstandingDebtCents,
+    );
+  }
+
+  return paginatedResult({ items, totalItems, page, pageSize });
 }
 
 export async function getProductOverview(locale: Locale) {
@@ -712,7 +1199,6 @@ export async function getDashboardSnapshot(locale: Locale) {
 
 export async function getReportsSnapshot(locale: Locale) {
   const [
-    dashboard,
     invoices,
     materials,
     clients,
@@ -721,23 +1207,34 @@ export async function getReportsSnapshot(locale: Locale) {
     debitNotes,
     deliveryNotes,
   ] = await Promise.all([
-    getDashboardSnapshot(locale),
     prisma.invoice.findMany({
-      include: {
-        items: true,
-        client: true,
-        debitNotes: true,
+      select: {
+        items: {
+          select: {
+            productName: true,
+            quantity: true,
+            lineTotalCents: true,
+            unitCostCents: true,
+          },
+        },
       },
       orderBy: { issuedAt: "desc" },
+      take: 500,
     }),
     prisma.inventoryMovement.findMany({
       where: {
         kind: InventoryMovementKind.CONSUMPTION,
       },
-      include: {
-        material: true,
+      select: {
+        quantity: true,
+        material: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
+      take: 500,
     }),
     getClientOverview(),
     getProductOverview(locale),
@@ -745,12 +1242,22 @@ export async function getReportsSnapshot(locale: Locale) {
       orderBy: { date: "desc" },
     }),
     prisma.debitNote.findMany({
-      include: {
-        client: true,
+      select: {
+        clientId: true,
+        totalCents: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: { issuedAt: "desc" },
+      take: 500,
     }),
     prisma.deliveryNote.findMany({
+      select: {
+        status: true,
+      },
       orderBy: { issuedAt: "desc" },
     }),
   ]);
@@ -852,7 +1359,6 @@ export async function getReportsSnapshot(locale: Locale) {
   };
 
   return {
-    dashboard,
     productMargins: products.map((product) => ({
       name: product.name,
       marginCents: product.estimatedProfitCents,

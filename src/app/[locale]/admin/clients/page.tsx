@@ -3,8 +3,9 @@ import { ClientActions } from "@/components/admin/client-actions";
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
-import { getClientOverview } from "@/lib/erp";
+import { getClientOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -31,7 +32,12 @@ export default async function ClientsPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
-  const clients = await getClientOverview();
+  const clients = await getClientOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "CLIENTS", "CREATE");
   const canEdit = can(permissions, "CLIENTS", "EDIT");
@@ -85,6 +91,19 @@ export default async function ClientsPage({
               : "No clients match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: clients.page,
+            totalPages: clients.totalPages,
+            totalItems: clients.totalItems,
+            pageSize: clients.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} kliente"
+                : "Page {page} of {totalPages} - {totalItems} clients",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
             { key: "contact", label: "Contact" },
@@ -94,7 +113,7 @@ export default async function ClientsPage({
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
-          rows={clients.map((client) => ({
+          rows={clients.items.map((client) => ({
             id: client.id,
             searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatNumber ?? ""} ${client.notes ?? ""}`,
             sortValues: {

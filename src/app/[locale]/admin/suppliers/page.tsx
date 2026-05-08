@@ -3,8 +3,9 @@ import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-for
 import { RecordTable } from "@/components/admin/record-table";
 import { SupplierActions } from "@/components/admin/supplier-actions";
 import { Card } from "@/components/shared/card";
-import { getSupplierOverview } from "@/lib/erp";
+import { getSupplierOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -31,7 +32,12 @@ export default async function SuppliersPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
-  const suppliers = await getSupplierOverview();
+  const suppliers = await getSupplierOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "SUPPLIERS", "CREATE");
   const canEdit = can(permissions, "SUPPLIERS", "EDIT");
@@ -85,6 +91,19 @@ export default async function SuppliersPage({
               : "No suppliers match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: suppliers.page,
+            totalPages: suppliers.totalPages,
+            totalItems: suppliers.totalItems,
+            pageSize: suppliers.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} furnitore"
+                : "Page {page} of {totalPages} - {totalItems} suppliers",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Furnitori" : "Supplier", sortable: true },
             { key: "contact", label: "Contact" },
@@ -94,7 +113,7 @@ export default async function SuppliersPage({
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastPurchaseInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
-          rows={suppliers.map((supplier) => ({
+          rows={suppliers.items.map((supplier) => ({
             id: supplier.id,
             searchText: `${supplier.name} ${supplier.email ?? ""} ${supplier.phone ?? ""} ${supplier.address ?? ""} ${supplier.nui ?? ""} ${supplier.vatNumber ?? ""} ${supplier.notes ?? ""}`,
             sortValues: {

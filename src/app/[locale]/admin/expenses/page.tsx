@@ -11,8 +11,9 @@ import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
-import { getExpenseOverview, getPurchaseInvoiceBuilderOptions } from "@/lib/erp";
+import { getExpenseOverviewPage, getPurchaseInvoiceBuilderOptions } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -160,7 +161,12 @@ export default async function ExpensesPage({
   const sort = param(resolvedSearchParams, "sort") || "date";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const [expenses, options] = await Promise.all([
-    getExpenseOverview(),
+    getExpenseOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+    }),
     getPurchaseInvoiceBuilderOptions(typedLocale),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -213,6 +219,19 @@ export default async function ExpensesPage({
               : "No expenses match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: expenses.page,
+            totalPages: expenses.totalPages,
+            totalItems: expenses.totalItems,
+            pageSize: expenses.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} shpenzime"
+                : "Page {page} of {totalPages} - {totalItems} expenses",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Shpenzimi" : "Expense", sortable: true },
             { key: "supplier", label: typedLocale === "sq" ? "Furnitori" : "Supplier", sortable: true },
@@ -221,7 +240,7 @@ export default async function ExpensesPage({
             { key: "total", label: typedLocale === "sq" ? "Totali / TVSH" : "Total / VAT", sortable: true, align: "right" },
             { key: "description", label: typedLocale === "sq" ? "Përshkrimi" : "Description" },
           ]}
-          rows={expenses.map((expense) => ({
+          rows={expenses.items.map((expense) => ({
             id: expense.id,
             searchText: `${expense.name} ${categoryLabels[typedLocale][expense.category]} ${expense.supplierName ?? ""} ${expense.description ?? ""}`,
             sortValues: {

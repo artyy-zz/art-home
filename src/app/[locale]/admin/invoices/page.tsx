@@ -11,10 +11,11 @@ import {
   getAdjustedInvoiceOutstandingCents,
   getInvoiceAdjustmentCents,
   getInvoiceBuilderOptions,
-  getInvoiceOverview,
+  getInvoiceOverviewPage,
   statusTone,
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -54,7 +55,12 @@ export default async function InvoicesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const [invoices, options] = await Promise.all([
-    getInvoiceOverview(),
+    getInvoiceOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+    }),
     getInvoiceBuilderOptions(typedLocale),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -145,6 +151,19 @@ export default async function InvoicesPage({
               : "No sales invoices match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: invoices.page,
+            totalPages: invoices.totalPages,
+            totalItems: invoices.totalItems,
+            pageSize: invoices.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} fatura"
+                : "Page {page} of {totalPages} - {totalItems} invoices",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "number", label: typedLocale === "sq" ? "Fatura e shitjes" : "Sales invoice", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
@@ -154,7 +173,7 @@ export default async function InvoicesPage({
             { key: "dueDate", label: typedLocale === "sq" ? "Afati" : "Due date", sortable: true },
             { key: "total", label: typedLocale === "sq" ? "Totali / Borxhi" : "Total / Debt", sortable: true, align: "right" },
           ]}
-          rows={invoices.map((invoice) => {
+          rows={invoices.items.map((invoice) => {
             const adjustmentCents = getInvoiceAdjustmentCents(invoice);
             const outstandingCents = getAdjustedInvoiceOutstandingCents(invoice);
 

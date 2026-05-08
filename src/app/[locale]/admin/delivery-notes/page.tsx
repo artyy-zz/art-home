@@ -14,10 +14,11 @@ import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
   getDeliveryNoteBuilderOptions,
-  getDeliveryNoteOverview,
+  getDeliveryNoteOverviewPage,
   statusTone,
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { cn, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -70,7 +71,13 @@ export default async function DeliveryNotesPage({
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const activeType = param(resolvedSearchParams, "type") === "PURCHASE" ? "PURCHASE" : "SALES";
   const [deliveryNotes, options] = await Promise.all([
-    getDeliveryNoteOverview(),
+    getDeliveryNoteOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+      type: activeType,
+    }),
     getDeliveryNoteBuilderOptions(typedLocale),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -83,7 +90,6 @@ export default async function DeliveryNotesPage({
     options.clients.length > 0 &&
     options.suppliers.length > 0 &&
     options.items.length > 0;
-  const filteredNotes = deliveryNotes.filter((note) => note.type === activeType);
   const tabHref = (type: "SALES" | "PURCHASE") =>
     `/${typedLocale}/admin/delivery-notes?type=${type}`;
 
@@ -160,6 +166,19 @@ export default async function DeliveryNotesPage({
               : "No delivery notes match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: deliveryNotes.page,
+            totalPages: deliveryNotes.totalPages,
+            totalItems: deliveryNotes.totalItems,
+            pageSize: deliveryNotes.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} flete dergesa"
+                : "Page {page} of {totalPages} - {totalItems} delivery notes",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "number", label: typedLocale === "sq" ? "Numri" : "Number", sortable: true },
             { key: "type", label: typedLocale === "sq" ? "Tipi" : "Type", sortable: true },
@@ -169,7 +188,7 @@ export default async function DeliveryNotesPage({
             { key: "issuedAt", label: typedLocale === "sq" ? "Data" : "Date", sortable: true },
             { key: "notes", label: typedLocale === "sq" ? "Shënime" : "Notes" },
           ]}
-          rows={filteredNotes.map((note) => {
+          rows={deliveryNotes.items.map((note) => {
             const party = note.type === "SALES" ? note.client?.name : note.supplier?.name;
 
             return {

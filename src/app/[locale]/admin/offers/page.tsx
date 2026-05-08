@@ -7,8 +7,9 @@ import { OfferBuilderForm } from "@/components/forms/offer-builder-form";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
-import { getOfferBuilderOptions, getOfferOverview, statusTone } from "@/lib/erp";
+import { getOfferBuilderOptions, getOfferOverviewPage, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -46,7 +47,12 @@ export default async function OffersPage({
   const sort = param(resolvedSearchParams, "sort") || "createdAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const [offers, options] = await Promise.all([
-    getOfferOverview(),
+    getOfferOverviewPage({
+      page: parsePage(resolvedSearchParams.page),
+      query,
+      sort,
+      direction,
+    }),
     getOfferBuilderOptions(typedLocale),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
@@ -135,6 +141,19 @@ export default async function OffersPage({
               : "No offers match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: offers.page,
+            totalPages: offers.totalPages,
+            totalItems: offers.totalItems,
+            pageSize: offers.pageSize,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} oferta"
+                : "Page {page} of {totalPages} - {totalItems} offers",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "number", label: typedLocale === "sq" ? "Oferta" : "Offer", sortable: true },
             { key: "client", label: typedLocale === "sq" ? "Klienti" : "Client", sortable: true },
@@ -143,7 +162,7 @@ export default async function OffersPage({
             { key: "validUntil", label: typedLocale === "sq" ? "Vlen deri" : "Valid until", sortable: true },
             { key: "total", label: typedLocale === "sq" ? "Totali" : "Total", sortable: true, align: "right" },
           ]}
-          rows={offers.map((offer) => ({
+          rows={offers.items.map((offer) => ({
             id: offer.id,
             searchText: `${offer.number} ${offer.client.name} ${offer.lead?.name ?? ""} ${offer.status} ${offer.notes ?? ""} ${offer.items.map((item) => item.productName).join(" ")}`,
             sortValues: {
