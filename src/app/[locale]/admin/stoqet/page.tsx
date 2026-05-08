@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createStokAction } from "@/actions/admin";
 import { StockActions } from "@/components/admin/stock-actions";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -17,7 +18,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function StoqetPage({
+async function StoqetPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/stoqet">) {
@@ -188,3 +189,5 @@ export default async function StoqetPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/stoqet", StoqetPage);

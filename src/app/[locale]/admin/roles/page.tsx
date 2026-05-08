@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import {
   createRoleAction,
   deleteRoleAction,
@@ -102,7 +103,7 @@ function createEmptyPermissionMatrix() {
   }, {} as PermissionMatrix);
 }
 
-export default async function RolesPage({
+async function RolesPage({
   params,
 }: PageProps<"/[locale]/admin/roles">) {
   const { locale } = await params;
@@ -426,3 +427,5 @@ export default async function RolesPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/roles", RolesPage);

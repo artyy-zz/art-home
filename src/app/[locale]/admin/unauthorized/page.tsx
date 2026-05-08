@@ -1,10 +1,11 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import type { Locale } from "@/lib/i18n";
 import { unauthorizedMessage } from "@/lib/permissions";
 
-export default async function UnauthorizedPage({
+async function UnauthorizedPage({
   params,
 }: PageProps<"/[locale]/admin/unauthorized">) {
   const { locale } = await params;
@@ -26,3 +27,5 @@ export default async function UnauthorizedPage({
     </Card>
   );
 }
+
+export default withPagePerf("admin/unauthorized", UnauthorizedPage);

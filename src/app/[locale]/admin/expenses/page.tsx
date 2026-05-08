@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import {
   createExpenseAction,
   deleteExpenseAction,
@@ -148,7 +149,7 @@ function ExpenseFields({
   );
 }
 
-export default async function ExpensesPage({
+async function ExpensesPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/expenses">) {
@@ -330,3 +331,5 @@ export default async function ExpensesPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/expenses", ExpensesPage);

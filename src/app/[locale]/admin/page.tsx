@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { deleteNotificationAction } from "@/actions/admin";
@@ -10,7 +11,7 @@ import type { Locale } from "@/lib/i18n";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
-export default async function AdminDashboardPage({
+async function AdminDashboardPage({
   params,
 }: PageProps<"/[locale]/admin">) {
   const { locale } = await params;
@@ -190,3 +191,5 @@ export default async function AdminDashboardPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/dashboard", AdminDashboardPage);

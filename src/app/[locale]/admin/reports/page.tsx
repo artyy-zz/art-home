@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { Card } from "@/components/shared/card";
 import { ReportsCharts } from "@/components/admin/reports-charts";
 import { getReportsSnapshot } from "@/lib/erp";
@@ -24,7 +25,7 @@ const expenseCategoryLabels = {
   },
 } as const;
 
-export default async function ReportsPage({
+async function ReportsPage({
   params,
 }: PageProps<"/[locale]/admin/reports">) {
   const { locale } = await params;
@@ -180,3 +181,5 @@ export default async function ReportsPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/reports", ReportsPage);

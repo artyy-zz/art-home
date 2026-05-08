@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createUserAction, deleteUserAction, updateUserRoleAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
@@ -42,7 +43,7 @@ function usersHref(
   return `/${locale}/admin/users${query ? `?${query}` : ""}`;
 }
 
-export default async function UsersPage({
+async function UsersPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/users">) {
@@ -215,3 +216,5 @@ export default async function UsersPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/users", UsersPage);

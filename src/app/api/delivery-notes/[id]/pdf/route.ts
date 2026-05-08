@@ -1,3 +1,4 @@
+import { withApiPerf } from "@/lib/perf";
 import { getCurrentUser } from "@/lib/auth";
 import { getDeliveryNoteDocumentData } from "@/lib/erp";
 import { generateDeliveryNotePdf } from "@/lib/pdf";
@@ -8,7 +9,7 @@ const typeLabels = {
   PURCHASE: "Purchase Delivery Note",
 } as const;
 
-export async function GET(
+async function GETHandler(
   _request: Request,
   context: RouteContext<"/api/delivery-notes/[id]/pdf">,
 ) {
@@ -59,3 +60,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withApiPerf("api/delivery-notes/[id]/pdf", GETHandler);

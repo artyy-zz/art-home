@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { createInvoiceAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -42,7 +43,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function InvoicesPage({
+async function InvoicesPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/invoices">) {
@@ -255,3 +256,5 @@ export default async function InvoicesPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/invoices", InvoicesPage);

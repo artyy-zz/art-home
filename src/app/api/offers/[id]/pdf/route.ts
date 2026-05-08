@@ -1,9 +1,10 @@
+import { withApiPerf } from "@/lib/perf";
 import { generateSalesPdf } from "@/lib/pdf";
 import { getOfferDocumentData } from "@/lib/erp";
 import { getCurrentUser } from "@/lib/auth";
 import { userCan } from "@/lib/permissions";
 
-export async function GET(
+async function GETHandler(
   _request: Request,
   context: RouteContext<"/api/offers/[id]/pdf">,
 ) {
@@ -53,3 +54,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withApiPerf("api/offers/[id]/pdf", GETHandler);

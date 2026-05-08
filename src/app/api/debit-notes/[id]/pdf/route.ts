@@ -1,3 +1,4 @@
+import { withApiPerf } from "@/lib/perf";
 import { getCurrentUser } from "@/lib/auth";
 import { getDebitNoteDocumentData } from "@/lib/erp";
 import { generateDebitNotePdf } from "@/lib/pdf";
@@ -11,7 +12,7 @@ const reasonLabels = {
   OTHER: "Other",
 } as const;
 
-export async function GET(
+async function GETHandler(
   _request: Request,
   context: RouteContext<"/api/debit-notes/[id]/pdf">,
 ) {
@@ -62,3 +63,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withApiPerf("api/debit-notes/[id]/pdf", GETHandler);

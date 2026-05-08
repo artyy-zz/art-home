@@ -14,6 +14,7 @@ import {
   type PermissionMatrix,
   type PermissionModuleKey,
 } from "@/lib/permissions-config";
+import { measureAsync } from "@/lib/perf";
 
 type RoleRecord = Pick<Role, "id" | "key" | "name" | "isOwner" | "isSystem">;
 
@@ -86,48 +87,50 @@ export function isOwnerUser(user: Pick<PermissionUser, "role" | "roleRecord">) {
 }
 
 export const ensureSystemRoles = cache(async () => {
-  const roles = await Promise.all(
-    Object.entries(systemRoleDefinitions).map(([role, definition]) =>
-      prisma.role.upsert({
-        where: { key: definition.key },
-        update: {
-          name: definition.name,
-          description: definition.description,
-          isSystem: true,
-          isOwner: role === "OWNER",
-        },
-        create: {
-          key: definition.key,
-          name: definition.name,
-          description: definition.description,
-          isSystem: true,
-          isOwner: role === "OWNER",
-        },
+  return measureAsync("permissions.ensureSystemRoles", async () => {
+    const roles = await Promise.all(
+      Object.entries(systemRoleDefinitions).map(([role, definition]) =>
+        prisma.role.upsert({
+          where: { key: definition.key },
+          update: {
+            name: definition.name,
+            description: definition.description,
+            isSystem: true,
+            isOwner: role === "OWNER",
+          },
+          create: {
+            key: definition.key,
+            name: definition.name,
+            description: definition.description,
+            isSystem: true,
+            isOwner: role === "OWNER",
+          },
+        }),
+      ),
+    );
+
+    const roleByKey = new Map(roles.map((role) => [role.key, role]));
+    await Promise.all(
+      (["OWNER", "MANAGER", "STAFF"] as UserRole[]).map((role) => {
+        const roleRecord = roleByKey.get(role);
+        if (!roleRecord) {
+          return null;
+        }
+
+        return prisma.user.updateMany({
+          where: {
+            role,
+            roleId: null,
+          },
+          data: {
+            roleId: roleRecord.id,
+          },
+        });
       }),
-    ),
-  );
+    );
 
-  const roleByKey = new Map(roles.map((role) => [role.key, role]));
-  await Promise.all(
-    (["OWNER", "MANAGER", "STAFF"] as UserRole[]).map((role) => {
-      const roleRecord = roleByKey.get(role);
-      if (!roleRecord) {
-        return null;
-      }
-
-      return prisma.user.updateMany({
-        where: {
-          role,
-          roleId: null,
-        },
-        data: {
-          roleId: roleRecord.id,
-        },
-      });
-    }),
-  );
-
-  return roles;
+    return roles;
+  });
 });
 
 export function getDefaultPermissionMatrix(role: UserRole | null | undefined) {
@@ -174,39 +177,51 @@ export function getPermissionTemplateForRoleRecord(
 }
 
 export const getPermissionMatrixForRoleRecord = cache(async (role: RoleRecord) => {
-  const matrix = getPermissionTemplateForRoleRecord(role);
+  return measureAsync(
+    "permissions.roleMatrix",
+    async () => {
+      const matrix = getPermissionTemplateForRoleRecord(role);
 
-  if (role.isOwner || asSystemRole(role.key)) {
-    return matrix;
-  }
+      if (role.isOwner || asSystemRole(role.key)) {
+        return matrix;
+      }
 
-  const storedPermissions = await prisma.rolePermission.findMany({
-    where: { roleId: role.id },
-  });
+      const storedPermissions = await prisma.rolePermission.findMany({
+        where: { roleId: role.id },
+      });
 
-  for (const permission of storedPermissions) {
-    if (!isPermissionModuleKey(permission.module)) {
-      continue;
-    }
+      for (const permission of storedPermissions) {
+        if (!isPermissionModuleKey(permission.module)) {
+          continue;
+        }
 
-    matrix[permission.module][permission.action] = permission.allowed;
-  }
+        matrix[permission.module][permission.action] = permission.allowed;
+      }
 
-  return matrix;
+      return matrix;
+    },
+    { roleId: role.id, roleKey: role.key },
+  );
 });
 
 export const getPermissionMatrixForRole = cache(async (role: UserRole) => {
-  await ensureSystemRoles();
-  const roleRecord = await prisma.role.findUnique({
-    where: { key: role },
-    select: { id: true, key: true, name: true, isOwner: true, isSystem: true },
-  });
+  return measureAsync(
+    "permissions.systemRoleMatrix",
+    async () => {
+      await ensureSystemRoles();
+      const roleRecord = await prisma.role.findUnique({
+        where: { key: role },
+        select: { id: true, key: true, name: true, isOwner: true, isSystem: true },
+      });
 
-  if (roleRecord) {
-    return getPermissionMatrixForRoleRecord(roleRecord);
-  }
+      if (roleRecord) {
+        return getPermissionMatrixForRoleRecord(roleRecord);
+      }
 
-  return getDefaultPermissionMatrix(role);
+      return getDefaultPermissionMatrix(role);
+    },
+    { role },
+  );
 });
 
 const getPermissionTemplateForUser = cache(async (user: PermissionUser) => {
@@ -229,24 +244,30 @@ const getPermissionTemplateForUser = cache(async (user: PermissionUser) => {
 });
 
 export const getUserPermissionMatrix = cache(async (user: PermissionUser) => {
-  if (isOwnerUser(user)) {
-    return createFullMatrix();
-  }
+  return measureAsync(
+    "permissions.userMatrix",
+    async () => {
+      if (isOwnerUser(user)) {
+        return createFullMatrix();
+      }
 
-  const matrix = cloneMatrix(await getPermissionTemplateForUser(user));
-  const storedPermissions = await prisma.userPermission.findMany({
-    where: { userId: user.id },
-  });
+      const matrix = cloneMatrix(await getPermissionTemplateForUser(user));
+      const storedPermissions = await prisma.userPermission.findMany({
+        where: { userId: user.id },
+      });
 
-  for (const permission of storedPermissions) {
-    if (!isPermissionModuleKey(permission.module)) {
-      continue;
-    }
+      for (const permission of storedPermissions) {
+        if (!isPermissionModuleKey(permission.module)) {
+          continue;
+        }
 
-    matrix[permission.module][permission.action] = permission.allowed;
-  }
+        matrix[permission.module][permission.action] = permission.allowed;
+      }
 
-  return matrix;
+      return matrix;
+    },
+    { userId: user.id, role: user.role, roleId: user.roleId },
+  );
 });
 
 export function can(
@@ -271,7 +292,11 @@ export async function requirePermission(
   module: PermissionModuleKey,
   action: PermissionActionKey,
 ) {
-  const user = await requireStaffSession(locale);
+  const user = await measureAsync(
+    "permissions.requirePermission",
+    () => requireStaffSession(locale),
+    { locale, module, action },
+  );
   const permissions = await getUserPermissionMatrix(user);
   const allowed = can(permissions, module, action);
 
@@ -297,8 +322,16 @@ export async function assertPermission(
   module: PermissionModuleKey,
   action: PermissionActionKey,
 ) {
-  const user = await requireStaffSession(locale);
-  const allowed = await userCan(user, module, action);
+  const user = await measureAsync(
+    "permissions.assertPermission.session",
+    () => requireStaffSession(locale),
+    { locale, module, action },
+  );
+  const allowed = await measureAsync(
+    "permissions.assertPermission.allowed",
+    () => userCan(user, module, action),
+    { locale, module, action, userId: user.id },
+  );
 
   if (!allowed) {
     throw new Error(unauthorizedMessage(locale));

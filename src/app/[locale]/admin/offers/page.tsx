@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { createOfferAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -34,7 +35,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function OffersPage({
+async function OffersPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/offers">) {
@@ -215,3 +216,5 @@ export default async function OffersPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/offers", OffersPage);

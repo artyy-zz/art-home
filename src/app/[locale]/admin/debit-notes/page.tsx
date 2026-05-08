@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import {
@@ -57,7 +58,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function DebitNotesPage({
+async function DebitNotesPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/debit-notes">) {
@@ -274,3 +275,5 @@ export default async function DebitNotesPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/debit-notes", DebitNotesPage);

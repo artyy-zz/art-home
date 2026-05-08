@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createAssetInventoryAction } from "@/actions/admin";
 import { AssetInventoryActions } from "@/components/admin/asset-inventory-actions";
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -26,7 +27,7 @@ function dateInputValue(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-export default async function AssetsInventoryPage({
+async function AssetsInventoryPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/assets-inventory">) {
@@ -163,3 +164,5 @@ export default async function AssetsInventoryPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/assets-inventory", AssetsInventoryPage);

@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createSupplierAction } from "@/actions/admin";
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
@@ -20,7 +21,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function SuppliersPage({
+async function SuppliersPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/suppliers">) {
@@ -184,3 +185,5 @@ export default async function SuppliersPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/suppliers", SuppliersPage);

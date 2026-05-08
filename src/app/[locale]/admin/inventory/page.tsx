@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createMaterialAction } from "@/actions/admin";
 import { MaterialType } from "@prisma/client";
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -28,7 +29,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function InventoryPage({
+async function InventoryPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/inventory">) {
@@ -165,3 +166,5 @@ export default async function InventoryPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/inventory", InventoryPage);

@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import { createClientAction } from "@/actions/admin";
 import { ClientActions } from "@/components/admin/client-actions";
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
@@ -20,7 +21,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function ClientsPage({
+async function ClientsPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/clients">) {
@@ -180,3 +181,5 @@ export default async function ClientsPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/clients", ClientsPage);

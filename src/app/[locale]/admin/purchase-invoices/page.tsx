@@ -1,3 +1,4 @@
+import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import {
@@ -48,7 +49,7 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-export default async function PurchaseInvoicesPage({
+async function PurchaseInvoicesPage({
   params,
   searchParams,
 }: PageProps<"/[locale]/admin/purchase-invoices">) {
@@ -298,3 +299,5 @@ export default async function PurchaseInvoicesPage({
     </div>
   );
 }
+
+export default withPagePerf("admin/purchase-invoices", PurchaseInvoicesPage);

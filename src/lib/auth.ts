@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/lib/i18n";
+import { measureAsync } from "@/lib/perf";
 
 const SESSION_COOKIE = "arthome_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7;
@@ -38,29 +39,43 @@ async function signSession(payload: SessionPayload) {
 }
 
 export async function authenticateUser(email: string, password: string) {
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase() },
-  });
+  const user = await measureAsync(
+    "auth.authenticate.userLookup",
+    () =>
+      prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+      }),
+    { email: email.toLowerCase() },
+  );
 
   if (!user) {
     return null;
   }
 
-  const matches = await bcrypt.compare(password, user.passwordHash);
+  const matches = await measureAsync("auth.authenticate.bcryptCompare", () =>
+    bcrypt.compare(password, user.passwordHash),
+  );
   if (!matches) {
     return null;
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() },
-  });
+  await measureAsync(
+    "auth.authenticate.lastLoginUpdate",
+    () =>
+      prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      }),
+    { userId: user.id },
+  );
 
   return user;
 }
 
 export async function createSession(payload: SessionPayload) {
-  const token = await signSession(payload);
+  const token = await measureAsync("auth.createSession.signJwt", () =>
+    signSession(payload),
+  );
   const cookieStore = await cookies();
 
   cookieStore.set(SESSION_COOKIE, token, {
@@ -78,49 +93,57 @@ export async function clearSession() {
 }
 
 export const getSession = cache(async () => {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) {
-    return null;
-  }
+  return measureAsync("auth.session.lookup", async () => {
+    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    if (!token) {
+      return null;
+    }
 
-  try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
-    return payload as SessionPayload;
-  } catch {
-    return null;
-  }
+    try {
+      const { payload } = await jwtVerify(token, getSessionSecret());
+      return payload as SessionPayload;
+    } catch {
+      return null;
+    }
+  });
 });
 
 export const getCurrentUser = cache(async () => {
-  const session = await getSession();
-  if (!session?.sub) {
-    return null;
-  }
+  return measureAsync("auth.currentUser.lookup", async () => {
+    const session = await getSession();
+    if (!session?.sub) {
+      return null;
+    }
 
-  return prisma.user.findUnique({
-    where: { id: session.sub },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      roleId: true,
-      roleRecord: {
-        select: {
-          id: true,
-          key: true,
-          name: true,
-          isOwner: true,
-          isSystem: true,
+    return prisma.user.findUnique({
+      where: { id: session.sub },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        roleId: true,
+        roleRecord: {
+          select: {
+            id: true,
+            key: true,
+            name: true,
+            isOwner: true,
+            isSystem: true,
+          },
         },
+        lastLoginAt: true,
       },
-      lastLoginAt: true,
-    },
+    });
   });
 });
 
 export async function requireStaffSession(locale: Locale) {
-  const user = await getCurrentUser();
+  const user = await measureAsync(
+    "auth.requireStaffSession",
+    () => getCurrentUser(),
+    { locale },
+  );
   if (!user) {
     redirect(`/${locale}/login`);
   }
@@ -129,7 +152,11 @@ export async function requireStaffSession(locale: Locale) {
 }
 
 export async function requireAdminSession(locale: Locale) {
-  const user = await requireStaffSession(locale);
+  const user = await measureAsync(
+    "auth.requireAdminSession",
+    () => requireStaffSession(locale),
+    { locale },
+  );
   if (user.role !== "OWNER" && user.role !== "MANAGER" && user.role !== "STAFF") {
     redirect(`/${locale}/login`);
   }

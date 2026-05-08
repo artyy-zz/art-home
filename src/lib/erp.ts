@@ -20,6 +20,7 @@ import {
   paginationArgs,
   type PaginatedResult,
 } from "@/lib/pagination";
+import { measureAsync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
 
 const productWithBomArgs = Prisma.validator<Prisma.ProductDefaultArgs>()({
@@ -971,6 +972,7 @@ export async function getProductBuilderOptions() {
 }
 
 export async function getDashboardSnapshot(locale: Locale) {
+  return measureAsync("erp.dashboardSnapshot", async () => {
   const [invoices, materials, notifications, leads, movements] = await Promise.all([
     prisma.invoice.findMany({
       select: {
@@ -1195,9 +1197,11 @@ export async function getDashboardSnapshot(locale: Locale) {
     overdueInvoices,
     recentLeads: leads,
   };
+  }, { locale });
 }
 
 export async function getReportsSnapshot(locale: Locale) {
+  return measureAsync("erp.reportsSnapshot", async () => {
   const [
     invoices,
     materials,
@@ -1385,6 +1389,7 @@ export async function getReportsSnapshot(locale: Locale) {
     ),
     deliveryNoteCounts,
   };
+  }, { locale });
 }
 
 export function statusTone(status: string) {
