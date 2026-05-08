@@ -6,117 +6,282 @@
 - Local:         http://localhost:3000
 - Network:       http://26.108.41.110:3000
 - Environments: .env
-✓ Ready in 287ms
+✓ Ready in 276ms
 
- GET /sq/admin/users 200 in 1211ms (next.js: 657ms, generate-params: 381ms, application-code: 554ms)
- GET /sq/admin/roles 200 in 759ms (next.js: 481ms, generate-params: 437ms, application-code: 278ms)
-✓ Compiled in 70ms
- GET /sq/admin/users 200 in 322ms (next.js: 74ms, generate-params: 8ms, application-code: 248ms)
- GET /sq/admin/roles 200 in 322ms (next.js: 21ms, generate-params: 8ms, application-code: 302ms)
-✓ Compiled in 121ms
- GET /sq/admin/users 200 in 357ms (next.js: 82ms, generate-params: 6ms, application-code: 275ms)
- GET /sq/admin/roles 200 in 434ms (next.js: 106ms, generate-params: 7ms, application-code: 328ms)
- GET /sq/admin/reports 200 in 632ms (next.js: 382ms, generate-params: 338ms, application-code: 250ms)
- GET /sq/admin 200 in 414ms (next.js: 357ms, generate-params: 317ms, application-code: 57ms)
- GET /sq/admin/leads 200 in 445ms (next.js: 392ms, generate-params: 351ms, application-code: 53ms)
- GET /sq/admin/clients 200 in 462ms (next.js: 387ms, generate-params: 345ms, application-code: 75ms)
- GET /sq/admin/clients?sort=lastInvoice&dir=asc 200 in 67ms (next.js: 11ms, generate-params: 7ms, application-code: 56ms)
- GET /sq/admin/clients?sort=lastInvoice&dir=desc 200 in 63ms (next.js: 11ms, generate-params: 7ms, application-code: 52ms)
- POST /sq/admin/clients?sort=lastInvoice&dir=desc 200 in 103ms (next.js: 11ms, generate-params: 7ms, application-code: 92ms)
-  └─ ƒ createClientAction("sq", {}) in 15ms src/actions/admin.ts
- GET /sq/admin/clients?q=nui&sort=lastInvoice&dir=desc 200 in 208ms (next.js: 10ms, generate-params: 7ms, application-code: 198ms)
- GET /sq/admin/clients?q=&sort=lastInvoice&dir=desc 200 in 155ms (next.js: 10ms, generate-params: 6ms, application-code: 145ms)
- GET /sq/admin/clients?sort=lastInvoice&dir=asc 200 in 48ms (next.js: 10ms, generate-params: 7ms, application-code: 38ms)
- GET /sq/admin/clients?sort=name&dir=asc 200 in 65ms (next.js: 10ms, generate-params: 6ms, application-code: 56ms)
- GET /sq/admin/inventory 200 in 420ms (next.js: 362ms, generate-params: 323ms, application-code: 58ms)
- POST /sq/admin/inventory 200 in 94ms (next.js: 12ms, generate-params: 8ms, application-code: 82ms)
-  └─ ƒ createMaterialAction("sq", {}) in 12ms src/actions/admin.ts
- GET /sq/admin/offers 200 in 428ms (next.js: 373ms, generate-params: 331ms, application-code: 55ms)
- GET /sq/admin/invoices 200 in 417ms (next.js: 373ms, generate-params: 335ms, application-code: 45ms)
- GET /sq/admin/offers 200 in 72ms (next.js: 10ms, generate-params: 6ms, application-code: 62ms)
- GET /sq/admin/invoices 200 in 54ms (next.js: 12ms, generate-params: 7ms, application-code: 42ms)
- POST /sq/admin/invoices 200 in 112ms (next.js: 11ms, generate-params: 7ms, application-code: 102ms)
-  └─ ƒ createInvoiceAction("sq", {}) in 35ms src/actions/admin.ts
- GET /sq/admin 200 in 53ms (next.js: 10ms, generate-params: 6ms, application-code: 43ms)
- GET /sq/admin/invoices 200 in 59ms (next.js: 11ms, generate-params: 7ms, application-code: 47ms)
- GET /sq/admin/purchase-invoices 200 in 438ms (next.js: 382ms, generate-params: 339ms, application-code: 56ms)
- GET /sq/admin/inventory 200 in 56ms (next.js: 10ms, generate-params: 6ms, application-code: 47ms)
- GET /sq/admin/purchase-invoices 200 in 64ms (next.js: 9ms, generate-params: 6ms, application-code: 54ms)
- GET /sq/admin/invoices 200 in 70ms (next.js: 12ms, generate-params: 8ms, application-code: 59ms)
- GET /sq/admin/purchase-invoices 200 in 54ms (next.js: 9ms, generate-params: 6ms, application-code: 44ms)
- GET /sq/admin/inventory 200 in 57ms (next.js: 10ms, generate-params: 7ms, application-code: 47ms)
- GET /sq/admin/clients 200 in 68ms (next.js: 10ms, generate-params: 6ms, application-code: 58ms)
- POST /sq/admin/clients 200 in 87ms (next.js: 10ms, generate-params: 7ms, application-code: 77ms)
-  └─ ƒ updateClientAction("sq", "cmoivlecn000iunrg3kfdgq5o", {}) in 9ms src/actions/admin.ts
- GET /sq/admin 200 in 53ms (next.js: 10ms, generate-params: 7ms, application-code: 43ms)
- GET /sq/admin/clients 200 in 64ms (next.js: 9ms, generate-params: 6ms, application-code: 55ms)
- GET /sq/admin/purchase-invoices 200 in 71ms (next.js: 9ms, generate-params: 6ms, application-code: 62ms)
- GET /sq/admin/invoices 200 in 55ms (next.js: 10ms, generate-params: 7ms, application-code: 45ms)
- GET /sq/admin/offers 200 in 53ms (next.js: 12ms, generate-params: 7ms, application-code: 41ms)
- GET /sq/admin/invoices 200 in 66ms (next.js: 11ms, generate-params: 7ms, application-code: 55ms)
- GET /sq/admin/clients 200 in 64ms (next.js: 10ms, generate-params: 6ms, application-code: 54ms)
- GET /sq/admin/invoices 200 in 59ms (next.js: 9ms, generate-params: 6ms, application-code: 50ms)
- GET /sq/admin/purchase-invoices 200 in 52ms (next.js: 10ms, generate-params: 6ms, application-code: 42ms)
- GET /sq/admin/invoices 200 in 84ms (next.js: 11ms, generate-params: 8ms, application-code: 73ms)
- GET /sq/admin/purchase-invoices 200 in 52ms (next.js: 11ms, generate-params: 7ms, application-code: 41ms)
- GET /sq/admin/invoices 200 in 57ms (next.js: 10ms, generate-params: 7ms, application-code: 47ms)
- POST /sq/admin/invoices 200 in 84ms (next.js: 10ms, generate-params: 7ms, application-code: 74ms)
-  └─ ƒ deleteInvoiceAction("sq", "cmoivnp5d000lunrgobmjtoqr") in 21ms src/actions/admin.ts
- GET /sq/admin/purchase-invoices 200 in 49ms (next.js: 10ms, generate-params: 7ms, application-code: 39ms)
- GET /sq/admin/invoices 200 in 46ms (next.js: 9ms, generate-params: 6ms, application-code: 37ms)
- POST /sq/admin/invoices 500 in 426ms (next.js: 10ms, generate-params: 6ms, application-code: 416ms)
-  └─ ƒ createInvoiceAction("sq", {}) in 9ms src/actions/admin.ts
- GET /sq/admin/purchase-invoices 200 in 143ms (next.js: 10ms, generate-params: 7ms, application-code: 133ms)
- GET /sq/admin/invoices 200 in 60ms (next.js: 10ms, generate-params: 7ms, application-code: 50ms)
- POST /sq/admin/invoices 200 in 118ms (next.js: 13ms, generate-params: 9ms, application-code: 105ms)
-  └─ ƒ createInvoiceAction("sq", {}) in 35ms src/actions/admin.ts
- GET /sq/admin 200 in 57ms (next.js: 11ms, generate-params: 7ms, application-code: 46ms)
- GET /sq/admin/purchase-invoices 200 in 67ms (next.js: 10ms, generate-params: 7ms, application-code: 57ms)
- GET /sq/admin/reports 200 in 56ms (next.js: 11ms, generate-params: 8ms, application-code: 45ms)
- GET /sq/admin/users 200 in 137ms (next.js: 9ms, generate-params: 6ms, application-code: 128ms)
- GET /sq/admin/roles 200 in 197ms (next.js: 10ms, generate-params: 6ms, application-code: 186ms)
- GET /sq/admin/users 200 in 171ms (next.js: 10ms, generate-params: 6ms, application-code: 162ms)
- POST /sq/admin/users 500 in 383ms (next.js: 10ms, generate-params: 7ms, application-code: 373ms)
-  └─ ƒ createUserAction("sq", {}) in 17ms src/actions/admin.ts
- GET /sq/admin/users 200 in 190ms (next.js: 12ms, generate-params: 8ms, application-code: 178ms)
- POST /sq/admin/users 200 in 294ms (next.js: 10ms, generate-params: 6ms, application-code: 284ms)
-  └─ ƒ createUserAction("sq", {}) in 160ms src/actions/admin.ts
- GET /sq/admin/users?edit=cmoivs9z8001eunrgvvfop3c3 200 in 107ms (next.js: 10ms, generate-params: 7ms, application-code: 97ms)
- GET /sq/admin/users 200 in 20ms (next.js: 11ms, generate-params: 7ms, application-code: 9ms)
- GET /sq/admin/users 200 in 101ms (next.js: 3ms, generate-params: 31µs, application-code: 98ms)
- GET /sq/admin/roles 200 in 202ms (next.js: 11ms, generate-params: 7ms, application-code: 191ms)
- GET /sq/admin/roles 200 in 422ms (next.js: 10ms, generate-params: 7ms, application-code: 413ms)
- POST /sq/admin/roles 200 in 316ms (next.js: 10ms, generate-params: 6ms, application-code: 306ms)
-  └─ ƒ updateUserPermissionsAction("sq", "cmoivs9z8001eunrgvvfop3c3", {}) in 50ms src/actions/admin.ts
- POST /sq/admin/roles 200 in 240ms (next.js: 11ms, generate-params: 7ms, application-code: 230ms)
-  └─ ƒ updateUserPermissionsAction("sq", "cmoivs9z8001eunrgvvfop3c3", {}) in 38ms src/actions/admin.ts
- POST /sq/admin/roles 200 in 232ms (next.js: 3ms, generate-params: 76µs, application-code: 228ms)
-  └─ ƒ updateUserPermissionsAction("sq", "cmoivs9z8001eunrgvvfop3c3", {}) in 46ms src/actions/admin.ts
- POST /sq/admin/roles 200 in 234ms (next.js: 9ms, generate-params: 6ms, application-code: 225ms)
-  └─ ƒ updateUserPermissionsAction("sq", "cmoivs9z8001eunrgvvfop3c3", {}) in 39ms src/actions/admin.ts
- GET /sq/admin/roles 200 in 349ms (next.js: 9ms, generate-params: 6ms, application-code: 340ms)
- POST /sq/admin/roles 200 in 314ms (next.js: 11ms, generate-params: 7ms, application-code: 303ms)
-  └─ ƒ updateUserPermissionsAction("sq", "cmoivs9z8001eunrgvvfop3c3", {}) in 55ms src/actions/admin.ts
- GET /sq/admin/roles 200 in 403ms (next.js: 10ms, generate-params: 7ms, application-code: 393ms)
- GET /en/admin/roles 200 in 203ms (next.js: 10ms, generate-params: 7ms, application-code: 193ms)
- GET /sq/admin/roles 200 in 224ms (next.js: 10ms, generate-params: 6ms, application-code: 214ms)
- GET /sq/admin/settings 200 in 388ms (next.js: 351ms, generate-params: 312ms, application-code: 37ms)
- GET /sq/admin/users 200 in 125ms (next.js: 10ms, generate-params: 6ms, application-code: 115ms)
- GET /sq/admin/reports 200 in 66ms (next.js: 9ms, generate-params: 6ms, application-code: 56ms)
- GET /sq/admin 200 in 62ms (next.js: 13ms, generate-params: 8ms, application-code: 49ms)
- GET /sq/admin/purchase-invoices 200 in 53ms (next.js: 11ms, generate-params: 7ms, application-code: 43ms)
- GET /sq/admin/invoices 200 in 62ms (next.js: 10ms, generate-params: 6ms, application-code: 52ms)
- GET /sq/admin/purchase-invoices 200 in 51ms (next.js: 9ms, generate-params: 6ms, application-code: 42ms)
- POST /sq/admin/purchase-invoices 200 in 83ms (next.js: 10ms, generate-params: 7ms, application-code: 73ms)
-  └─ ƒ createSupplierAction("sq", {}) in 13ms src/actions/admin.ts
- POST /sq/admin/purchase-invoices 200 in 132ms (next.js: 10ms, generate-params: 7ms, application-code: 122ms)
-  └─ ƒ createPurchaseInvoiceAction("sq", {}) in 33ms src/actions/admin.ts
- GET /sq/admin 200 in 51ms (next.js: 11ms, generate-params: 7ms, application-code: 40ms)
- GET /sq/admin/users 200 in 138ms (next.js: 10ms, generate-params: 7ms, application-code: 128ms)
- GET /sq/admin/purchase-invoices 200 in 59ms (next.js: 11ms, generate-params: 7ms, application-code: 48ms)
- GET /api/purchase-invoices/cmoivum9300jjunrgkb97vqhf/pdf 200 in 1188ms (next.js: 1096ms, application-code: 92ms)
- GET /api/purchase-invoices/cmoivum9300jjunrgkb97vqhf/pdf 200 in 45ms (next.js: 14ms, application-code: 31ms)
- GET /sq/admin/purchase-invoices 200 in 261ms (next.js: 13ms, generate-params: 8ms, application-code: 249ms)
- GET /sq/admin/leads 200 in 896ms (next.js: 854ms, generate-params: 850ms, application-code: 42ms)
- GET /sq/admin/clients 200 in 75ms (next.js: 12ms, generate-params: 7ms, application-code: 64ms)
- GET /sq/admin 200 in 54ms (next.js: 11ms, generate-params: 7ms, application-code: 44ms)
+ GET /sq/admin/worker-hours 200 in 1980ms (next.js: 1757ms, generate-params: 336ms, application-code: 222ms)
+ GET /sq/admin/worker-hours 200 in 445ms (next.js: 126ms, generate-params: 8ms, application-code: 320ms)
+ GET /sq/admin/worker-hours 200 in 126ms (next.js: 11ms, generate-params: 55µs, application-code: 115ms)
+✓ Compiled in 134ms
+ GET /sq/admin/worker-hours 200 in 545ms (next.js: 118ms, generate-params: 9ms, application-code: 426ms)
+ GET /sq/admin/worker-hours 200 in 283ms (next.js: 8ms, generate-params: 64µs, application-code: 275ms)
+ GET /sq/admin/worker-hours 200 in 202ms (next.js: 10ms, generate-params: 49µs, application-code: 192ms)
+ GET /sq/admin/worker-hours 200 in 202ms (next.js: 81ms, generate-params: 53µs, application-code: 121ms)
+✓ Compiled in 82ms
+ GET /sq/admin/worker-hours 200 in 216ms (next.js: 116ms, generate-params: 8ms, application-code: 100ms)
+✓ Compiled in 61ms
+ GET /sq/admin/worker-hours 200 in 246ms (next.js: 114ms, generate-params: 7ms, application-code: 132ms)
+✓ Compiled in 67ms
+ GET /sq/admin/worker-hours 200 in 242ms (next.js: 116ms, generate-params: 7ms, application-code: 126ms)
+✓ Compiled in 63ms
+ GET /sq/admin/worker-hours 200 in 296ms (next.js: 122ms, generate-params: 9ms, application-code: 174ms)
+✓ Compiled in 105ms
+ GET /sq/admin/worker-hours 200 in 642ms (next.js: 115ms, generate-params: 8ms, application-code: 526ms)
+ GET /sq/admin/worker-hours 200 in 429ms (next.js: 11ms, generate-params: 46µs, application-code: 419ms)
+ GET /sq/admin/worker-hours 200 in 297ms (next.js: 16ms, generate-params: 33µs, application-code: 280ms)
+ GET /sq/admin/worker-hours 200 in 297ms (next.js: 181ms, generate-params: 33µs, application-code: 116ms)
+ GET /sq/admin/worker-hours 200 in 294ms (next.js: 105ms, generate-params: 42µs, application-code: 189ms)
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+ GET /sq/admin/worker-hours 200 in 542ms (next.js: 121ms, generate-params: 7ms, application-code: 421ms)
+ GET /sq/admin/worker-hours 200 in 141ms (next.js: 5ms, generate-params: 35µs, application-code: 136ms)
+✓ Compiled in 103ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+ GET /sq/admin/worker-hours 500 in 650ms (next.js: 131ms, generate-params: 10ms, application-code: 519ms)
+✓ Compiled in 173ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+ GET /sq/admin/worker-hours 500 in 624ms (next.js: 120ms, generate-params: 7ms, application-code: 504ms)
+✓ Compiled in 118ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+ GET /sq/admin/worker-hours 500 in 699ms (next.js: 121ms, generate-params: 8ms, application-code: 578ms)
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany()` invocation in
+C:\Users\PC\Desktop\arthome\.next\dev\server\chunks\ssr\[root-of-the-server]__0uajhnn._.js:114:161
+
+  111 const canCreate = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "CREATE");
+  112 const canEdit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "EDIT");
+  113 const canDelete = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$permissions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["can"])(permissions, "WORKER_HOURS", "DELETE");
+→ 114 const workers = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].worker.findMany({
+        orderBy: [
+          {
+            name: "asc"
+          },
+          {
+            createdAt: "desc"
+          }
+        ],
+        include: {
+          entries: {
+            orderBy: [
+              {
+                startedAt: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          },
+          advances: {
+            orderBy: [
+              {
+                date: "desc"
+              },
+              {
+                createdAt: "desc"
+              }
+            ]
+          }
+        }
+      })
+
+Unknown argument `date`. Available options are marked with ?.
+ GET /sq/admin/worker-hours 500 in 488ms (next.js: 108ms, generate-params: 7ms, application-code: 380ms)

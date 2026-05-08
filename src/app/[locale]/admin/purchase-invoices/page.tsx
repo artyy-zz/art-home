@@ -111,7 +111,7 @@ export default async function PurchaseInvoicesPage({
               />
             </div>
           ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-black/8 bg-white/75 p-5">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5">
               <p className="text-sm leading-7 text-[var(--color-muted)]">
                 {typedLocale === "sq"
                   ? "Shtoni furnitor dhe artikull në inventar para se të krijoni faturën e parë të blerjes."
@@ -224,7 +224,7 @@ export default async function PurchaseInvoicesPage({
                       </summary>
                       <form
                         action={updatePurchaseInvoiceAction.bind(null, typedLocale, invoice.id)}
-                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,380px)] gap-2 rounded-2xl border border-black/8 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
+                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,380px)] gap-2 rounded-2xl border-[2.25px] border-black/18 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
                       >
                         <select name="status" defaultValue={invoice.status} className={inputClassName}>
                           <option value="UNPAID">{statusLabels[typedLocale].UNPAID}</option>

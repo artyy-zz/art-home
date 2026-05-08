@@ -280,7 +280,7 @@ export default async function ExpensesPage({
                     </summary>
                     <form
                       action={updateExpenseAction.bind(null, typedLocale, expense.id)}
-                      className="absolute right-0 z-20 mt-2 grid w-[min(90vw,560px)] gap-2 rounded-2xl border border-black/8 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)] md:grid-cols-2"
+                      className="absolute right-0 z-20 mt-2 grid w-[min(90vw,560px)] gap-2 rounded-2xl border-[2.25px] border-black/18 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)] md:grid-cols-2"
                     >
                       <ExpenseFields locale={typedLocale} defaults={expense} />
                       <div className="md:col-span-2">

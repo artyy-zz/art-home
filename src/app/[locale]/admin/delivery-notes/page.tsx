@@ -117,7 +117,7 @@ export default async function DeliveryNotesPage({
               />
             </div>
           ) : (
-            <div className="mt-5 rounded-[24px] border border-black/8 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
+            <div className="mt-5 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
               {typedLocale === "sq"
                 ? "Shtoni klient, furnitor dhe artikull para se të krijoni fletë dërgesën e parë."
                 : "Add a client, supplier, and item before creating the first delivery note."}
@@ -228,7 +228,7 @@ export default async function DeliveryNotesPage({
                       </summary>
                       <form
                         action={updateDeliveryNoteAction.bind(null, typedLocale, note.id)}
-                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,340px)] gap-2 rounded-2xl border border-black/8 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
+                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,340px)] gap-2 rounded-2xl border-[2.25px] border-black/18 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
                       >
                         <select name="status" defaultValue={note.status} className={inputClassName}>
                           <option value="DRAFT">{statusLabels[typedLocale].DRAFT}</option>

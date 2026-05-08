@@ -108,6 +108,7 @@ export function OfferActions({
 
             <form
               action={updateOfferStatusAction.bind(null, locale, offer.id)}
+              onSubmit={() => setIsOpen(false)}
               className="mt-5 grid gap-3"
             >
               <select name="status" defaultValue={offer.status} className={inputClassName}>

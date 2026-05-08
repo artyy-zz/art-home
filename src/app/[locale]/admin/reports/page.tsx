@@ -44,7 +44,7 @@ export default async function ReportsPage({
           </h2>
           <div className="mt-6 space-y-3">
             {reports.expensesByMonth.map((item) => (
-              <div key={item.month} className="flex items-center justify-between rounded-[18px] border border-black/8 bg-white/75 px-4 py-3">
+              <div key={item.month} className="flex items-center justify-between rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-foreground)]">{item.month}</span>
                 <span className="text-sm text-[var(--color-muted)]">
                   {formatCurrency(item.totalCents, localeString)}
@@ -59,7 +59,7 @@ export default async function ReportsPage({
           </h2>
           <div className="mt-6 space-y-3">
             {reports.expensesByCategory.slice(0, 6).map((item) => (
-              <div key={item.category} className="flex items-center justify-between rounded-[18px] border border-black/8 bg-white/75 px-4 py-3">
+              <div key={item.category} className="flex items-center justify-between rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-foreground)]">
                   {expenseCategoryLabels[typedLocale][item.category as keyof typeof expenseCategoryLabels.sq]}
                 </span>
@@ -75,7 +75,7 @@ export default async function ReportsPage({
             {typedLocale === "sq" ? "Korrigjimet" : "Adjustments"}
           </h2>
           <div className="mt-6 space-y-4">
-            <div className="rounded-[18px] border border-black/8 bg-white/75 px-4 py-4">
+            <div className="rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">
                 {typedLocale === "sq" ? "Debit Note total" : "Debit note total"}
               </p>
@@ -107,7 +107,7 @@ export default async function ReportsPage({
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {reports.debitNotesByClient.map((client) => (
-            <div key={client.id} className="flex items-center justify-between rounded-[22px] border border-black/8 bg-white/75 px-4 py-4">
+            <div key={client.id} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
               <div>
                 <p className="font-semibold text-[var(--color-foreground)]">{client.name}</p>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -130,7 +130,7 @@ export default async function ReportsPage({
           </h2>
           <div className="mt-6 space-y-4">
             {reports.profitByProduct.slice(0, 6).map((product) => (
-              <div key={product.name} className="flex items-center justify-between rounded-[22px] border border-black/8 bg-white/75 px-4 py-4">
+              <div key={product.name} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">{product.name}</p>
                   <p className="text-sm text-[var(--color-muted)]">
@@ -151,7 +151,7 @@ export default async function ReportsPage({
           </h2>
           <div className="mt-6 space-y-4">
             {reports.materialUsage.slice(0, 6).map((material) => (
-              <div key={material.name} className="flex items-center justify-between rounded-[22px] border border-black/8 bg-white/75 px-4 py-4">
+              <div key={material.name} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
                 <p className="font-semibold text-[var(--color-foreground)]">{material.name}</p>
                 <span className="text-sm text-[var(--color-muted)]">
                   {formatNumber(material.quantity, localeString)}
@@ -168,7 +168,7 @@ export default async function ReportsPage({
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {reports.clientDebt.map((client) => (
-            <div key={client.id} className="rounded-[22px] border border-black/8 bg-white/75 px-4 py-4">
+            <div key={client.id} className="rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
               <p className="font-semibold text-[var(--color-foreground)]">{client.name}</p>
               <p className="mt-2 text-sm text-[var(--color-muted)]">
                 {formatCurrency(client.outstandingDebtCents, localeString)}

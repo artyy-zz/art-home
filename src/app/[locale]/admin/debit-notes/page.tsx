@@ -105,7 +105,7 @@ export default async function DebitNotesPage({
               />
             </div>
           ) : (
-            <div className="mt-5 rounded-[24px] border border-black/8 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
+            <div className="mt-5 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
               {typedLocale === "sq"
                 ? "Krijoni një faturë shitjeje me artikuj para se të krijoni debit note."
                 : "Create a sales invoice with items before creating a debit note."}
@@ -212,7 +212,7 @@ export default async function DebitNotesPage({
                       </summary>
                       <form
                         action={updateDebitNoteAction.bind(null, typedLocale, note.id)}
-                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,340px)] gap-2 rounded-2xl border border-black/8 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
+                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,340px)] gap-2 rounded-2xl border-[2.25px] border-black/18 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
                       >
                         <input
                           name="issuedAt"

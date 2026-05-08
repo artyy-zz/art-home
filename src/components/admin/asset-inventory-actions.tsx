@@ -95,6 +95,7 @@ export function AssetInventoryActions({
 
             <form
               action={updateAssetInventoryAction.bind(null, locale, asset.id)}
+              onSubmit={() => setIsOpen(false)}
               className="mt-5 grid gap-3 md:grid-cols-2"
             >
               <label className={fieldLabelClassName}>

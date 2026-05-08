@@ -235,7 +235,7 @@ export function WorkerHoursBoard({
 
   if (workers.length === 0) {
     return (
-      <p className="rounded-2xl border border-black/8 bg-white/72 p-4 text-sm text-[var(--color-muted)]">
+      <p className="rounded-2xl border-[2.25px] border-black/18 bg-white/72 p-4 text-sm text-[var(--color-muted)]">
         {locale === "sq" ? "Nuk ka punëtorë ende." : "No workers yet."}
       </p>
     );
@@ -252,7 +252,7 @@ export function WorkerHoursBoard({
         return (
           <details
             key={worker.id}
-            className="group overflow-hidden rounded-2xl border border-black/8 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+            className="group overflow-hidden rounded-2xl border-[2.25px] border-black/18 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
           >
             <summary className="grid cursor-pointer list-none gap-3 p-4 text-left transition hover:bg-white md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden">
               <div>
@@ -270,7 +270,7 @@ export function WorkerHoursBoard({
               <ChevronDown className="h-5 w-5 justify-self-end text-[var(--color-muted)] transition group-open:rotate-180" />
             </summary>
 
-            <div className="border-t border-black/8 p-4">
+            <div className="border-t-[2.25px] border-black/18 p-4">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-2">
                   {canEdit ? (
@@ -304,7 +304,7 @@ export function WorkerHoursBoard({
               {canCreate ? (
                 <form
                   action={createWorkerTimeEntryAction.bind(null, locale, worker.id)}
-                  className="mb-4 grid gap-3 rounded-2xl border border-black/8 bg-[#f7f2ec] p-3 md:grid-cols-[1fr_1fr_1fr_auto]"
+                  className="mb-4 grid gap-3 rounded-2xl border-[2.25px] border-black/18 bg-[#f7f2ec] p-3 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
                   <input
                     name="date"
@@ -335,7 +335,7 @@ export function WorkerHoursBoard({
                 </form>
               ) : null}
 
-              <div className="overflow-hidden rounded-2xl border border-black/8 bg-white/80">
+              <div className="overflow-hidden rounded-2xl border-[2.25px] border-black/18 bg-white/80">
                 <div className="overflow-x-auto">
                   <table className="min-w-[900px] w-full border-collapse text-left text-sm">
                     <thead className="bg-[#eee5da] text-xs uppercase tracking-[0.16em] text-[#5a4b40]">
@@ -348,7 +348,7 @@ export function WorkerHoursBoard({
                         <th className="px-4 py-3 text-right font-semibold">{locale === "sq" ? "Veprime" : "Actions"}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/8">
+                    <tbody className="divide-y-[2.25px] divide-black/18">
                       {worker.entries.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">

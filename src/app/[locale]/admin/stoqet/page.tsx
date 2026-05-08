@@ -83,7 +83,7 @@ export default async function StoqetPage({
                 submitLabel={typedLocale === "sq" ? "Ruaj Stokun" : "Save Stock"}
               />
             ) : (
-              <p className="rounded-2xl border border-black/8 bg-white/72 p-4 text-sm text-[var(--color-muted)]">
+              <p className="rounded-2xl border-[2.25px] border-black/18 bg-white/72 p-4 text-sm text-[var(--color-muted)]">
                 {typedLocale === "sq"
                   ? "Shto artikuj para se te krijosh stok."
                   : "Add items before creating stock."}

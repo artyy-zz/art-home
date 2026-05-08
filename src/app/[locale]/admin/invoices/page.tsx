@@ -112,7 +112,7 @@ export default async function InvoicesPage({
               />
             </div>
           ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-black/8 bg-white/75 p-5">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5">
               <p className="text-sm leading-7 text-[var(--color-muted)]">
                 {missingSetupMessage}
               </p>

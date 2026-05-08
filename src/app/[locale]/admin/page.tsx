@@ -73,7 +73,7 @@ export default async function AdminDashboardPage({
             {snapshot.kpis.bestSellingProducts.map((product) => (
               <div
                 key={product.name}
-                className="flex items-center justify-between rounded-[22px] border border-black/8 bg-white/75 px-4 py-4"
+                className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
               >
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">
@@ -97,7 +97,7 @@ export default async function AdminDashboardPage({
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.notifications.map((notification) => (
-              <div key={notification.id} className="relative rounded-[22px] border border-black/8 bg-white/75 p-4 pr-11">
+              <div key={notification.id} className="relative rounded-[22px] border-[2.25px] border-black/18 bg-white/75 p-4 pr-11">
                 {canDeleteNotifications ? (
                   <form
                     action={deleteNotificationAction.bind(null, typedLocale, notification.id)}
@@ -141,7 +141,7 @@ export default async function AdminDashboardPage({
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.overdueInvoices.map((invoice) => (
-              <div key={invoice.id} className="rounded-[22px] border border-black/8 bg-white/75 p-4">
+              <div key={invoice.id} className="rounded-[22px] border-[2.25px] border-black/18 bg-white/75 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-[var(--color-foreground)]">
@@ -168,7 +168,7 @@ export default async function AdminDashboardPage({
             {snapshot.lowStockMaterials.map((material) => (
               <div
                 key={material.id}
-                className="flex items-center justify-between rounded-[22px] border border-black/8 bg-white/75 px-4 py-4"
+                className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
               >
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">

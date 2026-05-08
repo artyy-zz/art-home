@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -91,6 +93,7 @@ export function RecordTable({
   emptyMessage: string;
   actionsLabel?: string;
 }) {
+  const [selectionMode, setSelectionMode] = useState(false);
   const normalizedQuery = normalizeSearch(query.trim());
   const filteredRows = normalizedQuery
     ? rows.filter((row) => normalizeSearch(row.searchText).includes(normalizedQuery))
@@ -108,6 +111,9 @@ export function RecordTable({
           return direction === "asc" ? comparison : comparison * -1;
         })
       : filteredRows;
+  const showActions = Boolean(actionsLabel && selectionMode);
+  const selectLabel = searchLabel === "Search" ? "Select" : "Selekto";
+  const cancelSelectLabel = searchLabel === "Search" ? "Cancel" : "Anulo";
 
   return (
     <div className="space-y-4">
@@ -129,9 +135,18 @@ export function RecordTable({
         <button className="h-12 rounded-full bg-[var(--color-foreground)] px-5 text-sm font-medium text-white transition hover:bg-black">
           {searchLabel}
         </button>
+        {actionsLabel ? (
+          <button
+            type="button"
+            onClick={() => setSelectionMode((value) => !value)}
+            className="h-12 rounded-full border border-black/10 bg-white/90 px-5 text-sm font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+          >
+            {selectionMode ? cancelSelectLabel : selectLabel}
+          </button>
+        ) : null}
       </form>
 
-      <div className="overflow-hidden rounded-[24px] border border-black/8 bg-white/82">
+      <div className="overflow-hidden rounded-[24px] border-[2.25px] border-black/18 bg-white/82">
         <div className="overflow-x-auto">
           <table className="min-w-[920px] w-full border-collapse text-left text-sm">
             <thead className="bg-[#eee5da] text-xs uppercase tracking-[0.18em] text-[#5a4b40]">
@@ -176,18 +191,18 @@ export function RecordTable({
                     )}
                   </th>
                 ))}
-                {actionsLabel ? (
+                {showActions ? (
                   <th className="whitespace-nowrap px-4 py-4 text-right font-semibold">
                     {actionsLabel}
                   </th>
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/8">
+            <tbody className="divide-y-[2.25px] divide-black/18">
               {sortedRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + (actionsLabel ? 1 : 0)}
+                    colSpan={columns.length + (showActions ? 1 : 0)}
                     className="px-4 py-10 text-center text-sm text-[var(--color-muted)]"
                   >
                     {emptyMessage}
@@ -208,7 +223,7 @@ export function RecordTable({
                         {row.cells[column.key]}
                       </td>
                     ))}
-                    {actionsLabel ? (
+                    {showActions ? (
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap justify-end gap-2">{row.actions}</div>
                       </td>

@@ -58,7 +58,7 @@ function PermissionChecklist({
   return (
     <div className="grid gap-3">
       {visiblePermissionModules.map((permissionModule) => (
-        <div key={permissionModule} className="rounded-2xl border border-black/8 bg-white/72 p-3">
+        <div key={permissionModule} className="rounded-2xl border-[2.25px] border-black/18 bg-white/72 p-3">
           <div className="grid gap-3 lg:grid-cols-[minmax(170px,0.75fr)_1.7fr] lg:items-center">
             <div>
               <p className="text-sm font-semibold text-[var(--color-foreground)]">
@@ -72,7 +72,7 @@ function PermissionChecklist({
               {permissionActions.map((action) => (
                 <label
                   key={action}
-                  className="flex min-h-10 items-center gap-2 rounded-full border border-black/8 bg-white/78 px-3 text-xs font-medium text-[var(--color-foreground)]"
+                  className="flex min-h-10 items-center gap-2 rounded-full border-[2.25px] border-black/18 bg-white/78 px-3 text-xs font-medium text-[var(--color-foreground)]"
                 >
                   <input
                     type="checkbox"
@@ -196,7 +196,7 @@ export default async function RolesPage({
           const stats = permissionStats(matrix);
 
           return (
-            <div key={role.id} className="rounded-2xl border border-black/8 bg-white/82 p-4">
+            <div key={role.id} className="rounded-2xl border-[2.25px] border-black/18 bg-white/82 p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <p className="text-sm font-semibold text-[var(--color-foreground)]">{role.name}</p>
                 <span className="rounded-full bg-[#f4f0ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5a4b40]">
@@ -267,7 +267,7 @@ export default async function RolesPage({
             return (
               <details
                 key={role.id}
-                className="group overflow-hidden rounded-2xl border border-black/8 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+                className="group overflow-hidden rounded-2xl border-[2.25px] border-black/18 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
               >
                 <summary className="grid cursor-pointer list-none gap-3 p-4 text-left transition hover:bg-white md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden">
                   <div>
@@ -288,10 +288,10 @@ export default async function RolesPage({
                   <ChevronDown className="h-5 w-5 justify-self-end text-[var(--color-muted)] transition group-open:rotate-180" />
                 </summary>
 
-                <div className="border-t border-black/8 p-4">
+                <div className="border-t-[2.25px] border-black/18 p-4">
                   {role.isOwner ? (
                     <div className="space-y-4">
-                      <div className="rounded-2xl border border-black/8 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
+                      <div className="rounded-2xl border-[2.25px] border-black/18 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
                         {typedLocale === "sq"
                           ? "Owner eshte i mbrojtur dhe ka gjithmone qasje te plote."
                           : "Owner is protected and always has full access."}
@@ -300,7 +300,7 @@ export default async function RolesPage({
                     </div>
                   ) : role.isSystem ? (
                     <div className="space-y-4">
-                      <div className="rounded-2xl border border-black/8 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
+                      <div className="rounded-2xl border-[2.25px] border-black/18 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
                         {typedLocale === "sq"
                           ? "Rolet e sistemit mund te shikohen, ndersa lejet baze ruhen nga sistemi."
                           : "System roles can be reviewed, while their base permissions are maintained by the system."}
@@ -381,7 +381,7 @@ export default async function RolesPage({
           return (
             <details
               key={person.id}
-              className="group overflow-hidden rounded-2xl border border-black/8 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+              className="group overflow-hidden rounded-2xl border-[2.25px] border-black/18 bg-white/86 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
             >
               <summary className="grid cursor-pointer list-none gap-3 p-4 text-left transition hover:bg-white md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden">
                 <div>
@@ -399,10 +399,10 @@ export default async function RolesPage({
                 <ChevronDown className="h-5 w-5 justify-self-end text-[var(--color-muted)] transition group-open:rotate-180" />
               </summary>
 
-              <div className="border-t border-black/8 p-4">
+              <div className="border-t-[2.25px] border-black/18 p-4">
                 {isOwner ? (
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-black/8 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
+                    <div className="rounded-2xl border-[2.25px] border-black/18 bg-[#f7f2ec] p-4 text-sm font-medium text-[var(--color-foreground)]">
                       {typedLocale === "sq"
                         ? "Owner ka gjithmonë qasje të plotë dhe nuk mund të humbasë lejet."
                         : "Owner always has full access and cannot lose permissions."}

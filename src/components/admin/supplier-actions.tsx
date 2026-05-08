@@ -85,6 +85,7 @@ export function SupplierActions({
 
             <form
               action={updateSupplierAction.bind(null, locale, supplier.id)}
+              onSubmit={() => setIsOpen(false)}
               className="mt-5 grid gap-3 md:grid-cols-2"
             >
               <label className={fieldLabelClassName}>

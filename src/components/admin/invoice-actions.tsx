@@ -110,6 +110,7 @@ export function InvoiceActions({
 
             <form
               action={updateInvoiceAction.bind(null, locale, invoice.id)}
+              onSubmit={() => setIsOpen(false)}
               className="mt-5 grid gap-3"
             >
               <select name="status" defaultValue={invoice.status} className={inputClassName}>

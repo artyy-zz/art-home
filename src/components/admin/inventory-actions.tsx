@@ -103,6 +103,7 @@ export function InventoryActions({
 
             <form
               action={updateMaterialAction.bind(null, locale, material.id)}
+              onSubmit={() => setIsOpen(false)}
               className="mt-5 grid gap-3 md:grid-cols-2"
             >
               <label className={fieldLabelClassName}>
