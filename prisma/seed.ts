@@ -25,6 +25,7 @@ async function main() {
     },
   });
 
+  
   const passwordHash = await bcrypt.hash(ownerPassword, 10);
 
   await prisma.user.upsert({
