@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -139,6 +140,8 @@ export function RecordTable({
   serverControlled?: boolean;
   pagination?: Pagination;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [selectionMode, setSelectionMode] = useState(false);
   const normalizedQuery = normalizeSearch(query.trim());
   const filteredRows = !serverControlled && normalizedQuery
@@ -160,10 +163,30 @@ export function RecordTable({
   const showActions = Boolean(actionsLabel && selectionMode);
   const selectLabel = searchLabel === "Search" ? "Select" : "Selekto";
   const cancelSelectLabel = searchLabel === "Search" ? "Cancel" : "Anulo";
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (!serverControlled) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const data = new FormData(event.currentTarget);
+    const params = new URLSearchParams();
+    for (const [key, value] of data.entries()) {
+      const text = String(value);
+      if (text) {
+        params.set(key, text);
+      }
+    }
+
+    startTransition(() => {
+      router.push(params.size > 0 ? `${currentPath}?${params.toString()}` : currentPath);
+    });
+  };
 
   return (
-    <div className="space-y-4">
-      <form action={currentPath} className="flex flex-col gap-3 sm:flex-row">
+    <div className={cn("space-y-4 transition-opacity", isPending && "opacity-70")}>
+      <form action={currentPath} onSubmit={handleSearchSubmit} className="flex flex-col gap-3 sm:flex-row">
         {Object.entries(preservedParams ?? {}).map(([key, value]) => (
           <input key={key} type="hidden" name={key} value={value} />
         ))}

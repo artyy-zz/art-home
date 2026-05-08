@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Boxes,
@@ -42,40 +42,62 @@ export function AdminSidebar({
   roleLabel: string;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const dict = getDictionary(locale);
-  const visible = new Set(visibleModules);
+  const visible = useMemo(() => new Set(visibleModules), [visibleModules]);
   const [collapsed, setCollapsed] = useState(false);
-  const items: Array<{
+  const items = useMemo<Array<{
     href: string;
     label: string;
     icon: typeof LayoutDashboard;
     module: PermissionModuleKey;
     exact?: boolean;
-  }> = [
-    {
-      href: `/${locale}/admin`,
-      label: dict.admin.dashboard,
-      icon: LayoutDashboard,
-      module: "DASHBOARD" as const,
-      exact: true,
-    },
-    { href: `/${locale}/admin/leads`, label: dict.admin.leads, icon: MessageSquareText, module: "LEADS" as const },
-    { href: `/${locale}/admin/clients`, label: dict.admin.clients, icon: Users, module: "CLIENTS" as const },
-    { href: `/${locale}/admin/suppliers`, label: dict.admin.suppliers, icon: Truck, module: "SUPPLIERS" as const },
-    { href: `/${locale}/admin/inventory`, label: dict.admin.inventory, icon: Boxes, module: "INVENTORY" as const },
-    { href: `/${locale}/admin/stoqet`, label: dict.admin.stoqet, icon: PackageCheck, module: "STOQET" as const },
-    { href: `/${locale}/admin/assets-inventory`, label: dict.admin.assetsInventory, icon: ClipboardList, module: "ASSETS_INVENTORY" as const },
-    { href: `/${locale}/admin/offers`, label: dict.admin.offers, icon: FileText, module: "OFFERS" as const },
-    { href: `/${locale}/admin/invoices`, label: dict.admin.invoices, icon: Receipt, module: "INVOICES" as const },
-    { href: `/${locale}/admin/purchase-invoices`, label: dict.admin.purchaseInvoices, icon: ShoppingCart, module: "PURCHASE_INVOICES" as const },
-    { href: `/${locale}/admin/delivery-notes`, label: dict.admin.deliveryNotes, icon: ClipboardList, module: "DELIVERY_NOTES" as const },
-    { href: `/${locale}/admin/expenses`, label: dict.admin.expenses, icon: WalletCards, module: "EXPENSES" as const },
-    { href: `/${locale}/admin/debit-notes`, label: dict.admin.debitNotes, icon: FileMinus2, module: "DEBIT_NOTES" as const },
-    { href: `/${locale}/admin/worker-hours`, label: dict.admin.workerHours, icon: Clock3, module: "WORKER_HOURS" as const },
-    { href: `/${locale}/admin/users`, label: dict.admin.users, icon: Users, module: "USERS" as const },
-    { href: `/${locale}/admin/roles`, label: dict.admin.roles, icon: ShieldCheck, module: "ROLES" as const },
-    { href: `/${locale}/admin/reports`, label: dict.admin.reports, icon: BarChart3, module: "REPORTS" as const },
-  ].filter((item) => visible.has(item.module));
+  }>>(
+    () =>
+      [
+        {
+          href: `/${locale}/admin`,
+          label: dict.admin.dashboard,
+          icon: LayoutDashboard,
+          module: "DASHBOARD" as const,
+          exact: true,
+        },
+        { href: `/${locale}/admin/leads`, label: dict.admin.leads, icon: MessageSquareText, module: "LEADS" as const },
+        { href: `/${locale}/admin/clients`, label: dict.admin.clients, icon: Users, module: "CLIENTS" as const },
+        { href: `/${locale}/admin/suppliers`, label: dict.admin.suppliers, icon: Truck, module: "SUPPLIERS" as const },
+        { href: `/${locale}/admin/inventory`, label: dict.admin.inventory, icon: Boxes, module: "INVENTORY" as const },
+        { href: `/${locale}/admin/stoqet`, label: dict.admin.stoqet, icon: PackageCheck, module: "STOQET" as const },
+        { href: `/${locale}/admin/assets-inventory`, label: dict.admin.assetsInventory, icon: ClipboardList, module: "ASSETS_INVENTORY" as const },
+        { href: `/${locale}/admin/offers`, label: dict.admin.offers, icon: FileText, module: "OFFERS" as const },
+        { href: `/${locale}/admin/invoices`, label: dict.admin.invoices, icon: Receipt, module: "INVOICES" as const },
+        { href: `/${locale}/admin/purchase-invoices`, label: dict.admin.purchaseInvoices, icon: ShoppingCart, module: "PURCHASE_INVOICES" as const },
+        { href: `/${locale}/admin/delivery-notes`, label: dict.admin.deliveryNotes, icon: ClipboardList, module: "DELIVERY_NOTES" as const },
+        { href: `/${locale}/admin/expenses`, label: dict.admin.expenses, icon: WalletCards, module: "EXPENSES" as const },
+        { href: `/${locale}/admin/debit-notes`, label: dict.admin.debitNotes, icon: FileMinus2, module: "DEBIT_NOTES" as const },
+        { href: `/${locale}/admin/worker-hours`, label: dict.admin.workerHours, icon: Clock3, module: "WORKER_HOURS" as const },
+        { href: `/${locale}/admin/users`, label: dict.admin.users, icon: Users, module: "USERS" as const },
+        { href: `/${locale}/admin/roles`, label: dict.admin.roles, icon: ShieldCheck, module: "ROLES" as const },
+        { href: `/${locale}/admin/reports`, label: dict.admin.reports, icon: BarChart3, module: "REPORTS" as const },
+      ].filter((item) => visible.has(item.module)),
+    [dict, locale, visible],
+  );
+  const hrefs = useMemo(() => items.map((item) => item.href), [items]);
+
+  useEffect(() => {
+    const warmRoutes = () => {
+      for (const href of hrefs) {
+        if (href !== pathname) {
+          router.prefetch(href);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(warmRoutes, 250);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [hrefs, pathname, router]);
 
   return (
     <aside
@@ -139,6 +161,8 @@ export function AdminSidebar({
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
+              onMouseEnter={() => router.prefetch(item.href)}
+              onFocus={() => router.prefetch(item.href)}
               className={cn(
                 "flex items-center rounded-2xl text-sm font-medium transition",
                 collapsed ? "h-11 w-11 justify-center" : "gap-3 px-4 py-3",
