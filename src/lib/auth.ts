@@ -77,7 +77,7 @@ export async function clearSession() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function getSession() {
+export const getSession = cache(async () => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) {
     return null;
@@ -89,7 +89,7 @@ export async function getSession() {
   } catch {
     return null;
   }
-}
+});
 
 export const getCurrentUser = cache(async () => {
   const session = await getSession();

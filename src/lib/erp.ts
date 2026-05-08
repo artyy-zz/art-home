@@ -486,16 +486,47 @@ export async function getProductBuilderOptions() {
 export async function getDashboardSnapshot(locale: Locale) {
   const [invoices, materials, notifications, leads, movements] = await Promise.all([
     prisma.invoice.findMany({
-      include: {
-        client: true,
-        items: true,
-        debitNotes: true,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        subtotalCents: true,
+        vatAmountCents: true,
+        totalCents: true,
+        amountPaidCents: true,
+        dueDate: true,
+        issuedAt: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+        items: {
+          select: {
+            productName: true,
+            quantity: true,
+            lineTotalCents: true,
+            unitCostCents: true,
+          },
+        },
+        debitNotes: {
+          select: {
+            totalCents: true,
+          },
+        },
       },
       orderBy: {
         issuedAt: "desc",
       },
     }),
     prisma.material.findMany({
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        stockQuantity: true,
+        lowStockThreshold: true,
+      },
       orderBy: {
         stockQuantity: "asc",
       },
@@ -507,6 +538,18 @@ export async function getDashboardSnapshot(locale: Locale) {
       take: 6,
     }),
     prisma.lead.findMany({
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        description: true,
+        status: true,
+        sourceLocale: true,
+        createdAt: true,
+        updatedAt: true,
+        clientId: true,
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -516,12 +559,18 @@ export async function getDashboardSnapshot(locale: Locale) {
       where: {
         kind: InventoryMovementKind.CONSUMPTION,
       },
-      include: {
-        material: true,
+      select: {
+        quantity: true,
+        material: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
+      take: 200,
     }),
   ]);
 

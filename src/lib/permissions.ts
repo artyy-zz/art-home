@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Role, UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { requireStaffSession } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
@@ -51,6 +52,17 @@ function createFullMatrix() {
   ) as PermissionMatrix;
 }
 
+function cloneMatrix(matrix: PermissionMatrix) {
+  return Object.fromEntries(
+    permissionModules.map((module) => [
+      module,
+      Object.fromEntries(
+        permissionActions.map((action) => [action, matrix[module][action]]),
+      ),
+    ]),
+  ) as PermissionMatrix;
+}
+
 function allow(
   matrix: PermissionMatrix,
   module: PermissionModuleKey,
@@ -73,7 +85,7 @@ export function isOwnerUser(user: Pick<PermissionUser, "role" | "roleRecord">) {
   return user.role === "OWNER" || Boolean(user.roleRecord?.isOwner);
 }
 
-export async function ensureSystemRoles() {
+export const ensureSystemRoles = cache(async () => {
   const roles = await Promise.all(
     Object.entries(systemRoleDefinitions).map(([role, definition]) =>
       prisma.role.upsert({
@@ -116,7 +128,7 @@ export async function ensureSystemRoles() {
   );
 
   return roles;
-}
+});
 
 export function getDefaultPermissionMatrix(role: UserRole | null | undefined) {
   if (role === "OWNER") {
@@ -161,7 +173,7 @@ export function getPermissionTemplateForRoleRecord(
   return getDefaultPermissionMatrix(asSystemRole(role.key));
 }
 
-export async function getPermissionMatrixForRoleRecord(role: RoleRecord) {
+export const getPermissionMatrixForRoleRecord = cache(async (role: RoleRecord) => {
   const matrix = getPermissionTemplateForRoleRecord(role);
 
   if (role.isOwner || asSystemRole(role.key)) {
@@ -181,9 +193,9 @@ export async function getPermissionMatrixForRoleRecord(role: RoleRecord) {
   }
 
   return matrix;
-}
+});
 
-export async function getPermissionMatrixForRole(role: UserRole) {
+export const getPermissionMatrixForRole = cache(async (role: UserRole) => {
   await ensureSystemRoles();
   const roleRecord = await prisma.role.findUnique({
     where: { key: role },
@@ -195,9 +207,9 @@ export async function getPermissionMatrixForRole(role: UserRole) {
   }
 
   return getDefaultPermissionMatrix(role);
-}
+});
 
-async function getPermissionTemplateForUser(user: PermissionUser) {
+const getPermissionTemplateForUser = cache(async (user: PermissionUser) => {
   if (user.roleRecord) {
     return getPermissionMatrixForRoleRecord(user.roleRecord);
   }
@@ -214,14 +226,14 @@ async function getPermissionTemplateForUser(user: PermissionUser) {
   }
 
   return getPermissionMatrixForRole(user.role);
-}
+});
 
-export async function getUserPermissionMatrix(user: PermissionUser) {
+export const getUserPermissionMatrix = cache(async (user: PermissionUser) => {
   if (isOwnerUser(user)) {
     return createFullMatrix();
   }
 
-  const matrix = await getPermissionTemplateForUser(user);
+  const matrix = cloneMatrix(await getPermissionTemplateForUser(user));
   const storedPermissions = await prisma.userPermission.findMany({
     where: { userId: user.id },
   });
@@ -235,7 +247,7 @@ export async function getUserPermissionMatrix(user: PermissionUser) {
   }
 
   return matrix;
-}
+});
 
 export function can(
   permissions: PermissionMatrix,
