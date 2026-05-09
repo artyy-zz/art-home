@@ -7,14 +7,13 @@ import {
   updateDeliveryNoteAction,
 } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyDeliveryNoteBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
-import { DeliveryNoteBuilderForm } from "@/components/forms/delivery-note-builder-form";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
-  getDeliveryNoteBuilderOptions,
   getDeliveryNoteOverviewPage,
   statusTone,
 } from "@/lib/erp";
@@ -73,27 +72,17 @@ async function DeliveryNotesPage({
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const activeType = param(resolvedSearchParams, "type") === "PURCHASE" ? "PURCHASE" : "SALES";
   const canCreate = can(permissions, "DELIVERY_NOTES", "CREATE");
-  const [deliveryNotes, options] = await Promise.all([
-    getDeliveryNoteOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-      type: activeType,
-    }),
-    canCreate
-      ? getDeliveryNoteBuilderOptions(typedLocale)
-      : Promise.resolve({ clients: [], suppliers: [], items: [] }),
-  ]);
+  const deliveryNotes = await getDeliveryNoteOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+    type: activeType,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "DELIVERY_NOTES", "EDIT");
   const canDelete = can(permissions, "DELIVERY_NOTES", "DELETE");
   const canExport = can(permissions, "DELIVERY_NOTES", "EXPORT");
-  const canCreateDeliveryNote =
-    canCreate &&
-    options.clients.length > 0 &&
-    options.suppliers.length > 0 &&
-    options.items.length > 0;
   const tabHref = (type: "SALES" | "PURCHASE") =>
     `/${typedLocale}/admin/delivery-notes?type=${type}`;
 
@@ -107,34 +96,10 @@ async function DeliveryNotesPage({
           buttonLabel={typedLocale === "sq" ? "Shto fletë dërgesë" : "Add delivery note"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          {canCreateDeliveryNote ? (
-            <div>
-              <DeliveryNoteBuilderForm
-                locale={typedLocale}
-                clients={options.clients.map((client) => ({
-                  id: client.id,
-                  name: client.name,
-                }))}
-                suppliers={options.suppliers.map((supplier) => ({
-                  id: supplier.id,
-                  name: supplier.name,
-                }))}
-                items={options.items.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  sku: item.sku,
-                  categoryTitle: item.categoryTitle,
-                }))}
-                action={createDeliveryNoteAction.bind(null, typedLocale)}
-              />
-            </div>
-          ) : (
-            <div className="mt-5 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
-              {typedLocale === "sq"
-                ? "Shtoni klient, furnitor dhe artikull para se të krijoni fletë dërgesën e parë."
-                : "Add a client, supplier, and item before creating the first delivery note."}
-            </div>
-          )}
+          <LazyDeliveryNoteBuilderForm
+            locale={typedLocale}
+            action={createDeliveryNoteAction.bind(null, typedLocale)}
+          />
         </CreateFormPanel>
       ) : null}
 

@@ -7,14 +7,13 @@ import {
   updateDebitNoteAction,
 } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyDebitNoteBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
-import { DebitNoteBuilderForm } from "@/components/forms/debit-note-builder-form";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
   getAdjustedInvoiceOutstandingCents,
-  getDebitNoteBuilderOptions,
   getDebitNoteOverviewPage,
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
@@ -72,27 +71,16 @@ async function DebitNotesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const canCreate = can(permissions, "DEBIT_NOTES", "CREATE");
-  const [debitNotes, options] = await Promise.all([
-    getDebitNoteOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-    }),
-    canCreate
-      ? getDebitNoteBuilderOptions()
-      : Promise.resolve({ clients: [], invoices: [] }),
-  ]);
+  const debitNotes = await getDebitNoteOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "DEBIT_NOTES", "EDIT");
   const canDelete = can(permissions, "DEBIT_NOTES", "DELETE");
   const canExport = can(permissions, "DEBIT_NOTES", "EXPORT");
-  const canCreateDebitNote =
-    canCreate &&
-    options.clients.length > 0 &&
-    options.invoices.some((invoice) =>
-      invoice.items.some((item) => item.remainingQuantity > 0),
-    );
 
   return measureDetailSync(
     "admin/debit-notes.table mapping/formatting",
@@ -104,25 +92,10 @@ async function DebitNotesPage({
           buttonLabel={typedLocale === "sq" ? "Shto debit note" : "Add debit note"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          {canCreateDebitNote ? (
-            <div>
-              <DebitNoteBuilderForm
-                locale={typedLocale}
-                clients={options.clients.map((client) => ({
-                  id: client.id,
-                  name: client.name,
-                }))}
-                invoices={options.invoices}
-                action={createDebitNoteAction.bind(null, typedLocale)}
-              />
-            </div>
-          ) : (
-            <div className="mt-5 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5 text-sm leading-7 text-[var(--color-muted)]">
-              {typedLocale === "sq"
-                ? "Krijoni një faturë shitjeje me artikuj para se të krijoni debit note."
-                : "Create a sales invoice with items before creating a debit note."}
-            </div>
-          )}
+          <LazyDebitNoteBuilderForm
+            locale={typedLocale}
+            action={createDebitNoteAction.bind(null, typedLocale)}
+          />
         </CreateFormPanel>
       ) : null}
 

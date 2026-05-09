@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { preload } from "swr";
 import {
   BarChart3,
   Boxes,
@@ -29,6 +30,24 @@ import type { PermissionModuleKey } from "@/lib/permissions-config";
 import { cn } from "@/lib/utils";
 
 const iconClass = "h-4 w-4 shrink-0";
+
+const optionResourceByModule: Partial<Record<PermissionModuleKey, string>> = {
+  OFFERS: "offers",
+  INVOICES: "invoices",
+  PURCHASE_INVOICES: "purchase-invoices",
+  DELIVERY_NOTES: "delivery-notes",
+  EXPENSES: "expenses",
+  DEBIT_NOTES: "debit-notes",
+  STOQET: "stoqet",
+};
+
+const sidebarFetcher = (url: string) =>
+  fetch(url).then((response) => {
+    if (!response.ok) {
+      throw new Error("Prefetch failed");
+    }
+    return response.json();
+  });
 
 export function AdminSidebar({
   locale,
@@ -82,6 +101,18 @@ export function AdminSidebar({
     [dict, locale, visible],
   );
   const hrefs = useMemo(() => items.map((item) => item.href), [items]);
+  const prefetchItem = (item: { href: string; module: PermissionModuleKey }) => {
+    router.prefetch(item.href);
+
+    const resource = optionResourceByModule[item.module];
+    if (resource) {
+      const params = new URLSearchParams({ locale, resource });
+      if (resource === "stoqet") {
+        params.set("mode", "create");
+      }
+      void preload(`/api/admin/options?${params.toString()}`, sidebarFetcher);
+    }
+  };
 
   useEffect(() => {
     const warmRoutes = () => {
@@ -161,8 +192,8 @@ export function AdminSidebar({
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
-              onMouseEnter={() => router.prefetch(item.href)}
-              onFocus={() => router.prefetch(item.href)}
+              onMouseEnter={() => prefetchItem(item)}
+              onFocus={() => prefetchItem(item)}
               className={cn(
                 "flex items-center rounded-2xl text-sm font-medium transition",
                 collapsed ? "h-11 w-11 justify-center" : "gap-3 px-4 py-3",

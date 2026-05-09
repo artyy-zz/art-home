@@ -7,14 +7,13 @@ import {
   updatePurchaseInvoiceAction,
 } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyPurchaseInvoiceBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
-import { PurchaseInvoiceBuilderForm } from "@/components/forms/purchase-invoice-builder-form";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
-  getPurchaseInvoiceBuilderOptions,
   getPurchaseInvoiceOverviewPage,
   statusTone,
 } from "@/lib/erp";
@@ -63,35 +62,16 @@ async function PurchaseInvoicesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const canCreate = can(permissions, "PURCHASE_INVOICES", "CREATE");
-  const [purchaseInvoices, options] = await Promise.all([
-    getPurchaseInvoiceOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-    }),
-    canCreate
-      ? getPurchaseInvoiceBuilderOptions(typedLocale)
-      : Promise.resolve({ suppliers: [], items: [] }),
-  ]);
+  const purchaseInvoices = await getPurchaseInvoiceOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "PURCHASE_INVOICES", "EDIT");
   const canDelete = can(permissions, "PURCHASE_INVOICES", "DELETE");
   const canExport = can(permissions, "PURCHASE_INVOICES", "EXPORT");
-  const canCreatePurchaseInvoice =
-    canCreate && options.suppliers.length > 0 && options.items.length > 0;
-  const missingSetupHref =
-    options.suppliers.length === 0
-      ? `/${typedLocale}/admin/suppliers`
-      : `/${typedLocale}/admin/inventory`;
-  const missingSetupLabel =
-    options.suppliers.length === 0
-      ? typedLocale === "sq"
-        ? "Shto furnitor"
-        : "Add supplier"
-      : typedLocale === "sq"
-        ? "Shko te artikujt"
-        : "Go to items";
 
   return measureDetailSync(
     "admin/purchase-invoices.table mapping/formatting",
@@ -103,40 +83,10 @@ async function PurchaseInvoicesPage({
           buttonLabel={typedLocale === "sq" ? "Shto faturë blerjeje" : "Add purchase invoice"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          {canCreatePurchaseInvoice ? (
-            <div>
-              <PurchaseInvoiceBuilderForm
-                locale={typedLocale}
-                suppliers={options.suppliers.map((supplier) => ({
-                  id: supplier.id,
-                  name: supplier.name,
-                }))}
-                items={options.items.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  sku: item.sku,
-                  unit: item.unit,
-                  unitPriceCents: item.unitPriceCents,
-                  categoryTitle: item.categoryTitle,
-                }))}
-                action={createPurchaseInvoiceAction.bind(null, typedLocale)}
-              />
-            </div>
-          ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5">
-              <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {typedLocale === "sq"
-                  ? "Shtoni furnitor dhe artikull në inventar para se të krijoni faturën e parë të blerjes."
-                  : "Add a supplier and an inventory item before creating the first purchase invoice."}
-              </p>
-              <Link
-                href={missingSetupHref}
-                className={buttonClasses({ variant: "secondary" })}
-              >
-                {missingSetupLabel}
-              </Link>
-            </div>
-          )}
+          <LazyPurchaseInvoiceBuilderForm
+            locale={typedLocale}
+            action={createPurchaseInvoiceAction.bind(null, typedLocale)}
+          />
         </CreateFormPanel>
       ) : null}
 

@@ -2,9 +2,9 @@ import { withPagePerf } from "@/lib/perf";
 import { createStokAction } from "@/actions/admin";
 import { StockActions } from "@/components/admin/stock-actions";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyStockBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
-import { StockBuilderForm } from "@/components/forms/stock-builder-form";
 import type { Locale } from "@/lib/i18n";
 import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
@@ -36,43 +36,28 @@ async function StoqetPage({
   const canEdit = can(permissions, "STOQET", "EDIT");
   const canDelete = can(permissions, "STOQET", "DELETE");
 
-  const needsMaterialOptions = canCreate || canEdit;
-  const [materials, stocks] = await measureDetailAsync(
+  const stocks = await measureDetailAsync(
     "admin/stoqet.main data query",
     () =>
-      Promise.all([
-        needsMaterialOptions
-          ? prisma.material.findMany({
-              orderBy: [{ name: "asc" }, { sku: "asc" }],
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                unit: true,
-                stockQuantity: true,
-              },
-            })
-          : Promise.resolve([]),
-        prisma.stok.findMany({
-          orderBy: [{ createdAt: "desc" }],
-          include: {
-            items: {
-              orderBy: [{ createdAt: "asc" }],
-              include: {
-                material: {
-                  select: {
-                    id: true,
-                    name: true,
-                    sku: true,
-                    unit: true,
-                    stockQuantity: true,
-                  },
+      prisma.stok.findMany({
+        orderBy: [{ createdAt: "desc" }],
+        include: {
+          items: {
+            orderBy: [{ createdAt: "asc" }],
+            include: {
+              material: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  unit: true,
+                  stockQuantity: true,
                 },
               },
             },
           },
-        }),
-      ]),
+        },
+      }),
     { locale: typedLocale },
   );
   const rows = measureDetailSync(
@@ -131,7 +116,6 @@ async function StoqetPage({
             <StockActions
               locale={typedLocale}
               stock={stock}
-              materials={materials}
               canEdit={canEdit}
               canDelete={canDelete}
             />
@@ -150,20 +134,11 @@ async function StoqetPage({
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
           <div>
-            {materials.length > 0 ? (
-              <StockBuilderForm
-                locale={typedLocale}
-                materials={materials}
-                action={createStokAction.bind(null, typedLocale)}
-                submitLabel={typedLocale === "sq" ? "Ruaj Stokun" : "Save Stock"}
-              />
-            ) : (
-              <p className="rounded-2xl border-[2.25px] border-black/18 bg-white/72 p-4 text-sm text-[var(--color-muted)]">
-                {typedLocale === "sq"
-                  ? "Shto artikuj para se te krijosh stok."
-                  : "Add items before creating stock."}
-              </p>
-            )}
+            <LazyStockBuilderForm
+              locale={typedLocale}
+              action={createStokAction.bind(null, typedLocale)}
+              submitLabel={typedLocale === "sq" ? "Ruaj Stokun" : "Save Stock"}
+            />
           </div>
         </CreateFormPanel>
       ) : null}

@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useTransition, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import useSWRImmutable from "swr/immutable";
 import { cn } from "@/lib/utils";
 
 type SortValue = string | number | Date | null | undefined;
@@ -35,6 +43,11 @@ type Pagination = {
   label: string;
   previousLabel: string;
   nextLabel: string;
+};
+
+type TableCache = {
+  rows: Row[];
+  pagination?: Pagination;
 };
 
 function normalizeSearch(value: string) {
@@ -146,10 +159,36 @@ export function RecordTable({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectionMode, setSelectionMode] = useState(false);
+  const cacheKey = useMemo(
+    () => [
+      "admin-list",
+      currentPath,
+      JSON.stringify(preservedParams ?? {}),
+      query,
+      sort ?? "",
+      direction,
+      serverControlled ? "server" : "client",
+    ],
+    [currentPath, direction, preservedParams, query, serverControlled, sort],
+  );
+  const { data: cachedTable, mutate } = useSWRImmutable<TableCache>(
+    cacheKey,
+    null,
+    {
+      fallbackData: { rows, pagination },
+    },
+  );
+
+  useEffect(() => {
+    void mutate({ rows, pagination }, { revalidate: false });
+  }, [mutate, pagination, rows]);
+
+  const activeRows = cachedTable?.rows ?? rows;
+  const activePagination = cachedTable?.pagination ?? pagination;
   const normalizedQuery = normalizeSearch(query.trim());
   const filteredRows = !serverControlled && normalizedQuery
-    ? rows.filter((row) => normalizeSearch(row.searchText).includes(normalizedQuery))
-    : rows;
+    ? activeRows.filter((row) => normalizeSearch(row.searchText).includes(normalizedQuery))
+    : activeRows;
 
   const sortedRows =
     !serverControlled && sort && columns.some((column) => column.key === sort && column.sortable)
@@ -308,15 +347,15 @@ export function RecordTable({
         </div>
       </div>
 
-      {pagination ? (
+      {activePagination ? (
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
           <span>
-            {pagination.label
-              .replace("{page}", String(pagination.page))
-              .replace("{totalPages}", String(pagination.totalPages))
+            {activePagination.label
+              .replace("{page}", String(activePagination.page))
+              .replace("{totalPages}", String(activePagination.totalPages))
               .replace(
                 "{totalItems}",
-                `${pagination.totalItems}${pagination.exactTotal === false ? "+" : ""}`,
+                `${activePagination.totalItems}${activePagination.exactTotal === false ? "+" : ""}`,
               )}
           </span>
           <div className="flex items-center gap-2">
@@ -327,16 +366,16 @@ export function RecordTable({
                 query,
                 sort,
                 direction,
-                page: Math.max(1, pagination.page - 1),
+                page: Math.max(1, activePagination.page - 1),
               })}
-              aria-disabled={pagination.hasPreviousPage === false || pagination.page <= 1}
+              aria-disabled={activePagination.hasPreviousPage === false || activePagination.page <= 1}
               className={cn(
                 "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
-                (pagination.hasPreviousPage === false || pagination.page <= 1) &&
+                (activePagination.hasPreviousPage === false || activePagination.page <= 1) &&
                   "pointer-events-none opacity-45",
               )}
             >
-              {pagination.previousLabel}
+              {activePagination.previousLabel}
             </Link>
             <Link
               href={buildPageHref({
@@ -345,16 +384,16 @@ export function RecordTable({
                 query,
                 sort,
                 direction,
-                page: Math.min(pagination.totalPages, pagination.page + 1),
+                page: Math.min(activePagination.totalPages, activePagination.page + 1),
               })}
-              aria-disabled={pagination.hasNextPage === false || pagination.page >= pagination.totalPages}
+              aria-disabled={activePagination.hasNextPage === false || activePagination.page >= activePagination.totalPages}
               className={cn(
                 "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
-                (pagination.hasNextPage === false || pagination.page >= pagination.totalPages) &&
+                (activePagination.hasNextPage === false || activePagination.page >= activePagination.totalPages) &&
                   "pointer-events-none opacity-45",
               )}
             >
-              {pagination.nextLabel}
+              {activePagination.nextLabel}
             </Link>
           </div>
         </div>

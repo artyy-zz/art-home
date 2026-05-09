@@ -1,14 +1,12 @@
 import { withPagePerf } from "@/lib/perf";
-import Link from "next/link";
 import { createOfferAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyOfferBuilderForm } from "@/components/admin/lazy-admin-options";
 import { OfferActions } from "@/components/admin/offer-actions";
 import { RecordTable } from "@/components/admin/record-table";
-import { OfferBuilderForm } from "@/components/forms/offer-builder-form";
 import { Badge } from "@/components/shared/badge";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
-import { getOfferBuilderOptions, getOfferOverviewPage, statusTone } from "@/lib/erp";
+import { getOfferOverviewPage, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
 import { measureDetailSync } from "@/lib/perf";
@@ -49,42 +47,16 @@ async function OffersPage({
   const sort = param(resolvedSearchParams, "sort") || "createdAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const canCreate = can(permissions, "OFFERS", "CREATE");
-  const [offers, options] = await Promise.all([
-    getOfferOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-    }),
-    canCreate
-      ? getOfferBuilderOptions(typedLocale)
-      : Promise.resolve({ clients: [], leads: [], items: [] }),
-  ]);
+  const offers = await getOfferOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "OFFERS", "EDIT");
   const canDelete = can(permissions, "OFFERS", "DELETE");
   const canExport = can(permissions, "OFFERS", "EXPORT");
-  const canCreateOffer = canCreate && options.clients.length > 0 && options.items.length > 0;
-  const missingSetupHref =
-    options.clients.length === 0
-      ? `/${typedLocale}/admin/clients`
-      : `/${typedLocale}/admin/inventory`;
-  const missingSetupLabel =
-    options.clients.length === 0
-      ? typedLocale === "sq"
-        ? "Shto klient"
-        : "Add client"
-      : typedLocale === "sq"
-        ? "Shto artikull"
-        : "Add item";
-  const missingSetupMessage =
-    options.clients.length === 0
-      ? typedLocale === "sq"
-        ? "Shtoni nje klient para se te krijoni oferten e pare."
-        : "Add a client before creating the first offer."
-      : typedLocale === "sq"
-        ? "Shtoni nje artikull para se te krijoni oferten e pare."
-        : "Add an item before creating the first offer.";
 
   return measureDetailSync(
     "admin/offers.table mapping/formatting",
@@ -96,38 +68,10 @@ async function OffersPage({
           buttonLabel={typedLocale === "sq" ? "Shto oferte" : "Add offer"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          {canCreateOffer ? (
-            <div>
-              <OfferBuilderForm
-                locale={typedLocale}
-                clients={options.clients.map((client) => ({
-                  id: client.id,
-                  name: client.name,
-                }))}
-                items={options.items.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  sku: item.sku,
-                  unit: item.unit,
-                  unitPriceCents: item.unitPriceCents,
-                  categoryTitle: item.categoryTitle,
-                }))}
-                action={createOfferAction.bind(null, typedLocale)}
-              />
-            </div>
-          ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5">
-              <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {missingSetupMessage}
-              </p>
-              <Link
-                href={missingSetupHref}
-                className={buttonClasses({ variant: "secondary" })}
-              >
-                {missingSetupLabel}
-              </Link>
-            </div>
-          )}
+          <LazyOfferBuilderForm
+            locale={typedLocale}
+            action={createOfferAction.bind(null, typedLocale)}
+          />
         </CreateFormPanel>
       ) : null}
 

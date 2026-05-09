@@ -6,12 +6,9 @@ import {
   deleteStokAction,
   updateStokAction,
 } from "@/actions/admin";
+import { LazyStockBuilderForm } from "@/components/admin/lazy-admin-options";
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
-import {
-  StockBuilderForm,
-  type StockMaterialOption,
-} from "@/components/forms/stock-builder-form";
 import type { Locale } from "@/lib/i18n";
 
 type StockItem = {
@@ -34,7 +31,6 @@ type StockActionsProps = {
     priceCents: number;
     items: StockItem[];
   };
-  materials: StockMaterialOption[];
   canEdit: boolean;
   canDelete: boolean;
 };
@@ -42,7 +38,6 @@ type StockActionsProps = {
 export function StockActions({
   locale,
   stock,
-  materials,
   canEdit,
   canDelete,
 }: StockActionsProps) {
@@ -99,9 +94,9 @@ export function StockActions({
             </div>
 
             <div className="mt-5">
-              <StockBuilderForm
+              <LazyStockBuilderForm
                 locale={locale}
-                materials={materials}
+                mode="edit"
                 action={updateStokAction.bind(null, locale, stock.id)}
                 submitLabel={locale === "sq" ? "Ruaj Stokun" : "Save Stock"}
                 initial={{

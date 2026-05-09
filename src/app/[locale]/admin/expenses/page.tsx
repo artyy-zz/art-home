@@ -6,13 +6,13 @@ import {
 } from "@/actions/admin";
 import { Pencil } from "lucide-react";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import { LazyExpenseBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
-import { ExpenseBuilderForm } from "@/components/forms/expense-builder-form";
 import { Badge } from "@/components/shared/badge";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
-import { getExpenseOverviewPage, getPurchaseInvoiceBuilderOptions } from "@/lib/erp";
+import { getExpenseOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
 import { measureDetailSync } from "@/lib/perf";
@@ -163,17 +163,12 @@ async function ExpensesPage({
   const sort = param(resolvedSearchParams, "sort") || "date";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const canCreate = can(permissions, "EXPENSES", "CREATE");
-  const [expenses, options] = await Promise.all([
-    getExpenseOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-    }),
-    canCreate
-      ? getPurchaseInvoiceBuilderOptions(typedLocale, "admin/expenses")
-      : Promise.resolve({ suppliers: [], items: [] }),
-  ]);
+  const expenses = await getExpenseOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "EXPENSES", "EDIT");
   const canDelete = can(permissions, "EXPENSES", "DELETE");
@@ -188,20 +183,8 @@ async function ExpensesPage({
           buttonLabel={typedLocale === "sq" ? "Shto shpenzim" : "Add expense"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          <ExpenseBuilderForm
+          <LazyExpenseBuilderForm
             locale={typedLocale}
-            suppliers={options.suppliers.map((supplier) => ({
-              id: supplier.id,
-              name: supplier.name,
-            }))}
-            items={options.items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              sku: item.sku,
-              unit: item.unit,
-              unitPriceCents: item.unitPriceCents,
-              categoryTitle: item.categoryTitle,
-            }))}
             action={createExpenseAction.bind(null, typedLocale)}
           />
         </CreateFormPanel>

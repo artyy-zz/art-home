@@ -1,17 +1,14 @@
 import { withPagePerf } from "@/lib/perf";
-import Link from "next/link";
 import { createInvoiceAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { InvoiceActions } from "@/components/admin/invoice-actions";
+import { LazyInvoiceBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
-import { InvoiceBuilderForm } from "@/components/forms/invoice-builder-form";
 import { Badge } from "@/components/shared/badge";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import {
   getAdjustedInvoiceOutstandingCents,
   getInvoiceAdjustmentCents,
-  getInvoiceBuilderOptions,
   getInvoiceOverviewPage,
   statusTone,
 } from "@/lib/erp";
@@ -57,42 +54,16 @@ async function InvoicesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const canCreate = can(permissions, "INVOICES", "CREATE");
-  const [invoices, options] = await Promise.all([
-    getInvoiceOverviewPage({
-      page: parsePage(resolvedSearchParams.page),
-      query,
-      sort,
-      direction,
-    }),
-    canCreate
-      ? getInvoiceBuilderOptions(typedLocale)
-      : Promise.resolve({ clients: [], items: [] }),
-  ]);
+  const invoices = await getInvoiceOverviewPage({
+    page: parsePage(resolvedSearchParams.page),
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "INVOICES", "EDIT");
   const canDelete = can(permissions, "INVOICES", "DELETE");
   const canExport = can(permissions, "INVOICES", "EXPORT");
-  const canCreateInvoice = canCreate && options.clients.length > 0 && options.items.length > 0;
-  const missingSetupHref =
-    options.clients.length === 0
-      ? `/${typedLocale}/admin/clients`
-      : `/${typedLocale}/admin/inventory`;
-  const missingSetupLabel =
-    options.clients.length === 0
-      ? typedLocale === "sq"
-        ? "Shto klient"
-        : "Add client"
-      : typedLocale === "sq"
-        ? "Shto artikull"
-        : "Add item";
-  const missingSetupMessage =
-    options.clients.length === 0
-      ? typedLocale === "sq"
-        ? "Shtoni nje klient para se te krijoni faturen e pare."
-        : "Add a client before creating the first invoice."
-      : typedLocale === "sq"
-        ? "Shtoni nje artikull para se te krijoni faturen e pare."
-        : "Add an item before creating the first invoice.";
 
   return measureDetailSync(
     "admin/invoices.table mapping/formatting",
@@ -104,38 +75,10 @@ async function InvoicesPage({
           buttonLabel={typedLocale === "sq" ? "Shto fature" : "Add invoice"}
           cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
         >
-          {canCreateInvoice ? (
-            <div>
-              <InvoiceBuilderForm
-                locale={typedLocale}
-                clients={options.clients.map((client) => ({
-                  id: client.id,
-                  name: client.name,
-                }))}
-                items={options.items.map((item) => ({
-                  id: item.id,
-                  name: item.name,
-                  sku: item.sku,
-                  unit: item.unit,
-                  unitPriceCents: item.unitPriceCents,
-                  categoryTitle: item.categoryTitle,
-                }))}
-                action={createInvoiceAction.bind(null, typedLocale)}
-              />
-            </div>
-          ) : (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[24px] border-[2.25px] border-black/18 bg-white/75 p-5">
-              <p className="text-sm leading-7 text-[var(--color-muted)]">
-                {missingSetupMessage}
-              </p>
-              <Link
-                href={missingSetupHref}
-                className={buttonClasses({ variant: "secondary" })}
-              >
-                {missingSetupLabel}
-              </Link>
-            </div>
-          )}
+          <LazyInvoiceBuilderForm
+            locale={typedLocale}
+            action={createInvoiceAction.bind(null, typedLocale)}
+          />
         </CreateFormPanel>
       ) : null}
 

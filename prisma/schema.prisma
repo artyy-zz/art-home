@@ -147,6 +147,9 @@ model User {
   permissions  UserPermission[]
 
   @@index([roleId])
+  @@index([createdAt])
+  @@index([name])
+  @@index([role, name])
 }
 
 model Role {
@@ -212,6 +215,10 @@ model Client {
   debitNotes    DebitNote[]
 
   @@index([deletedAt])
+  @@index([deletedAt, name])
+  @@index([deletedAt, email])
+  @@index([deletedAt, phone])
+  @@index([createdAt])
 }
 
 model Supplier {
@@ -232,6 +239,10 @@ model Supplier {
   deliveryNotes    DeliveryNote[]
 
   @@index([deletedAt])
+  @@index([deletedAt, name])
+  @@index([deletedAt, email])
+  @@index([deletedAt, phone])
+  @@index([createdAt])
 }
 
 model Lead {
@@ -272,6 +283,9 @@ model Material {
   stokItems         StokArtikull[]
 
   @@index([type, name])
+  @@index([name])
+  @@index([stockQuantity, name])
+  @@index([createdAt])
 }
 
 model Stok {
@@ -283,6 +297,8 @@ model Stok {
   items      StokArtikull[]
 
   @@index([name])
+  @@index([createdAt])
+  @@index([priceCents])
 }
 
 model StokArtikull {
@@ -370,6 +386,11 @@ model Offer {
   invoice        Invoice?
 
   @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([validUntil])
+  @@index([totalCents])
+  @@index([clientId, createdAt])
+  @@index([leadId])
 }
 
 model OfferItem {
@@ -414,6 +435,10 @@ model Invoice {
   debitNotes          DebitNote[]
 
   @@index([status, dueDate])
+  @@index([issuedAt])
+  @@index([dueDate])
+  @@index([totalCents])
+  @@index([clientId, issuedAt])
 }
 
 model InvoiceItem {
@@ -457,6 +482,10 @@ model PurchaseInvoice {
 
   @@index([status, dueDate])
   @@index([supplierId])
+  @@index([issuedAt])
+  @@index([dueDate])
+  @@index([totalCents])
+  @@index([supplierId, issuedAt])
 }
 
 model PurchaseInvoiceItem {
@@ -490,6 +519,8 @@ model DeliveryNote {
   items      DeliveryNoteItem[]
 
   @@index([type, status, issuedAt])
+  @@index([issuedAt])
+  @@index([type, issuedAt])
   @@index([clientId])
   @@index([supplierId])
 }
@@ -524,6 +555,10 @@ model Expense {
   updatedAt      DateTime        @updatedAt
 
   @@index([category, date])
+  @@index([date])
+  @@index([name])
+  @@index([supplierName])
+  @@index([totalCents])
 }
 
 model DebitNote {
@@ -547,6 +582,9 @@ model DebitNote {
 
   @@index([clientId, issuedAt])
   @@index([invoiceId])
+  @@index([issuedAt])
+  @@index([reason, issuedAt])
+  @@index([totalCents])
 }
 
 model DebitNoteItem {
@@ -604,6 +642,8 @@ model Worker {
   advances  WorkerAdvance[]
 
   @@index([name])
+  @@index([role, name])
+  @@index([createdAt])
 }
 
 model WorkerTimeEntry {
