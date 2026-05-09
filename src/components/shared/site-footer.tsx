@@ -8,7 +8,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
 
   return (
     <footer className="border-t border-black/8 bg-[#1a1714] text-[#f2ede5]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.3fr_1fr_1fr] md:px-10">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.3fr_1fr_1fr] md:px-10 md:py-14">
         <div>
           <p className="font-display text-3xl">Art Home</p>
           <p className="mt-4 max-w-md text-sm leading-7 text-white/72">
@@ -32,7 +32,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <p className="text-xs uppercase tracking-[0.22em] text-white/55">
             {locale === "sq" ? "Kontakt" : "Contact"}
           </p>
-          <div className="mt-4 space-y-3 text-sm text-white/80">
+          <div className="mt-4 space-y-3 break-words text-sm text-white/80">
             <p>{COMPANY.phone}</p>
             <p>{COMPANY.email}</p>
             <p>{COMPANY.address}</p>

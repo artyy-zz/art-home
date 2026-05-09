@@ -14,6 +14,7 @@ import {
   FileMinus2,
   FileText,
   LayoutDashboard,
+  Menu,
   MessageSquareText,
   PackageCheck,
   Receipt,
@@ -22,6 +23,7 @@ import {
   Truck,
   Users,
   WalletCards,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import type { Locale } from "@/lib/i18n";
@@ -65,6 +67,7 @@ export function AdminSidebar({
   const dict = getDictionary(locale);
   const visible = useMemo(() => new Set(visibleModules), [visibleModules]);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const items = useMemo<Array<{
     href: string;
     label: string;
@@ -130,13 +133,81 @@ export function AdminSidebar({
     };
   }, [hrefs, pathname, router]);
 
+  const closeMobile = () => setMobileOpen(false);
+
   return (
-    <aside
-      className={cn(
-        "panel-card sticky top-6 hidden h-[calc(100vh-3rem)] rounded-[28px] p-5 transition-[width] duration-300 lg:flex lg:flex-col",
-        collapsed ? "w-24" : "w-80",
-      )}
-    >
+    <>
+      <div className="panel-card sticky top-3 z-40 flex items-center justify-between gap-3 rounded-[24px] p-3 lg:hidden">
+        <Logo href={`/${locale}`} inverse className="[&>span:last-child]:text-xl" />
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/8 text-white/82 transition hover:bg-white/14 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/18"
+          aria-label={locale === "sq" ? "Hap menune" : "Open menu"}
+          aria-expanded={mobileOpen}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 bg-black/55 p-3 lg:hidden">
+          <div className="panel-card flex max-h-[calc(100vh-1.5rem)] w-full max-w-sm flex-col overflow-hidden rounded-[26px] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Logo href={`/${locale}`} inverse className="[&>span:last-child]:text-xl" />
+              <button
+                type="button"
+                onClick={closeMobile}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/8 text-white/82 transition hover:bg-white/14 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/18"
+                aria-label={locale === "sq" ? "Mbyll menune" : "Close menu"}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[20px] border border-white/10 bg-white/6 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                {locale === "sq" ? "Panel i mbrojtur" : "Protected panel"}
+              </p>
+              <p className="mt-2 text-base font-semibold text-white">{userName}</p>
+              <p className="mt-1 text-xs text-white/62">{roleLabel}</p>
+            </div>
+
+            <nav className="mt-5 flex flex-1 flex-col gap-2 overflow-y-auto pr-1">
+              {items.map((item) => {
+                const Icon = item.icon;
+                const active = item.exact ? pathname === item.href : pathname?.startsWith(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMobile}
+                    onMouseEnter={() => prefetchItem(item)}
+                    onFocus={() => prefetchItem(item)}
+                    className={cn(
+                      "flex min-h-12 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+                      active
+                        ? "bg-[#fff7eb] !text-black shadow-[0_12px_26px_rgba(0,0,0,0.18)]"
+                        : "text-white/76 hover:bg-white/10 hover:text-white",
+                    )}
+                  >
+                    <Icon className={iconClass} />
+                    <span className="min-w-0 truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      ) : null}
+
+      <aside
+        className={cn(
+          "panel-card sticky top-6 hidden h-[calc(100vh-3rem)] rounded-[28px] p-5 transition-[width] duration-300 lg:flex lg:flex-col",
+          collapsed ? "w-24" : "w-80",
+        )}
+      >
       <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "justify-between")}>
         {collapsed ? null : <Logo href={`/${locale}`} inverse />}
         <button
@@ -208,6 +279,7 @@ export function AdminSidebar({
           );
         })}
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }

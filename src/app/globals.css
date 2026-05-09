@@ -32,6 +32,12 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-sans), sans-serif;
   background:
@@ -49,6 +55,20 @@ input,
 textarea,
 select {
   font: inherit;
+  max-width: 100%;
+  min-width: 0;
+}
+
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 ::selection {
@@ -129,5 +149,9 @@ select {
     background:
       radial-gradient(circle at top center, rgba(150, 114, 79, 0.14), transparent 34%),
       linear-gradient(180deg, #fbf8f4 0%, #f3eee7 100%);
+  }
+
+  [data-admin-content] .surface-card {
+    border-radius: 22px;
   }
 }

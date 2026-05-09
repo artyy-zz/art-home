@@ -42,13 +42,13 @@ async function ReportsPage({
       <ReportsCharts locale={typedLocale} margins={reports.productMargins} debts={reports.clientDebt} />
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Shpenzimet mujore" : "Monthly expenses"}
           </h2>
           <div className="mt-6 space-y-3">
             {reports.expensesByMonth.map((item) => (
-              <div key={item.month} className="flex items-center justify-between rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
+              <div key={item.month} className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-foreground)]">{item.month}</span>
                 <span className="text-sm text-[var(--color-muted)]">
                   {formatCurrency(item.totalCents, localeString)}
@@ -57,13 +57,13 @@ async function ReportsPage({
             ))}
           </div>
         </Card>
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Shpenzimet sipas kategorisë" : "Expenses by category"}
           </h2>
           <div className="mt-6 space-y-3">
             {reports.expensesByCategory.slice(0, 6).map((item) => (
-              <div key={item.category} className="flex items-center justify-between rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
+              <div key={item.category} className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] border-[2.25px] border-black/18 bg-white/75 px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-foreground)]">
                   {expenseCategoryLabels[typedLocale][item.category as keyof typeof expenseCategoryLabels.sq]}
                 </span>
@@ -74,8 +74,8 @@ async function ReportsPage({
             ))}
           </div>
         </Card>
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Korrigjimet" : "Adjustments"}
           </h2>
           <div className="mt-6 space-y-4">
@@ -105,13 +105,13 @@ async function ReportsPage({
         </Card>
       </div>
 
-      <Card className="rounded-[30px] p-6">
-        <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+      <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+        <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
           {typedLocale === "sq" ? "Debit Note sipas klientit" : "Debit notes per client"}
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {reports.debitNotesByClient.map((client) => (
-            <div key={client.id} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
+            <div key={client.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
               <div>
                 <p className="font-semibold text-[var(--color-foreground)]">{client.name}</p>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -128,13 +128,13 @@ async function ReportsPage({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Fitimi per produkt" : "Profit per product"}
           </h2>
           <div className="mt-6 space-y-4">
             {reports.profitByProduct.slice(0, 6).map((product) => (
-              <div key={product.name} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
+              <div key={product.name} className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">{product.name}</p>
                   <p className="text-sm text-[var(--color-muted)]">
@@ -149,13 +149,13 @@ async function ReportsPage({
             ))}
           </div>
         </Card>
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Perdorimi i materialit" : "Material usage"}
           </h2>
           <div className="mt-6 space-y-4">
             {reports.materialUsage.slice(0, 6).map((material) => (
-              <div key={material.name} className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
+              <div key={material.name} className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4">
                 <p className="font-semibold text-[var(--color-foreground)]">{material.name}</p>
                 <span className="text-sm text-[var(--color-muted)]">
                   {formatNumber(material.quantity, localeString)}
@@ -166,8 +166,8 @@ async function ReportsPage({
         </Card>
       </div>
 
-      <Card className="rounded-[30px] p-6">
-        <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+      <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+        <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
           {typedLocale === "sq" ? "Borxhi sipas klientit" : "Client debt overview"}
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">

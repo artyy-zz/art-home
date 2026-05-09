@@ -35,12 +35,12 @@ export function PlaceholderMedia({
         </>
       )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,14,10,0.08)_0%,rgba(18,14,10,0.68)_100%)]" />
-      <div className="relative flex h-full min-h-[220px] items-end p-6">
+      <div className="relative flex h-full min-h-[220px] items-end p-4 sm:p-6">
         <div>
           <span className="text-[11px] uppercase tracking-[0.26em] text-white/72">
             Art Home
           </span>
-          <p className="mt-2 max-w-xs font-display text-3xl leading-none text-white">
+          <p className="mt-2 max-w-xs break-words font-display text-2xl leading-none text-white sm:text-3xl">
             {label}
           </p>
         </div>

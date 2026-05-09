@@ -103,7 +103,7 @@ async function DeliveryNotesPage({
         </CreateFormPanel>
       ) : null}
 
-      <Card className="rounded-[28px] p-6">
+      <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
         <div className="mb-5 flex flex-wrap gap-2">
           {(["SALES", "PURCHASE"] as const).map((type) => (
             <Link
@@ -111,7 +111,7 @@ async function DeliveryNotesPage({
               href={tabHref(type)}
               className={cn(
                 buttonClasses({ variant: activeType === type ? "primary" : "secondary", size: "sm" }),
-                "min-w-44",
+                "min-w-0 flex-1 sm:min-w-44 sm:flex-none",
                 activeType === type && "!text-white",
               )}
             >

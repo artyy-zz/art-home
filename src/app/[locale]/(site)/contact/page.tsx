@@ -28,15 +28,15 @@ export default async function ContactPage({
   ];
 
   return (
-    <div className="px-6 py-14 md:px-10">
+    <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl space-y-8">
         <SectionHeading title={dict.contact.title} description={dict.contact.intro} />
         <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <Card className="rounded-[30px] p-7 md:p-9">
+          <Card className="rounded-[26px] p-5 sm:p-7 md:rounded-[30px] md:p-9">
             <p className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">
               {typedLocale === "sq" ? "Detajet e kontaktit" : "Contact details"}
             </p>
-            <h1 className="mt-4 font-display text-5xl leading-none text-[var(--color-foreground)]">
+            <h1 className="mt-4 break-words font-display text-4xl leading-none text-[var(--color-foreground)] sm:text-5xl">
               {COMPANY.name}
             </h1>
             <div className="mt-8 space-y-5">
@@ -83,7 +83,7 @@ export default async function ContactPage({
             <iframe
               title={typedLocale === "sq" ? "Harta e lokacionit Art Home" : "Art Home location map"}
               src={GOOGLE_MAPS_EMBED_URL}
-              className="h-[440px] w-full rounded-[24px] border-0"
+              className="h-[340px] w-full rounded-[24px] border-0 sm:h-[440px]"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

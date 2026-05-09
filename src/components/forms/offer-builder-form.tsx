@@ -121,8 +121,8 @@ export function OfferBuilderForm({
           {locale === "sq" ? "TVSH standarde" : "Standard VAT"}: 18%
         </span>
       </div>
-      <div className="rounded-[26px] border border-black/8 bg-white/70 p-5">
-        <div className="flex items-center justify-between gap-4">
+      <div className="rounded-[24px] border border-black/8 bg-white/70 p-4 sm:rounded-[26px] sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-display text-2xl text-[var(--color-foreground)]">
             {locale === "sq" ? "Artikujt" : "Items"}
           </h3>
@@ -222,7 +222,7 @@ export function OfferBuilderForm({
             })),
         )}
       />
-      <div className="flex flex-wrap justify-end gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
         {closeCreateFormPanel ? (
           <Button type="button" variant="secondary" onClick={closeCreateFormPanel}>
             {locale === "sq" ? "Anulo" : "Cancel"}

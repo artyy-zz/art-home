@@ -10,12 +10,12 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
   const dict = getDictionary(typedLocale);
 
   return (
-    <div className="px-6 py-14 md:px-10">
+    <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl space-y-10">
         <SectionHeading title={dict.about.title} description={dict.about.intro} />
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card className="rounded-[32px] p-8">
-            <h2 className="font-display text-4xl leading-none text-[var(--color-foreground)]">
+          <Card className="rounded-[26px] p-5 sm:p-8 md:rounded-[32px]">
+            <h2 className="break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-4xl">
               {dict.about.craftsmanshipTitle}
             </h2>
             <p className="mt-5 text-sm leading-8 text-[var(--color-muted)]">
@@ -39,7 +39,7 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
           <PlaceholderMedia
             label={typedLocale === "sq" ? "Punishtja Art Home" : "Art Home Workshop"}
             src={siteImages.about}
-            className="min-h-[420px]"
+            className="min-h-[300px] sm:min-h-[360px] md:min-h-[420px]"
           />
         </div>
       </div>

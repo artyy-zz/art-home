@@ -9,13 +9,13 @@ export default async function LoginPage({ params }: PageProps<"/[locale]/login">
   const dict = getDictionary(typedLocale);
 
   return (
-    <div className="min-h-[calc(100vh-3rem)] px-6 py-14 md:px-10">
+    <div className="min-h-[calc(100vh-3rem)] px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-3xl">
-        <Card tone="dark" className="rounded-[36px] p-7 md:p-10">
+        <Card tone="dark" className="rounded-[28px] p-5 sm:p-7 md:rounded-[36px] md:p-10">
           <p className="text-xs uppercase tracking-[0.24em] text-white/55">
             {dict.login.demoLabel}
           </p>
-          <h1 className="mt-4 font-display text-5xl leading-none text-white">
+          <h1 className="mt-4 break-words font-display text-4xl leading-none text-white sm:text-5xl">
             {dict.login.title}
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-8 text-white/74">

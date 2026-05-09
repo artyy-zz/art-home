@@ -188,8 +188,8 @@ export function ExpenseBuilderForm({
         value={notes}
         onChange={(event) => setNotes(event.target.value)}
       />
-      <div className="rounded-[26px] border border-black/8 bg-white/70 p-5">
-        <div className="flex items-center justify-between gap-4">
+      <div className="rounded-[24px] border border-black/8 bg-white/70 p-4 sm:rounded-[26px] sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-display text-2xl text-[var(--color-foreground)]">
             {locale === "sq" ? "Artikujt" : "Items"}
           </h3>
@@ -281,7 +281,7 @@ export function ExpenseBuilderForm({
           ))}
         </div>
       </div>
-      <div className="flex flex-wrap justify-end gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
         {error ? (
           <p className="w-full rounded-2xl bg-[rgba(140,47,43,0.09)] px-4 py-3 text-sm text-[var(--color-danger)]">
             {error}

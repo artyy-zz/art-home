@@ -41,11 +41,11 @@ export function CreateFormPanel({
   const closePanel = () => setIsOpen(false);
 
   return (
-    <Card className={cn("rounded-[28px] p-4 sm:p-5", className)}>
+    <Card className={cn("rounded-[24px] p-4 sm:rounded-[28px] sm:p-5", className)}>
       {isOpen ? (
         <>
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+            <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
               {title}
             </h2>
             <button
@@ -140,17 +140,17 @@ export function CreateActionForm({
           {error}
         </p>
       ) : null}
-      <div className={cn("flex flex-wrap justify-end gap-2", footerClassName)}>
+      <div className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end", footerClassName)}>
         {closePanel ? (
           <button
             type="button"
             onClick={closePanel}
-            className={buttonClasses({ variant: "secondary" })}
+            className={buttonClasses({ variant: "secondary", className: "w-full sm:w-auto" })}
           >
             {cancelLabel}
           </button>
         ) : null}
-        <CreateSubmitButton label={submitLabel} />
+        <CreateSubmitButton label={submitLabel} className="w-full sm:w-auto" />
       </div>
     </form>
   );

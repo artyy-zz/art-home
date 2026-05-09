@@ -91,9 +91,9 @@ async function WorkerHoursPage({
         </CreateFormPanel>
       ) : null}
 
-      <Card className="rounded-[28px] p-6">
+      <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
         <div className="mb-5">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Orët e Punëtorëve" : "Worker Hours"}
           </h2>
         </div>

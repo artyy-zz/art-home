@@ -79,8 +79,8 @@ export function ProductBuilderForm({
         {locale === "sq" ? "Shfaq si produkt i veçuar" : "Feature this product"}
       </label>
 
-      <div className="rounded-[26px] border border-black/8 bg-white/70 p-5">
-        <div className="flex items-center justify-between">
+      <div className="rounded-[24px] border border-black/8 bg-white/70 p-4 sm:rounded-[26px] sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-display text-2xl text-[var(--color-foreground)]">BOM</h3>
           <Button
             type="button"

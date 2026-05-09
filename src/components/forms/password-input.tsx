@@ -21,7 +21,7 @@ export function PasswordInput({
   const Icon = visible ? EyeOff : Eye;
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <input
         type={visible ? "text" : "password"}
         name={name}

@@ -32,7 +32,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
           {state.error}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-3 pt-3">
+      <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:items-center">
         <SubmitButton variant="secondary">
           {locale === "sq" ? "Hyr ne sistem" : "Access ERP"}
         </SubmitButton>

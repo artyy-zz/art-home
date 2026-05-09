@@ -212,10 +212,10 @@ async function RolesPage({
 
   return (
     <div className="space-y-5">
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+            <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
               {typedLocale === "sq" ? "Rolet & Lejet" : "Roles & Permissions"}
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">
@@ -298,8 +298,8 @@ async function RolesPage({
         </CreateActionForm>
       </CreateFormPanel>
 
-      <Card className="p-6">
-        <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+      <Card className="p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
           {typedLocale === "sq" ? "Menaxho rolet" : "Manage roles"}
         </h2>
         <div className="mt-5 space-y-3">

@@ -26,7 +26,7 @@ export function ReportsCharts({
 }) {
   return (
     <div className="grid gap-6 xl:grid-cols-2">
-      <div className="surface-card rounded-[30px] p-6">
+      <div className="surface-card rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Marzhi i produktit" : "Product margin"}
         </p>
@@ -48,7 +48,7 @@ export function ReportsCharts({
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="surface-card rounded-[30px] p-6">
+      <div className="surface-card rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Borxhi i klientëve" : "Client debt"}
         </p>

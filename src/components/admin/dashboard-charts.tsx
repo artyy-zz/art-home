@@ -23,7 +23,7 @@ export function DashboardCharts({
 }) {
   return (
     <div className="grid gap-6 xl:grid-cols-2">
-      <div className="surface-card rounded-[30px] p-6">
+      <div className="surface-card rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Të ardhura / fitim" : "Revenue / Profit"}
         </p>
@@ -58,7 +58,7 @@ export function DashboardCharts({
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="surface-card rounded-[30px] p-6">
+      <div className="surface-card rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
           {locale === "sq" ? "Përdorimi i materialit" : "Material usage"}
         </p>

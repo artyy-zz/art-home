@@ -46,11 +46,11 @@ async function AdminDashboardPage({
             value: formatCurrency(snapshot.kpis.outstandingDebtCents, localeString),
           },
         ].map((item) => (
-          <Card key={item.label} className="rounded-[28px] p-6">
+          <Card key={item.label} className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
             <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
               {item.label}
             </p>
-            <p className="mt-4 font-display text-5xl leading-none text-[var(--color-foreground)]">
+            <p className="mt-4 break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-5xl">
               {item.value}
             </p>
           </Card>
@@ -64,9 +64,9 @@ async function AdminDashboardPage({
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="rounded-[30px] p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
               {typedLocale === "sq" ? "Shitjet kryesore" : "Best-selling items"}
             </h2>
             <Link href={`/${typedLocale}/admin/reports`} className={buttonClasses({ variant: "ghost", size: "sm" })}>
@@ -77,7 +77,7 @@ async function AdminDashboardPage({
             {snapshot.kpis.bestSellingProducts.map((product) => (
               <div
                 key={product.name}
-                className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
               >
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">
@@ -95,8 +95,8 @@ async function AdminDashboardPage({
             ))}
           </div>
         </Card>
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Njoftime dhe alert-e" : "Notifications and alerts"}
           </h2>
           <div className="mt-6 space-y-4">
@@ -139,14 +139,14 @@ async function AdminDashboardPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Fatura per ndjekje" : "Invoices to follow up"}
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.overdueInvoices.map((invoice) => (
               <div key={invoice.id} className="rounded-[22px] border-[2.25px] border-black/18 bg-white/75 p-4">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-[var(--color-foreground)]">
                       {invoice.number}
@@ -155,7 +155,7 @@ async function AdminDashboardPage({
                   </div>
                   <Badge tone={statusTone(invoice.status)}>{invoice.status}</Badge>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-sm text-[var(--color-muted)]">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-muted)]">
                   <span>{formatDate(invoice.dueDate, localeString)}</span>
                   <span>{formatCurrency(invoice.outstandingCents, localeString)}</span>
                 </div>
@@ -164,15 +164,15 @@ async function AdminDashboardPage({
           </div>
         </Card>
 
-        <Card className="rounded-[30px] p-6">
-          <h2 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+        <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
+          <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
             {typedLocale === "sq" ? "Stok i ulet" : "Low stock"}
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.lowStockMaterials.map((material) => (
               <div
                 key={material.id}
-                className="flex items-center justify-between rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
               >
                 <div>
                   <p className="font-semibold text-[var(--color-foreground)]">

@@ -143,7 +143,7 @@ async function StoqetPage({
         </CreateFormPanel>
       ) : null}
 
-      <Card className="rounded-[28px] p-6">
+      <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
         <RecordTable
           currentPath={`/${typedLocale}/admin/stoqet`}
           query={query}

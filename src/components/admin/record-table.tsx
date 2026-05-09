@@ -205,6 +205,7 @@ export function RecordTable({
   const showActions = Boolean(actionsLabel && selectionMode);
   const selectLabel = searchLabel === "Search" ? "Select" : "Selekto";
   const cancelSelectLabel = searchLabel === "Search" ? "Cancel" : "Anulo";
+  const sortableColumns = columns.filter((column) => column.sortable);
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (!serverControlled) {
       return;
@@ -243,21 +244,93 @@ export function RecordTable({
         </label>
         {sort ? <input type="hidden" name="sort" value={sort} /> : null}
         <input type="hidden" name="dir" value={direction} />
-        <button className="h-12 rounded-full bg-[var(--color-foreground)] px-5 text-sm font-medium text-white transition hover:bg-black">
+        <button className="min-h-12 rounded-full bg-[var(--color-foreground)] px-5 py-2 text-sm font-medium text-white transition hover:bg-black sm:w-auto">
           {searchLabel}
         </button>
         {actionsLabel ? (
           <button
             type="button"
             onClick={() => setSelectionMode((value) => !value)}
-            className="h-12 rounded-full border border-black/10 bg-white/90 px-5 text-sm font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+            className="min-h-12 rounded-full border border-black/10 bg-white/90 px-5 py-2 text-sm font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] sm:w-auto"
           >
             {selectionMode ? cancelSelectLabel : selectLabel}
           </button>
         ) : null}
       </form>
 
-      <div className="overflow-hidden rounded-[24px] border-[2.25px] border-black/18 bg-white/82">
+      {sortableColumns.length > 0 ? (
+        <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+          {sortableColumns.map((column) => (
+            <Link
+              key={column.key}
+              href={buildSortHref({
+                currentPath,
+                preservedParams,
+                query,
+                sort,
+                direction,
+                target: column.key,
+              })}
+              className={cn(
+                "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white/90 px-3 py-2 text-xs font-semibold text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
+                sort === column.key && "border-[var(--color-accent)] bg-[var(--color-accent-soft)]",
+              )}
+            >
+              {column.label}
+              {sort === column.key ? (
+                direction === "asc" ? (
+                  <ArrowUp className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowDown className="h-3.5 w-3.5" />
+                )
+              ) : (
+                <ArrowUpDown className="h-3.5 w-3.5 opacity-55" />
+              )}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 md:hidden">
+        {sortedRows.length === 0 ? (
+          <div className="rounded-[22px] border-[2.25px] border-black/18 bg-white/82 px-4 py-8 text-center text-sm text-[var(--color-muted)]">
+            {emptyMessage}
+          </div>
+        ) : (
+          sortedRows.map((row) => (
+            <article
+              key={row.id}
+              id={`mobile-${row.id}`}
+              className="rounded-[22px] border-[2.25px] border-black/18 bg-white/82 p-4 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+            >
+              <dl className="grid gap-3">
+                {columns.map((column) => (
+                  <div key={column.key} className="grid gap-1 border-b border-black/8 pb-3 last:border-b-0 last:pb-0">
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6a5a4d]">
+                      {column.label}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "min-w-0 break-words text-sm text-[var(--color-foreground)]",
+                        column.align === "right" && "sm:text-right",
+                      )}
+                    >
+                      {row.cells[column.key]}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {showActions ? (
+                <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-black/8 pt-4">
+                  {row.actions}
+                </div>
+              ) : null}
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-[24px] border-[2.25px] border-black/18 bg-white/82 md:block">
         <div className="overflow-x-auto">
           <table className="min-w-[920px] w-full border-collapse text-left text-sm">
             <thead className="bg-[#eee5da] text-xs uppercase tracking-[0.18em] text-[#5a4b40]">
@@ -358,7 +431,7 @@ export function RecordTable({
                 `${activePagination.totalItems}${activePagination.exactTotal === false ? "+" : ""}`,
               )}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <Link
               href={buildPageHref({
                 currentPath,
@@ -370,7 +443,7 @@ export function RecordTable({
               })}
               aria-disabled={activePagination.hasPreviousPage === false || activePagination.page <= 1}
               className={cn(
-                "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
+                "flex-1 rounded-full border border-black/10 bg-white/90 px-4 py-2 text-center font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] sm:flex-none",
                 (activePagination.hasPreviousPage === false || activePagination.page <= 1) &&
                   "pointer-events-none opacity-45",
               )}
@@ -388,7 +461,7 @@ export function RecordTable({
               })}
               aria-disabled={activePagination.hasNextPage === false || activePagination.page >= activePagination.totalPages}
               className={cn(
-                "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
+                "flex-1 rounded-full border border-black/10 bg-white/90 px-4 py-2 text-center font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] sm:flex-none",
                 (activePagination.hasNextPage === false || activePagination.page >= activePagination.totalPages) &&
                   "pointer-events-none opacity-45",
               )}

@@ -64,11 +64,11 @@ export function SupplierActions({
       </div>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] border border-black/10 bg-[#fbf8f4] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-3 py-3 sm:items-center sm:px-4 sm:py-6">
+          <div className="max-h-[calc(100vh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-black/10 bg-[#fbf8f4] p-4 shadow-[0_28px_80px_rgba(0,0,0,0.28)] sm:rounded-[28px] sm:p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-display text-3xl leading-none text-[var(--color-foreground)]">
+                <h3 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
                   {locale === "sq" ? "Ndrysho furnitorin" : "Edit supplier"}
                 </h3>
                 <p className="mt-2 text-sm text-[var(--color-muted)]">{supplier.name}</p>

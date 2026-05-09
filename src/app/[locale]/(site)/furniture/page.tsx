@@ -13,7 +13,7 @@ export default async function FurniturePage({
   const products = await getPublicProducts(typedLocale);
 
   return (
-    <div className="px-6 py-14 md:px-10">
+    <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           label={typedLocale === "sq" ? "Koleksioni" : "Collection"}
@@ -32,19 +32,19 @@ export default async function FurniturePage({
           {products.map((product) => (
             <Card
               key={product.id}
-              className="grid overflow-hidden rounded-[32px] lg:grid-cols-[0.95fr_1.05fr]"
+              className="grid overflow-hidden rounded-[26px] md:rounded-[32px] lg:grid-cols-[0.95fr_1.05fr]"
             >
               <PlaceholderMedia
                 label={product.name}
                 src={getProductImage(product.slug, product.category)}
-                className="min-h-[300px]"
+                className="min-h-[240px] sm:min-h-[300px]"
               />
-              <div className="p-6 md:p-8">
+              <div className="p-5 sm:p-6 md:p-8">
                 <div>
                   <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">
                     {product.categoryTitle}
                   </p>
-                  <h2 className="mt-3 font-display text-4xl leading-none text-[var(--color-foreground)]">
+                  <h2 className="mt-3 break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-4xl">
                     {product.name}
                   </h2>
                 </div>
