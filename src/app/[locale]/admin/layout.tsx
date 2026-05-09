@@ -4,6 +4,7 @@ import { Button } from "@/components/shared/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { requireAdminSession } from "@/lib/auth";
 import { getDictionary, type Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { getUserPermissionMatrix, isOwnerUser, visibleModulesFromMatrix } from "@/lib/permissions";
 import { roleLabels } from "@/lib/permissions-config";
 
@@ -11,15 +12,40 @@ export default async function AdminLayout({
   children,
   params,
 }: LayoutProps<"/[locale]/admin">) {
-  const { locale } = await params;
-  const typedLocale = locale as Locale;
-  const dict = getDictionary(typedLocale);
-  const user = await requireAdminSession(typedLocale);
-  const permissions = await getUserPermissionMatrix(user);
-  const visibleModules = visibleModulesFromMatrix(permissions).filter(
-    (module) => module !== "ROLES" || isOwnerUser(user),
+  const { locale } = await measureDetailAsync(
+    "admin/layout.i18n/locale loading",
+    () => params,
   );
-  const roleLabel = user.roleRecord?.name ?? roleLabels[user.role][typedLocale];
+  const typedLocale = locale as Locale;
+  const dict = measureDetailSync(
+    "admin/layout.i18n/dictionary loading",
+    () => getDictionary(typedLocale),
+    { locale: typedLocale },
+  );
+  const user = await measureDetailAsync(
+    "admin/layout.auth/session",
+    () => requireAdminSession(typedLocale),
+    { locale: typedLocale },
+  );
+  const permissions = await measureDetailAsync(
+    "admin/layout.permissions",
+    () => getUserPermissionMatrix(user),
+    { locale: typedLocale, userId: user.id },
+  );
+  const { visibleModules, roleLabel } = measureDetailSync(
+    "admin/layout.layout/sidebar work",
+    () => {
+      const modules = visibleModulesFromMatrix(permissions).filter(
+        (module) => module !== "ROLES" || isOwnerUser(user),
+      );
+
+      return {
+        visibleModules: modules,
+        roleLabel: user.roleRecord?.name ?? roleLabels[user.role][typedLocale],
+      };
+    },
+    { locale: typedLocale, userId: user.id },
+  );
 
   return (
     <div className="min-h-screen bg-[#140f0c] px-4 py-6 md:px-6 lg:px-8">

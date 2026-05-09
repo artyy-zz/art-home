@@ -14,7 +14,7 @@ import {
   type PermissionMatrix,
   type PermissionModuleKey,
 } from "@/lib/permissions-config";
-import { measureAsync } from "@/lib/perf";
+import { measureAsync, measureDetailAsync, measureDetailSync } from "@/lib/perf";
 
 type RoleRecord = Pick<Role, "id" | "key" | "name" | "isOwner" | "isSystem">;
 
@@ -23,6 +23,26 @@ type PermissionUser = {
   role: UserRole;
   roleId: string | null;
   roleRecord?: RoleRecord | null;
+};
+
+const adminPerfLabels: Record<PermissionModuleKey, string> = {
+  DASHBOARD: "admin/dashboard",
+  LEADS: "admin/leads",
+  CLIENTS: "admin/clients",
+  SUPPLIERS: "admin/suppliers",
+  INVENTORY: "admin/inventory",
+  ASSETS_INVENTORY: "admin/assets-inventory",
+  STOQET: "admin/stoqet",
+  OFFERS: "admin/offers",
+  INVOICES: "admin/invoices",
+  PURCHASE_INVOICES: "admin/purchase-invoices",
+  DELIVERY_NOTES: "admin/delivery-notes",
+  EXPENSES: "admin/expenses",
+  DEBIT_NOTES: "admin/debit-notes",
+  REPORTS: "admin/reports",
+  WORKER_HOURS: "admin/worker-hours",
+  USERS: "admin/users",
+  ROLES: "admin/roles",
 };
 
 export function unauthorizedMessage(locale: Locale) {
@@ -292,12 +312,22 @@ export async function requirePermission(
   module: PermissionModuleKey,
   action: PermissionActionKey,
 ) {
+  const perfLabel = adminPerfLabels[module];
   const user = await measureAsync(
     "permissions.requirePermission",
-    () => requireStaffSession(locale),
+    () =>
+      measureDetailAsync(
+        `${perfLabel}.auth/session`,
+        () => requireStaffSession(locale),
+        { locale, module, action },
+      ),
     { locale, module, action },
   );
-  const permissions = await getUserPermissionMatrix(user);
+  const permissions = await measureDetailAsync(
+    `${perfLabel}.permissions`,
+    () => getUserPermissionMatrix(user),
+    { locale, module, action, userId: user.id },
+  );
   const allowed = can(permissions, module, action);
 
   if (!allowed) {
@@ -308,9 +338,18 @@ export async function requirePermission(
 }
 
 export async function requireOwner(locale: Locale) {
-  const user = await requireStaffSession(locale);
+  const user = await measureDetailAsync(
+    "admin/roles.auth/session",
+    () => requireStaffSession(locale),
+    { locale, module: "ROLES", action: "VIEW" },
+  );
+  const isOwner = measureDetailSync(
+    "admin/roles.permissions",
+    () => isOwnerUser(user),
+    { locale, module: "ROLES", action: "VIEW", userId: user.id },
+  );
 
-  if (!isOwnerUser(user)) {
+  if (!isOwner) {
     redirect(`/${locale}/admin/unauthorized`);
   }
 

@@ -7,6 +7,7 @@ import { Card } from "@/components/shared/card";
 import { getSupplierOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -43,6 +44,77 @@ async function SuppliersPage({
   const canCreate = can(permissions, "SUPPLIERS", "CREATE");
   const canEdit = can(permissions, "SUPPLIERS", "EDIT");
   const canDelete = can(permissions, "SUPPLIERS", "DELETE");
+  const rows = measureDetailSync(
+    "admin/suppliers.table mapping/formatting",
+    () =>
+      suppliers.items.map((supplier) => ({
+        id: supplier.id,
+        searchText: `${supplier.name} ${supplier.email ?? ""} ${supplier.phone ?? ""} ${supplier.address ?? ""} ${supplier.nui ?? ""} ${supplier.vatNumber ?? ""} ${supplier.notes ?? ""}`,
+        sortValues: {
+          name: supplier.name,
+          activity: supplier.purchaseInvoiceCount,
+          debt: supplier.outstandingDebtCents,
+          lastPurchaseInvoice: supplier.lastPurchaseInvoiceAt,
+        },
+        cells: {
+          name: (
+            <div>
+              <p className="font-semibold">{supplier.name}</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                {supplier.contactPerson || (typedLocale === "sq" ? "Pa kontakt" : "No contact")}
+              </p>
+            </div>
+          ),
+          contact: (
+            <div className="space-y-1 text-[var(--color-muted)]">
+              <p>{supplier.email || "-"}</p>
+              <p>{supplier.phone || "-"}</p>
+              <p className="max-w-[220px] truncate">{supplier.address || "-"}</p>
+            </div>
+          ),
+          tax: (
+            <div className="space-y-1 text-[var(--color-muted)]">
+              <p>{supplier.nui || "-"}</p>
+              <p>
+                {typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}{" "}
+                {supplier.vatNumber || "-"}
+              </p>
+            </div>
+          ),
+          notes: (
+            <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
+              {supplier.notes || "-"}
+            </p>
+          ),
+          activity: `${supplier.purchaseInvoiceCount} ${
+            typedLocale === "sq" ? "fatura blerjeje" : "purchase invoices"
+          }`,
+          debt: formatCurrency(supplier.outstandingDebtCents, localeString),
+          lastPurchaseInvoice: supplier.lastPurchaseInvoiceAt
+            ? formatDate(supplier.lastPurchaseInvoiceAt, localeString)
+            : "-",
+        },
+        actions: (
+          <SupplierActions
+            locale={typedLocale}
+            supplier={{
+              id: supplier.id,
+              name: supplier.name,
+              contactPerson: supplier.contactPerson,
+              nui: supplier.nui,
+              vatNumber: supplier.vatNumber,
+              email: supplier.email,
+              phone: supplier.phone,
+              address: supplier.address,
+              notes: supplier.notes,
+            }}
+            canEdit={canEdit}
+            canDelete={canDelete}
+          />
+        ),
+      })),
+    { locale: typedLocale, rows: suppliers.items.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -114,72 +186,7 @@ async function SuppliersPage({
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastPurchaseInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
-          rows={suppliers.items.map((supplier) => ({
-            id: supplier.id,
-            searchText: `${supplier.name} ${supplier.email ?? ""} ${supplier.phone ?? ""} ${supplier.address ?? ""} ${supplier.nui ?? ""} ${supplier.vatNumber ?? ""} ${supplier.notes ?? ""}`,
-            sortValues: {
-              name: supplier.name,
-              activity: supplier.purchaseInvoiceCount,
-              debt: supplier.outstandingDebtCents,
-              lastPurchaseInvoice: supplier.lastPurchaseInvoiceAt,
-            },
-            cells: {
-              name: (
-                <div>
-                  <p className="font-semibold">{supplier.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    {supplier.contactPerson || (typedLocale === "sq" ? "Pa kontakt" : "No contact")}
-                  </p>
-                </div>
-              ),
-              contact: (
-                <div className="space-y-1 text-[var(--color-muted)]">
-                  <p>{supplier.email || "-"}</p>
-                  <p>{supplier.phone || "-"}</p>
-                  <p className="max-w-[220px] truncate">{supplier.address || "-"}</p>
-                </div>
-              ),
-              tax: (
-                <div className="space-y-1 text-[var(--color-muted)]">
-                  <p>{supplier.nui || "-"}</p>
-                  <p>
-                    {typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}{" "}
-                    {supplier.vatNumber || "-"}
-                  </p>
-                </div>
-              ),
-              notes: (
-                <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
-                  {supplier.notes || "-"}
-                </p>
-              ),
-              activity: `${supplier.purchaseInvoiceCount} ${
-                typedLocale === "sq" ? "fatura blerjeje" : "purchase invoices"
-              }`,
-              debt: formatCurrency(supplier.outstandingDebtCents, localeString),
-              lastPurchaseInvoice: supplier.lastPurchaseInvoiceAt
-                ? formatDate(supplier.lastPurchaseInvoiceAt, localeString)
-                : "-",
-            },
-            actions: (
-              <SupplierActions
-                locale={typedLocale}
-                supplier={{
-                  id: supplier.id,
-                  name: supplier.name,
-                  contactPerson: supplier.contactPerson,
-                  nui: supplier.nui,
-                  vatNumber: supplier.vatNumber,
-                  email: supplier.email,
-                  phone: supplier.phone,
-                  address: supplier.address,
-                  notes: supplier.notes,
-                }}
-                canEdit={canEdit}
-                canDelete={canDelete}
-              />
-            ),
-          }))}
+          rows={rows}
         />
       </Card>
     </div>

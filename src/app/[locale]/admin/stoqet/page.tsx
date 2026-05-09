@@ -6,6 +6,7 @@ import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
 import { StockBuilderForm } from "@/components/forms/stock-builder-form";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -35,37 +36,107 @@ async function StoqetPage({
   const canEdit = can(permissions, "STOQET", "EDIT");
   const canDelete = can(permissions, "STOQET", "DELETE");
 
-  const [materials, stocks] = await Promise.all([
-    prisma.material.findMany({
-      orderBy: [{ name: "asc" }, { sku: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        sku: true,
-        unit: true,
-        stockQuantity: true,
-      },
-    }),
-    prisma.stok.findMany({
-      orderBy: [{ createdAt: "desc" }],
-      include: {
-        items: {
-          orderBy: [{ createdAt: "asc" }],
+  const [materials, stocks] = await measureDetailAsync(
+    "admin/stoqet.main data query",
+    () =>
+      Promise.all([
+        prisma.material.findMany({
+          orderBy: [{ name: "asc" }, { sku: "asc" }],
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            unit: true,
+            stockQuantity: true,
+          },
+        }),
+        prisma.stok.findMany({
+          orderBy: [{ createdAt: "desc" }],
           include: {
-            material: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                unit: true,
-                stockQuantity: true,
+            items: {
+              orderBy: [{ createdAt: "asc" }],
+              include: {
+                material: {
+                  select: {
+                    id: true,
+                    name: true,
+                    sku: true,
+                    unit: true,
+                    stockQuantity: true,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    }),
-  ]);
+        }),
+      ]),
+    { locale: typedLocale },
+  );
+  const rows = measureDetailSync(
+    "admin/stoqet.table mapping/formatting",
+    () =>
+      stocks.map((stock) => {
+        const itemSummary = stock.items
+          .slice(0, 3)
+          .map((item) => item.material.name)
+          .join(", ");
+
+        return {
+          id: stock.id,
+          searchText: `${stock.name} ${stock.items
+            .map((item) => `${item.material.name} ${item.material.sku}`)
+            .join(" ")}`,
+          sortValues: {
+            name: stock.name,
+            price: stock.priceCents,
+            items: stock.items.length,
+          },
+          cells: {
+            name: <p className="font-semibold">{stock.name}</p>,
+            price: formatCurrency(stock.priceCents, localeString),
+            items: (
+              <div>
+                <p className="font-semibold">
+                  {stock.items.length}{" "}
+                  {typedLocale === "sq"
+                    ? stock.items.length === 1
+                      ? "artikull"
+                      : "artikuj"
+                    : stock.items.length === 1
+                      ? "item"
+                      : "items"}
+                </p>
+                <p className="mt-1 max-w-[360px] text-xs text-[var(--color-muted)]">
+                  {itemSummary ||
+                    (typedLocale === "sq" ? "Pa artikuj" : "No items")}
+                </p>
+                {stock.items.length > 0 ? (
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">
+                    {stock.items
+                      .slice(0, 2)
+                      .map(
+                        (item) =>
+                          `${formatNumber(item.quantity, localeString)} ${item.material.unit}`,
+                      )
+                      .join(" / ")}
+                  </p>
+                ) : null}
+              </div>
+            ),
+          },
+          actions: (
+            <StockActions
+              locale={typedLocale}
+              stock={stock}
+              materials={materials}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
+          ),
+        };
+      }),
+    { locale: typedLocale, rows: stocks.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -124,66 +195,7 @@ async function StoqetPage({
               sortable: true,
             },
           ]}
-          rows={stocks.map((stock) => {
-            const itemSummary = stock.items
-              .slice(0, 3)
-              .map((item) => item.material.name)
-              .join(", ");
-
-            return {
-              id: stock.id,
-              searchText: `${stock.name} ${stock.items
-                .map((item) => `${item.material.name} ${item.material.sku}`)
-                .join(" ")}`,
-              sortValues: {
-                name: stock.name,
-                price: stock.priceCents,
-                items: stock.items.length,
-              },
-              cells: {
-                name: <p className="font-semibold">{stock.name}</p>,
-                price: formatCurrency(stock.priceCents, localeString),
-                items: (
-                  <div>
-                    <p className="font-semibold">
-                      {stock.items.length}{" "}
-                      {typedLocale === "sq"
-                        ? stock.items.length === 1
-                          ? "artikull"
-                          : "artikuj"
-                        : stock.items.length === 1
-                          ? "item"
-                          : "items"}
-                    </p>
-                    <p className="mt-1 max-w-[360px] text-xs text-[var(--color-muted)]">
-                      {itemSummary ||
-                        (typedLocale === "sq" ? "Pa artikuj" : "No items")}
-                    </p>
-                    {stock.items.length > 0 ? (
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">
-                        {stock.items
-                          .slice(0, 2)
-                          .map(
-                            (item) =>
-                              `${formatNumber(item.quantity, localeString)} ${item.material.unit}`,
-                          )
-                          .join(" / ")}
-                      </p>
-                    ) : null}
-                  </div>
-                ),
-              },
-              actions: (
-                <StockActions
-                  locale={typedLocale}
-                  stock={stock}
-                  materials={materials}
-                  canEdit={canEdit}
-                  canDelete={canDelete}
-                />
-              ),
-            };
-          })}
+          rows={rows}
         />
       </Card>
     </div>

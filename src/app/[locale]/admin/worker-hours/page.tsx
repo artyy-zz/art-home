@@ -4,6 +4,7 @@ import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-for
 import { WorkerHoursBoard } from "@/components/admin/worker-hours-board";
 import { Card } from "@/components/shared/card";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -21,17 +22,42 @@ async function WorkerHoursPage({
   const canEdit = can(permissions, "WORKER_HOURS", "EDIT");
   const canDelete = can(permissions, "WORKER_HOURS", "DELETE");
 
-  const workers = await prisma.worker.findMany({
-    orderBy: [{ name: "asc" }, { createdAt: "desc" }],
-    include: {
-      entries: {
-        orderBy: [{ startedAt: "desc" }, { createdAt: "desc" }],
-      },
-      advances: {
-        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      },
-    },
-  });
+  const workers = await measureDetailAsync(
+    "admin/worker-hours.main data query",
+    () =>
+      prisma.worker.findMany({
+        orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+        include: {
+          entries: {
+            orderBy: [{ startedAt: "desc" }, { createdAt: "desc" }],
+          },
+          advances: {
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+          },
+        },
+      }),
+    { locale: typedLocale },
+  );
+  const workerRows = measureDetailSync(
+    "admin/worker-hours.table mapping/formatting",
+    () =>
+      workers.map((worker) => ({
+        id: worker.id,
+        name: worker.name,
+        role: worker.role,
+        entries: worker.entries.map((entry) => ({
+          id: entry.id,
+          startedAt: entry.startedAt.toISOString(),
+          finishedAt: entry.finishedAt.toISOString(),
+        })),
+        advances: worker.advances.map((advance) => ({
+          id: advance.id,
+          date: advance.date.toISOString(),
+          amountCents: advance.amountCents,
+        })),
+      })),
+    { locale: typedLocale, rows: workers.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -73,21 +99,7 @@ async function WorkerHoursPage({
         </div>
         <WorkerHoursBoard
           locale={typedLocale}
-          workers={workers.map((worker) => ({
-            id: worker.id,
-            name: worker.name,
-            role: worker.role,
-            entries: worker.entries.map((entry) => ({
-              id: entry.id,
-              startedAt: entry.startedAt.toISOString(),
-              finishedAt: entry.finishedAt.toISOString(),
-            })),
-            advances: worker.advances.map((advance) => ({
-              id: advance.id,
-              date: advance.date.toISOString(),
-              amountCents: advance.amountCents,
-            })),
-          }))}
+          workers={workerRows}
           canCreate={canCreate}
           canEdit={canEdit}
           canDelete={canDelete}

@@ -7,6 +7,7 @@ import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { can, getAssignableRoles, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
@@ -56,35 +57,52 @@ async function UsersPage({
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
   const editUserId = param(resolvedSearchParams, "edit");
-  const roles = (await getAssignableRoles()).filter(
-    (role) => !role.isOwner || user.role === "OWNER" || user.roleRecord?.isOwner,
+  const assignableRoles = await measureDetailAsync(
+    "admin/users.main data query",
+    () => getAssignableRoles(),
+    { locale: typedLocale, query: "roles" },
   );
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      roleId: true,
-      roleRecord: {
+  const roles = measureDetailSync(
+    "admin/users.table mapping/formatting",
+    () =>
+      assignableRoles.filter(
+        (role) => !role.isOwner || user.role === "OWNER" || user.roleRecord?.isOwner,
+      ),
+    { locale: typedLocale, rows: assignableRoles.length, target: "roles" },
+  );
+  const users = await measureDetailAsync(
+    "admin/users.main data query",
+    () =>
+      prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
         select: {
           id: true,
           name: true,
-          isOwner: true,
+          email: true,
+          role: true,
+          roleId: true,
+          roleRecord: {
+            select: {
+              id: true,
+              name: true,
+              isOwner: true,
+            },
+          },
+          lastLoginAt: true,
+          createdAt: true,
         },
-      },
-      lastLoginAt: true,
-      createdAt: true,
-    },
-  });
+      }),
+    { locale: typedLocale, query: "users" },
+  );
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "USERS", "CREATE");
   const canEdit = can(permissions, "USERS", "EDIT");
   const canDelete = can(permissions, "USERS", "DELETE");
   const currentUserIsOwner = user.role === "OWNER" || Boolean(user.roleRecord?.isOwner);
 
-  return (
+  return measureDetailSync(
+    "admin/users.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       {canCreate ? (
         <CreateFormPanel
@@ -214,6 +232,8 @@ async function UsersPage({
         />
       </Card>
     </div>
+    ),
+    { locale: typedLocale, rows: users.length },
   );
 }
 

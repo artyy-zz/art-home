@@ -7,6 +7,7 @@ import { Card } from "@/components/shared/card";
 import { getClientOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -43,6 +44,73 @@ async function ClientsPage({
   const canCreate = can(permissions, "CLIENTS", "CREATE");
   const canEdit = can(permissions, "CLIENTS", "EDIT");
   const canDelete = can(permissions, "CLIENTS", "DELETE");
+  const rows = measureDetailSync(
+    "admin/clients.table mapping/formatting",
+    () =>
+      clients.items.map((client) => ({
+        id: client.id,
+        searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatNumber ?? ""} ${client.notes ?? ""}`,
+        sortValues: {
+          name: client.name,
+          activity: client.invoiceCount + client.offerCount,
+          debt: client.outstandingDebtCents,
+          lastInvoice: client.lastInvoiceAt,
+        },
+        cells: {
+          name: (
+            <div>
+              <p className="font-semibold">{client.name}</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                {client.contactPerson || (typedLocale === "sq" ? "Pa kontakt" : "No contact")}
+              </p>
+            </div>
+          ),
+          contact: (
+            <div className="space-y-1 text-[var(--color-muted)]">
+              <p>{client.email || "-"}</p>
+              <p>{client.phone || "-"}</p>
+              <p className="max-w-[220px] truncate">{client.address || "-"}</p>
+            </div>
+          ),
+          tax: (
+            <div className="space-y-1 text-[var(--color-muted)]">
+              <p>{client.nui || "-"}</p>
+              <p>
+                {typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}{" "}
+                {client.vatNumber || "-"}
+              </p>
+            </div>
+          ),
+          notes: (
+            <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
+              {client.notes || "-"}
+            </p>
+          ),
+          activity: `${client.invoiceCount} ${typedLocale === "sq" ? "fatura" : "invoices"} / ${client.offerCount} ${typedLocale === "sq" ? "oferta" : "offers"}`,
+          debt: formatCurrency(client.outstandingDebtCents, localeString),
+          lastInvoice: client.lastInvoiceAt ? formatDate(client.lastInvoiceAt, localeString) : "-",
+        },
+        actions: (
+          <ClientActions
+            locale={typedLocale}
+            client={{
+              id: client.id,
+              name: client.name,
+              contactPerson: client.contactPerson,
+              nui: client.nui,
+              vatNumber: client.vatNumber,
+              email: client.email,
+              phone: client.phone,
+              address: client.address,
+              notes: client.notes,
+            }}
+            canEdit={canEdit}
+            canDelete={canDelete}
+          />
+        ),
+      })),
+    { locale: typedLocale, rows: clients.items.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -114,68 +182,7 @@ async function ClientsPage({
             { key: "debt", label: typedLocale === "sq" ? "Borxhi" : "Debt", sortable: true, align: "right" },
             { key: "lastInvoice", label: typedLocale === "sq" ? "Fatura e fundit" : "Last invoice", sortable: true },
           ]}
-          rows={clients.items.map((client) => ({
-            id: client.id,
-            searchText: `${client.name} ${client.email ?? ""} ${client.phone ?? ""} ${client.address ?? ""} ${client.nui ?? ""} ${client.vatNumber ?? ""} ${client.notes ?? ""}`,
-            sortValues: {
-              name: client.name,
-              activity: client.invoiceCount + client.offerCount,
-              debt: client.outstandingDebtCents,
-              lastInvoice: client.lastInvoiceAt,
-            },
-            cells: {
-              name: (
-                <div>
-                  <p className="font-semibold">{client.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    {client.contactPerson || (typedLocale === "sq" ? "Pa kontakt" : "No contact")}
-                  </p>
-                </div>
-              ),
-              contact: (
-                <div className="space-y-1 text-[var(--color-muted)]">
-                  <p>{client.email || "-"}</p>
-                  <p>{client.phone || "-"}</p>
-                  <p className="max-w-[220px] truncate">{client.address || "-"}</p>
-                </div>
-              ),
-              tax: (
-                <div className="space-y-1 text-[var(--color-muted)]">
-                  <p>{client.nui || "-"}</p>
-                  <p>
-                    {typedLocale === "sq" ? "Numri i TVSH" : "VAT number"}{" "}
-                    {client.vatNumber || "-"}
-                  </p>
-                </div>
-              ),
-              notes: (
-                <p className="max-w-[260px] whitespace-pre-wrap text-[var(--color-muted)]">
-                  {client.notes || "-"}
-                </p>
-              ),
-              activity: `${client.invoiceCount} ${typedLocale === "sq" ? "fatura" : "invoices"} / ${client.offerCount} ${typedLocale === "sq" ? "oferta" : "offers"}`,
-              debt: formatCurrency(client.outstandingDebtCents, localeString),
-              lastInvoice: client.lastInvoiceAt ? formatDate(client.lastInvoiceAt, localeString) : "-",
-            },
-            actions: (
-              <ClientActions
-                locale={typedLocale}
-                client={{
-                  id: client.id,
-                  name: client.name,
-                  contactPerson: client.contactPerson,
-                  nui: client.nui,
-                  vatNumber: client.vatNumber,
-                  email: client.email,
-                  phone: client.phone,
-                  address: client.address,
-                  notes: client.notes,
-                }}
-                canEdit={canEdit}
-                canDelete={canDelete}
-              />
-            ),
-          }))}
+          rows={rows}
         />
       </Card>
     </div>

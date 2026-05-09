@@ -19,6 +19,7 @@ import {
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -91,7 +92,9 @@ async function DebitNotesPage({
       invoice.items.some((item) => item.remainingQuantity > 0),
     );
 
-  return (
+  return measureDetailSync(
+    "admin/debit-notes.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       {canCreate ? (
         <CreateFormPanel
@@ -273,6 +276,8 @@ async function DebitNotesPage({
         />
       </Card>
     </div>
+    ),
+    { locale: typedLocale, rows: debitNotes.items.length },
   );
 }
 

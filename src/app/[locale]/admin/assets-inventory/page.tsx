@@ -5,6 +5,7 @@ import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-for
 import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
@@ -44,9 +45,43 @@ async function AssetsInventoryPage({
   const canEdit = can(permissions, "ASSETS_INVENTORY", "EDIT");
   const canDelete = can(permissions, "ASSETS_INVENTORY", "DELETE");
 
-  const assets = await prisma.assetInventory.findMany({
-    orderBy: [{ purchaseDate: "desc" }, { createdAt: "desc" }],
-  });
+  const assets = await measureDetailAsync(
+    "admin/assets-inventory.main data query",
+    () =>
+      prisma.assetInventory.findMany({
+        orderBy: [{ purchaseDate: "desc" }, { createdAt: "desc" }],
+      }),
+    { locale: typedLocale },
+  );
+  const rows = measureDetailSync(
+    "admin/assets-inventory.table mapping/formatting",
+    () =>
+      assets.map((asset) => ({
+        id: asset.id,
+        searchText: asset.name,
+        sortValues: {
+          name: asset.name,
+          quantity: asset.quantity,
+          value: asset.valueCents,
+          purchaseDate: asset.purchaseDate,
+        },
+        cells: {
+          name: <p className="font-semibold">{asset.name}</p>,
+          quantity: formatNumber(asset.quantity, localeString),
+          value: formatCurrency(asset.valueCents, localeString),
+          purchaseDate: formatDate(asset.purchaseDate, localeString),
+        },
+        actions: (
+          <AssetInventoryActions
+            locale={typedLocale}
+            asset={asset}
+            canEdit={canEdit}
+            canDelete={canDelete}
+          />
+        ),
+      })),
+    { locale: typedLocale, rows: assets.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -135,30 +170,7 @@ async function AssetsInventoryPage({
               sortable: true,
             },
           ]}
-          rows={assets.map((asset) => ({
-            id: asset.id,
-            searchText: asset.name,
-            sortValues: {
-              name: asset.name,
-              quantity: asset.quantity,
-              value: asset.valueCents,
-              purchaseDate: asset.purchaseDate,
-            },
-            cells: {
-              name: <p className="font-semibold">{asset.name}</p>,
-              quantity: formatNumber(asset.quantity, localeString),
-              value: formatCurrency(asset.valueCents, localeString),
-              purchaseDate: formatDate(asset.purchaseDate, localeString),
-            },
-            actions: (
-              <AssetInventoryActions
-                locale={typedLocale}
-                asset={asset}
-                canEdit={canEdit}
-                canDelete={canDelete}
-              />
-            ),
-          }))}
+          rows={rows}
         />
       </Card>
     </div>

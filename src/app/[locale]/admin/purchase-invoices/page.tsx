@@ -20,6 +20,7 @@ import {
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
@@ -90,7 +91,9 @@ async function PurchaseInvoicesPage({
         ? "Shko te artikujt"
         : "Go to items";
 
-  return (
+  return measureDetailSync(
+    "admin/purchase-invoices.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       {canCreate ? (
         <CreateFormPanel
@@ -297,6 +300,8 @@ async function PurchaseInvoicesPage({
         />
       </Card>
     </div>
+    ),
+    { locale: typedLocale, rows: purchaseInvoices.items.length },
   );
 }
 

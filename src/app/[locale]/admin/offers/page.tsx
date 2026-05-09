@@ -11,6 +11,7 @@ import { Card } from "@/components/shared/card";
 import { getOfferBuilderOptions, getOfferOverviewPage, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -83,7 +84,9 @@ async function OffersPage({
         ? "Shtoni nje artikull para se te krijoni oferten e pare."
         : "Add an item before creating the first offer.";
 
-  return (
+  return measureDetailSync(
+    "admin/offers.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       {canCreate ? (
         <CreateFormPanel
@@ -214,6 +217,8 @@ async function OffersPage({
         />
       </Card>
     </div>
+    ),
+    { locale: typedLocale, rows: offers.items.length },
   );
 }
 
