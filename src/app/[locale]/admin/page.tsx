@@ -8,6 +8,7 @@ import { DashboardCharts } from "@/components/admin/dashboard-charts";
 import { buttonClasses } from "@/components/shared/button";
 import { getDashboardSnapshot, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
@@ -22,7 +23,9 @@ async function AdminDashboardPage({
   const localeString = snapshot.intlLocale;
   const canDeleteNotifications = can(permissions, "DASHBOARD", "DELETE");
 
-  return (
+  return measureDetailSync(
+    "admin/dashboard.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
@@ -189,6 +192,8 @@ async function AdminDashboardPage({
         </Card>
       </div>
     </div>
+    ),
+    { locale: typedLocale },
   );
 }
 

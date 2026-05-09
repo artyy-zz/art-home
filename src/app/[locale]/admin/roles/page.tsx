@@ -10,6 +10,7 @@ import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import {
   ensureSystemRoles,
   getPermissionMatrixForRoleRecord,
@@ -109,61 +110,104 @@ async function RolesPage({
   const { locale } = await params;
   const typedLocale = locale as Locale;
   await requireOwner(typedLocale);
-  await ensureSystemRoles();
+  await measureDetailAsync(
+    "admin/roles.main data query",
+    () => ensureSystemRoles(),
+    { locale: typedLocale, query: "ensureSystemRoles" },
+  );
 
-  const roles = await prisma.role.findMany({
-    select: {
-      id: true,
-      key: true,
-      name: true,
-      description: true,
-      isOwner: true,
-      isSystem: true,
-      users: {
-        select: {
-          id: true,
-        },
-      },
-    },
-    orderBy: [{ isOwner: "desc" }, { name: "asc" }],
-  });
-
-  const users = await prisma.user.findMany({
-    orderBy: [{ role: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      roleId: true,
-      roleRecord: {
+  const roles = await measureDetailAsync(
+    "admin/roles.main data query",
+    () =>
+      prisma.role.findMany({
         select: {
           id: true,
           key: true,
           name: true,
+          description: true,
           isOwner: true,
           isSystem: true,
+          users: {
+            select: {
+              id: true,
+            },
+          },
         },
-      },
-    },
-  });
-
-  const roleMatrices = new Map(
-    await Promise.all(
-      roles.map(async (role) => [
-        role.id,
-        await getPermissionMatrixForRoleRecord(role),
-      ] as const),
-    ),
+        orderBy: [{ isOwner: "desc" }, { name: "asc" }],
+      }),
+    { locale: typedLocale, query: "roles" },
   );
 
-  const userMatrices = new Map(
-    await Promise.all(
-      users.map(async (person) => [
-        person.id,
-        await getUserPermissionMatrix(person),
-      ] as const),
-    ),
+  const users = await measureDetailAsync(
+    "admin/roles.main data query",
+    () =>
+      prisma.user.findMany({
+        orderBy: [{ role: "asc" }, { name: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          roleId: true,
+          roleRecord: {
+            select: {
+              id: true,
+              key: true,
+              name: true,
+              isOwner: true,
+              isSystem: true,
+            },
+          },
+        },
+      }),
+    { locale: typedLocale, query: "users" },
+  );
+
+  const roleMatrices = await measureDetailAsync(
+    "admin/roles.permissions",
+    async () =>
+      new Map(
+        await Promise.all(
+          roles.map(async (role) => [
+            role.id,
+            await getPermissionMatrixForRoleRecord(role),
+          ] as const),
+        ),
+      ),
+    { locale: typedLocale, rows: roles.length, target: "roles" },
+  );
+
+  const userMatrices = await measureDetailAsync(
+    "admin/roles.permissions",
+    async () =>
+      new Map(
+        await Promise.all(
+          users.map(async (person) => [
+            person.id,
+            await getUserPermissionMatrix(person),
+          ] as const),
+        ),
+      ),
+    { locale: typedLocale, rows: users.length, target: "users" },
+  );
+
+  measureDetailSync(
+    "admin/roles.table mapping/formatting",
+    () => {
+      for (const role of roles) {
+        const matrix = roleMatrices.get(role.id);
+        if (matrix) {
+          permissionStats(matrix);
+        }
+      }
+      for (const person of users) {
+        const matrix = userMatrices.get(person.id);
+        if (matrix) {
+          permissionStats(matrix);
+        }
+      }
+    },
+    { locale: typedLocale, roles: roles.length, users: users.length },
   );
 
   return (

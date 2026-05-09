@@ -3,6 +3,7 @@ import { Card } from "@/components/shared/card";
 import { ReportsCharts } from "@/components/admin/reports-charts";
 import { getReportsSnapshot } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailSync } from "@/lib/perf";
 import { requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
@@ -34,7 +35,9 @@ async function ReportsPage({
   const reports = await getReportsSnapshot(typedLocale);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
 
-  return (
+  return measureDetailSync(
+    "admin/reports.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       <ReportsCharts locale={typedLocale} margins={reports.productMargins} debts={reports.clientDebt} />
 
@@ -179,6 +182,8 @@ async function ReportsPage({
         </div>
       </Card>
     </div>
+    ),
+    { locale: typedLocale },
   );
 }
 

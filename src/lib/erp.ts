@@ -20,7 +20,7 @@ import {
   paginationArgs,
   type PaginatedResult,
 } from "@/lib/pagination";
-import { measureAsync } from "@/lib/perf";
+import { measureAsync, measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
 
 const productWithBomArgs = Prisma.validator<Prisma.ProductDefaultArgs>()({
@@ -49,6 +49,38 @@ function contains(value: string | undefined) {
 
 function sortDirection(direction: ListQuery["direction"]) {
   return direction === "asc" ? "asc" : "desc";
+}
+
+function measureAdminMainQuery<T>(
+  pageLabel: string,
+  callback: () => Promise<T>,
+  context?: Record<string, string | number | boolean | null | undefined>,
+) {
+  return measureDetailAsync(`${pageLabel}.main data query`, callback, context);
+}
+
+function measureAdminCountQuery<T>(
+  pageLabel: string,
+  callback: () => Promise<T>,
+  context?: Record<string, string | number | boolean | null | undefined>,
+) {
+  return measureDetailAsync(`${pageLabel}.count query`, callback, context);
+}
+
+function measureAdminAuxQuery<T>(
+  pageLabel: string,
+  callback: () => Promise<T>,
+  context?: Record<string, string | number | boolean | null | undefined>,
+) {
+  return measureDetailAsync(`${pageLabel}.builder/options query`, callback, context);
+}
+
+function measureAdminMapping<T>(
+  pageLabel: string,
+  callback: () => T,
+  context?: Record<string, string | number | boolean | null | undefined>,
+) {
+  return measureDetailSync(`${pageLabel}.table mapping/formatting`, callback, context);
 }
 
 export function calculateTotals(
@@ -199,18 +231,20 @@ export async function getClientOverview() {
 }
 
 export async function getInventoryOverview() {
-  return prisma.material.findMany({
-    include: {
-      bomItems: true,
-      movements: {
-        orderBy: {
-          createdAt: "desc",
+  return measureAdminMainQuery("admin/inventory", () =>
+    prisma.material.findMany({
+      include: {
+        bomItems: true,
+        movements: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 3,
         },
-        take: 3,
       },
-    },
-    orderBy: [{ stockQuantity: "asc" }, { name: "asc" }],
-  });
+      orderBy: [{ stockQuantity: "asc" }, { name: "asc" }],
+    }),
+  );
 }
 
 export function localizeInventoryItem(
@@ -303,18 +337,20 @@ export async function getOfferOverviewPage({
               : { createdAt: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.offer.findMany({
-      where,
-      include: {
-        client: true,
-        lead: true,
-        invoice: true,
-        items: true,
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.offer.count({ where }),
+    measureAdminMainQuery("admin/offers", () =>
+      prisma.offer.findMany({
+        where,
+        include: {
+          client: true,
+          lead: true,
+          invoice: true,
+          items: true,
+        },
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/offers", () => prisma.offer.count({ where })),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -354,18 +390,20 @@ export async function getInvoiceOverviewPage({
               : { issuedAt: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.invoice.findMany({
-      where,
-      include: {
-        client: true,
-        offer: true,
-        items: true,
-        debitNotes: true,
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.invoice.count({ where }),
+    measureAdminMainQuery("admin/invoices", () =>
+      prisma.invoice.findMany({
+        where,
+        include: {
+          client: true,
+          offer: true,
+          items: true,
+          debitNotes: true,
+        },
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/invoices", () => prisma.invoice.count({ where })),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -405,16 +443,20 @@ export async function getPurchaseInvoiceOverviewPage({
               : { issuedAt: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.purchaseInvoice.findMany({
-      where,
-      include: {
-        supplier: true,
-        items: true,
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.purchaseInvoice.count({ where }),
+    measureAdminMainQuery("admin/purchase-invoices", () =>
+      prisma.purchaseInvoice.findMany({
+        where,
+        include: {
+          supplier: true,
+          items: true,
+        },
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/purchase-invoices", () =>
+      prisma.purchaseInvoice.count({ where }),
+    ),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -453,44 +495,48 @@ export async function getClientOverviewPage({
         : { name: direction };
 
   const [clients, totalItems] = await Promise.all([
-    prisma.client.findMany({
-      where,
-      include: {
-        offers: { select: { id: true } },
-        invoices: {
-          select: {
-            issuedAt: true,
-            status: true,
-            totalCents: true,
-            amountPaidCents: true,
-            debitNotes: { select: { totalCents: true } },
+    measureAdminMainQuery("admin/clients", () =>
+      prisma.client.findMany({
+        where,
+        include: {
+          offers: { select: { id: true } },
+          invoices: {
+            select: {
+              issuedAt: true,
+              status: true,
+              totalCents: true,
+              amountPaidCents: true,
+              debitNotes: { select: { totalCents: true } },
+            },
           },
         },
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.client.count({ where }),
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/clients", () => prisma.client.count({ where })),
   ]);
 
-  const items = clients.map((client) => {
-    const outstandingDebtCents = client.invoices.reduce(
-      (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
-      0,
-    );
+  const items = measureAdminMapping("admin/clients", () =>
+    clients.map((client) => {
+      const outstandingDebtCents = client.invoices.reduce(
+        (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
+        0,
+      );
 
-    return {
-      ...client,
-      outstandingDebtCents,
-      offerCount: client.offers.length,
-      invoiceCount: client.invoices.length,
-      lastInvoiceAt:
-        client.invoices.sort(
-          (left, right) =>
-            new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
-        )[0]?.issuedAt ?? null,
-    };
-  });
+      return {
+        ...client,
+        outstandingDebtCents,
+        offerCount: client.offers.length,
+        invoiceCount: client.invoices.length,
+        lastInvoiceAt:
+          client.invoices.sort(
+            (left, right) =>
+              new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
+          )[0]?.issuedAt ?? null,
+      };
+    }),
+  );
 
   if (sort === "debt") {
     items.sort((left, right) =>
@@ -553,17 +599,21 @@ export async function getDeliveryNoteOverviewPage({
         : { issuedAt: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.deliveryNote.findMany({
-      where,
-      include: {
-        client: true,
-        supplier: true,
-        items: true,
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.deliveryNote.count({ where }),
+    measureAdminMainQuery("admin/delivery-notes", () =>
+      prisma.deliveryNote.findMany({
+        where,
+        include: {
+          client: true,
+          supplier: true,
+          items: true,
+        },
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/delivery-notes", () =>
+      prisma.deliveryNote.count({ where }),
+    ),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -606,12 +656,14 @@ export async function getExpenseOverviewPage({
           : { date: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.expense.findMany({
-      where,
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.expense.count({ where }),
+    measureAdminMainQuery("admin/expenses", () =>
+      prisma.expense.findMany({
+        where,
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/expenses", () => prisma.expense.count({ where })),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -669,25 +721,27 @@ export async function getDebitNoteOverviewPage({
           : { issuedAt: sortDirection(direction) };
 
   const [items, totalItems] = await Promise.all([
-    prisma.debitNote.findMany({
-      where,
-      include: {
-        client: true,
-        invoice: {
-          include: {
-            debitNotes: true,
+    measureAdminMainQuery("admin/debit-notes", () =>
+      prisma.debitNote.findMany({
+        where,
+        include: {
+          client: true,
+          invoice: {
+            include: {
+              debitNotes: true,
+            },
+          },
+          items: {
+            include: {
+              invoiceItem: true,
+            },
           },
         },
-        items: {
-          include: {
-            invoiceItem: true,
-          },
-        },
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.debitNote.count({ where }),
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/debit-notes", () => prisma.debitNote.count({ where })),
   ]);
 
   return paginatedResult({ items, totalItems, page, pageSize });
@@ -759,44 +813,48 @@ export async function getSupplierOverviewPage({
       : { name: direction };
 
   const [suppliers, totalItems] = await Promise.all([
-    prisma.supplier.findMany({
-      where,
-      include: {
-        purchaseInvoices: {
-          select: {
-            issuedAt: true,
-            status: true,
-            totalCents: true,
-            amountPaidCents: true,
+    measureAdminMainQuery("admin/suppliers", () =>
+      prisma.supplier.findMany({
+        where,
+        include: {
+          purchaseInvoices: {
+            select: {
+              issuedAt: true,
+              status: true,
+              totalCents: true,
+              amountPaidCents: true,
+            },
           },
         },
-      },
-      orderBy,
-      ...paginationArgs(page, pageSize),
-    }),
-    prisma.supplier.count({ where }),
+        orderBy,
+        ...paginationArgs(page, pageSize),
+      }),
+    ),
+    measureAdminCountQuery("admin/suppliers", () => prisma.supplier.count({ where })),
   ]);
 
-  const items = suppliers.map((supplier) => {
-    const outstandingDebtCents = supplier.purchaseInvoices.reduce((sum, invoice) => {
-      if (invoice.status === InvoiceStatus.PAID) {
-        return sum;
-      }
+  const items = measureAdminMapping("admin/suppliers", () =>
+    suppliers.map((supplier) => {
+      const outstandingDebtCents = supplier.purchaseInvoices.reduce((sum, invoice) => {
+        if (invoice.status === InvoiceStatus.PAID) {
+          return sum;
+        }
 
-      return sum + (invoice.totalCents - invoice.amountPaidCents);
-    }, 0);
+        return sum + (invoice.totalCents - invoice.amountPaidCents);
+      }, 0);
 
-    return {
-      ...supplier,
-      outstandingDebtCents,
-      purchaseInvoiceCount: supplier.purchaseInvoices.length,
-      lastPurchaseInvoiceAt:
-        supplier.purchaseInvoices.sort(
-          (left, right) =>
-            new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
-        )[0]?.issuedAt ?? null,
-    };
-  });
+      return {
+        ...supplier,
+        outstandingDebtCents,
+        purchaseInvoiceCount: supplier.purchaseInvoices.length,
+        lastPurchaseInvoiceAt:
+          supplier.purchaseInvoices.sort(
+            (left, right) =>
+              new Date(right.issuedAt).getTime() - new Date(left.issuedAt).getTime(),
+          )[0]?.issuedAt ?? null,
+      };
+    }),
+  );
 
   if (sort === "debt") {
     items.sort((left, right) =>
@@ -819,120 +877,145 @@ export async function getProductOverview(locale: Locale) {
 }
 
 export async function getOfferBuilderOptions(locale: Locale) {
-  const [clients, leads, materials] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.lead.findMany({
-      where: {
-        status: {
-          not: "CLOSED",
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.material.findMany({
-      orderBy: [{ type: "asc" }, { name: "asc" }],
-    }),
-  ]);
+  const [clients, leads, materials] = await measureAdminAuxQuery(
+    "admin/offers",
+    () =>
+      Promise.all([
+        prisma.client.findMany({
+          where: {
+            deletedAt: null,
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.lead.findMany({
+          where: {
+            status: {
+              not: "CLOSED",
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.material.findMany({
+          orderBy: [{ type: "asc" }, { name: "asc" }],
+        }),
+      ]),
+    { locale },
+  );
 
-  return {
+  return measureAdminMapping("admin/offers", () => ({
     clients,
     leads,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
-  };
+  }));
 }
 
 export async function getInvoiceBuilderOptions(locale: Locale) {
-  const [clients, materials] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.material.findMany({
-      orderBy: [{ type: "asc" }, { name: "asc" }],
-    }),
-  ]);
+  const [clients, materials] = await measureAdminAuxQuery(
+    "admin/invoices",
+    () =>
+      Promise.all([
+        prisma.client.findMany({
+          where: {
+            deletedAt: null,
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.material.findMany({
+          orderBy: [{ type: "asc" }, { name: "asc" }],
+        }),
+      ]),
+    { locale },
+  );
 
-  return {
+  return measureAdminMapping("admin/invoices", () => ({
     clients,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
-  };
+  }));
 }
 
-export async function getPurchaseInvoiceBuilderOptions(locale: Locale) {
-  const [suppliers, materials] = await Promise.all([
-    prisma.supplier.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.material.findMany({
-      orderBy: [{ type: "asc" }, { name: "asc" }],
-    }),
-  ]);
+export async function getPurchaseInvoiceBuilderOptions(
+  locale: Locale,
+  pageLabel = "admin/purchase-invoices",
+) {
+  const [suppliers, materials] = await measureAdminAuxQuery(
+    pageLabel,
+    () =>
+      Promise.all([
+        prisma.supplier.findMany({
+          where: {
+            deletedAt: null,
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.material.findMany({
+          orderBy: [{ type: "asc" }, { name: "asc" }],
+        }),
+      ]),
+    { locale },
+  );
 
-  return {
+  return measureAdminMapping(pageLabel, () => ({
     suppliers,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
-  };
+  }));
 }
 
 export async function getDeliveryNoteBuilderOptions(locale: Locale) {
-  const [clients, suppliers, materials] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.supplier.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.material.findMany({
-      orderBy: [{ type: "asc" }, { name: "asc" }],
-    }),
-  ]);
+  const [clients, suppliers, materials] = await measureAdminAuxQuery(
+    "admin/delivery-notes",
+    () =>
+      Promise.all([
+        prisma.client.findMany({
+          where: {
+            deletedAt: null,
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.supplier.findMany({
+          where: {
+            deletedAt: null,
+          },
+          orderBy: { name: "asc" },
+        }),
+        prisma.material.findMany({
+          orderBy: [{ type: "asc" }, { name: "asc" }],
+        }),
+      ]),
+    { locale },
+  );
 
-  return {
+  return measureAdminMapping("admin/delivery-notes", () => ({
     clients,
     suppliers,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
-  };
+  }));
 }
 
 export async function getDebitNoteBuilderOptions() {
-  const [clients, invoices] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.invoice.findMany({
-      include: {
-        client: true,
-        items: true,
-        debitNotes: {
-          include: {
-            items: true,
+  const [clients, invoices] = await measureAdminAuxQuery("admin/debit-notes", () =>
+    Promise.all([
+      prisma.client.findMany({
+        where: {
+          deletedAt: null,
+        },
+        orderBy: { name: "asc" },
+      }),
+      prisma.invoice.findMany({
+        include: {
+          client: true,
+          items: true,
+          debitNotes: {
+            include: {
+              items: true,
+            },
           },
         },
-      },
-      orderBy: { issuedAt: "desc" },
-    }),
-  ]);
+        orderBy: { issuedAt: "desc" },
+      }),
+    ]),
+  );
 
-  return {
+  return measureAdminMapping("admin/debit-notes", () => ({
     clients,
     invoices: invoices.map((invoice) => ({
       id: invoice.id,
@@ -962,7 +1045,7 @@ export async function getDebitNoteBuilderOptions() {
         };
       }),
     })),
-  };
+  }));
 }
 
 export async function getProductBuilderOptions() {
@@ -973,95 +1056,99 @@ export async function getProductBuilderOptions() {
 
 export async function getDashboardSnapshot(locale: Locale) {
   return measureAsync("erp.dashboardSnapshot", async () => {
-  const [invoices, materials, notifications, leads, movements] = await Promise.all([
-    prisma.invoice.findMany({
-      select: {
-        id: true,
-        number: true,
-        status: true,
-        subtotalCents: true,
-        vatAmountCents: true,
-        totalCents: true,
-        amountPaidCents: true,
-        dueDate: true,
-        issuedAt: true,
-        client: {
+  const [invoices, materials, notifications, leads, movements] =
+    await measureAdminMainQuery("admin/dashboard", () =>
+      Promise.all([
+        prisma.invoice.findMany({
           select: {
-            name: true,
-          },
-        },
-        items: {
-          select: {
-            productName: true,
-            quantity: true,
-            lineTotalCents: true,
-            unitCostCents: true,
-          },
-        },
-        debitNotes: {
-          select: {
+            id: true,
+            number: true,
+            status: true,
+            subtotalCents: true,
+            vatAmountCents: true,
             totalCents: true,
+            amountPaidCents: true,
+            dueDate: true,
+            issuedAt: true,
+            client: {
+              select: {
+                name: true,
+              },
+            },
+            items: {
+              select: {
+                productName: true,
+                quantity: true,
+                lineTotalCents: true,
+                unitCostCents: true,
+              },
+            },
+            debitNotes: {
+              select: {
+                totalCents: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: {
-        issuedAt: "desc",
-      },
-    }),
-    prisma.material.findMany({
-      select: {
-        id: true,
-        name: true,
-        unit: true,
-        stockQuantity: true,
-        lowStockThreshold: true,
-      },
-      orderBy: {
-        stockQuantity: "asc",
-      },
-    }),
-    prisma.notification.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 6,
-    }),
-    prisma.lead.findMany({
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        email: true,
-        description: true,
-        status: true,
-        sourceLocale: true,
-        createdAt: true,
-        updatedAt: true,
-        clientId: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 5,
-    }),
-    prisma.inventoryMovement.findMany({
-      where: {
-        kind: InventoryMovementKind.CONSUMPTION,
-      },
-      select: {
-        quantity: true,
-        material: {
+          orderBy: {
+            issuedAt: "desc",
+          },
+        }),
+        prisma.material.findMany({
           select: {
+            id: true,
             name: true,
+            unit: true,
+            stockQuantity: true,
+            lowStockThreshold: true,
           },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 200,
-    }),
-  ]);
+          orderBy: {
+            stockQuantity: "asc",
+          },
+        }),
+        prisma.notification.findMany({
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 6,
+        }),
+        prisma.lead.findMany({
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            description: true,
+            status: true,
+            sourceLocale: true,
+            createdAt: true,
+            updatedAt: true,
+            clientId: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 5,
+        }),
+        prisma.inventoryMovement.findMany({
+          where: {
+            kind: InventoryMovementKind.CONSUMPTION,
+          },
+          select: {
+            quantity: true,
+            material: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 200,
+        }),
+      ]),
+    { locale },
+  );
 
   const currentMonthStart = startOfMonth(new Date());
   const currentMonthEnd = endOfMonth(new Date());
@@ -1210,61 +1297,66 @@ export async function getReportsSnapshot(locale: Locale) {
     expenses,
     debitNotes,
     deliveryNotes,
-  ] = await Promise.all([
-    prisma.invoice.findMany({
-      select: {
-        items: {
+  ] = await measureAdminMainQuery(
+    "admin/reports",
+    () =>
+      Promise.all([
+        prisma.invoice.findMany({
           select: {
-            productName: true,
+            items: {
+              select: {
+                productName: true,
+                quantity: true,
+                lineTotalCents: true,
+                unitCostCents: true,
+              },
+            },
+          },
+          orderBy: { issuedAt: "desc" },
+          take: 500,
+        }),
+        prisma.inventoryMovement.findMany({
+          where: {
+            kind: InventoryMovementKind.CONSUMPTION,
+          },
+          select: {
             quantity: true,
-            lineTotalCents: true,
-            unitCostCents: true,
+            material: {
+              select: {
+                name: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: { issuedAt: "desc" },
-      take: 500,
-    }),
-    prisma.inventoryMovement.findMany({
-      where: {
-        kind: InventoryMovementKind.CONSUMPTION,
-      },
-      select: {
-        quantity: true,
-        material: {
+          orderBy: { createdAt: "desc" },
+          take: 500,
+        }),
+        getClientOverview(),
+        getProductOverview(locale),
+        prisma.expense.findMany({
+          orderBy: { date: "desc" },
+        }),
+        prisma.debitNote.findMany({
           select: {
-            name: true,
+            clientId: true,
+            totalCents: true,
+            client: {
+              select: {
+                name: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 500,
-    }),
-    getClientOverview(),
-    getProductOverview(locale),
-    prisma.expense.findMany({
-      orderBy: { date: "desc" },
-    }),
-    prisma.debitNote.findMany({
-      select: {
-        clientId: true,
-        totalCents: true,
-        client: {
+          orderBy: { issuedAt: "desc" },
+          take: 500,
+        }),
+        prisma.deliveryNote.findMany({
           select: {
-            name: true,
+            status: true,
           },
-        },
-      },
-      orderBy: { issuedAt: "desc" },
-      take: 500,
-    }),
-    prisma.deliveryNote.findMany({
-      select: {
-        status: true,
-      },
-      orderBy: { issuedAt: "desc" },
-    }),
-  ]);
+          orderBy: { issuedAt: "desc" },
+        }),
+      ]),
+    { locale },
+  );
 
   const profitByProductMap = new Map<
     string,

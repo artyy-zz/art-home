@@ -8,6 +8,7 @@ import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
 import { getInventoryOverview, materialTypeLabel } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
@@ -46,6 +47,61 @@ async function InventoryPage({
   const canCreate = can(permissions, "INVENTORY", "CREATE");
   const canEdit = can(permissions, "INVENTORY", "EDIT");
   const canDelete = can(permissions, "INVENTORY", "DELETE");
+  const rows = measureDetailSync(
+    "admin/inventory.table mapping/formatting",
+    () =>
+      materials.map((material) => ({
+        id: material.id,
+        searchText: `${material.name} ${material.sku} ${materialTypeLabel(material.type, typedLocale)} ${material.notes ?? ""}`,
+        sortValues: {
+          material: material.name,
+          type: material.type,
+          stock: material.stockQuantity,
+          threshold: material.lowStockThreshold,
+          cost: material.costPerUnitCents,
+        },
+        cells: {
+          material: (
+            <div>
+              <p className="font-semibold">{material.name}</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">{material.sku}</p>
+            </div>
+          ),
+          type: materialTypeLabel(material.type, typedLocale),
+          stock: (
+            <Badge tone={material.stockQuantity <= material.lowStockThreshold ? "warning" : "success"}>
+              {formatNumber(material.stockQuantity, localeString)} {material.unit}
+            </Badge>
+          ),
+          threshold: `${formatNumber(material.lowStockThreshold, localeString)} ${material.unit}`,
+          cost: formatCurrency(material.costPerUnitCents, localeString),
+          notes: (
+            <p className="max-w-[240px] whitespace-pre-wrap text-[var(--color-muted)]">
+              {material.notes || (typedLocale === "sq" ? "Pa shenime." : "No notes.")}
+            </p>
+          ),
+        },
+        actions: (
+          <InventoryActions
+            locale={typedLocale}
+            material={{
+              id: material.id,
+              name: material.name,
+              sku: material.sku,
+              type: material.type,
+              unit: material.unit,
+              stockQuantity: material.stockQuantity,
+              lowStockThreshold: material.lowStockThreshold,
+              costPerUnitCents: material.costPerUnitCents,
+              notes: material.notes,
+            }}
+            canEdit={canEdit}
+            canDelete={canDelete}
+          />
+        ),
+      })),
+    { locale: typedLocale, rows: materials.length },
+  );
 
   return (
     <div className="space-y-6">
@@ -111,56 +167,7 @@ async function InventoryPage({
             { key: "cost", label: typedLocale === "sq" ? "Çmimi" : "Price", sortable: true, align: "right" },
             { key: "notes", label: typedLocale === "sq" ? "Shenime" : "Notes" },
           ]}
-          rows={materials.map((material) => ({
-            id: material.id,
-            searchText: `${material.name} ${material.sku} ${materialTypeLabel(material.type, typedLocale)} ${material.notes ?? ""}`,
-            sortValues: {
-              material: material.name,
-              type: material.type,
-              stock: material.stockQuantity,
-              threshold: material.lowStockThreshold,
-              cost: material.costPerUnitCents,
-            },
-            cells: {
-              material: (
-                <div>
-                  <p className="font-semibold">{material.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">{material.sku}</p>
-                </div>
-              ),
-              type: materialTypeLabel(material.type, typedLocale),
-              stock: (
-                <Badge tone={material.stockQuantity <= material.lowStockThreshold ? "warning" : "success"}>
-                  {formatNumber(material.stockQuantity, localeString)} {material.unit}
-                </Badge>
-              ),
-              threshold: `${formatNumber(material.lowStockThreshold, localeString)} ${material.unit}`,
-              cost: formatCurrency(material.costPerUnitCents, localeString),
-              notes: (
-                <p className="max-w-[240px] whitespace-pre-wrap text-[var(--color-muted)]">
-                  {material.notes || (typedLocale === "sq" ? "Pa shenime." : "No notes.")}
-                </p>
-              ),
-            },
-            actions: (
-              <InventoryActions
-                locale={typedLocale}
-                material={{
-                  id: material.id,
-                  name: material.name,
-                  sku: material.sku,
-                  type: material.type,
-                  unit: material.unit,
-                  stockQuantity: material.stockQuantity,
-                  lowStockThreshold: material.lowStockThreshold,
-                  costPerUnitCents: material.costPerUnitCents,
-                  notes: material.notes,
-                }}
-                canEdit={canEdit}
-                canDelete={canDelete}
-              />
-            ),
-          }))}
+          rows={rows}
         />
       </Card>
     </div>

@@ -17,6 +17,7 @@ import {
 } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -91,7 +92,9 @@ async function InvoicesPage({
         ? "Shtoni nje artikull para se te krijoni faturen e pare."
         : "Add an item before creating the first invoice.";
 
-  return (
+  return measureDetailSync(
+    "admin/invoices.table mapping/formatting",
+    () => (
     <div className="space-y-6">
       {canCreate ? (
         <CreateFormPanel
@@ -254,6 +257,8 @@ async function InvoicesPage({
         />
       </Card>
     </div>
+    ),
+    { locale: typedLocale, rows: invoices.items.length },
   );
 }
 
