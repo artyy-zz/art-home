@@ -6,6 +6,9 @@ export type PaginatedResult<T> = {
   page: number;
   pageSize: number;
   totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  exactTotal: boolean;
 };
 
 export function parsePage(value: string | string[] | undefined) {
@@ -21,6 +24,13 @@ export function paginationArgs(page: number, pageSize = DEFAULT_PAGE_SIZE) {
   return {
     skip: (safePage - 1) * pageSize,
     take: pageSize,
+  };
+}
+
+export function paginationSliceArgs(page: number, pageSize = DEFAULT_PAGE_SIZE) {
+  return {
+    ...paginationArgs(page, pageSize),
+    take: pageSize + 1,
   };
 }
 
@@ -41,5 +51,33 @@ export function paginatedResult<T>({
     page,
     pageSize,
     totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
+    hasNextPage: page * pageSize < totalItems,
+    hasPreviousPage: page > 1,
+    exactTotal: true,
+  };
+}
+
+export function paginatedSliceResult<T>({
+  items,
+  page,
+  pageSize = DEFAULT_PAGE_SIZE,
+}: {
+  items: T[];
+  page: number;
+  pageSize?: number;
+}): PaginatedResult<T> {
+  const hasNextPage = items.length > pageSize;
+  const visibleItems = hasNextPage ? items.slice(0, pageSize) : items;
+  const minimumTotalItems = (Math.max(1, page) - 1) * pageSize + visibleItems.length;
+
+  return {
+    items: visibleItems,
+    totalItems: hasNextPage ? minimumTotalItems + 1 : minimumTotalItems,
+    page,
+    pageSize,
+    totalPages: hasNextPage ? page + 1 : Math.max(1, page),
+    hasNextPage,
+    hasPreviousPage: page > 1,
+    exactTotal: false,
   };
 }

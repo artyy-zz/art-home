@@ -48,6 +48,7 @@ async function OffersPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "createdAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const canCreate = can(permissions, "OFFERS", "CREATE");
   const [offers, options] = await Promise.all([
     getOfferOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -55,10 +56,11 @@ async function OffersPage({
       sort,
       direction,
     }),
-    getOfferBuilderOptions(typedLocale),
+    canCreate
+      ? getOfferBuilderOptions(typedLocale)
+      : Promise.resolve({ clients: [], leads: [], items: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "OFFERS", "CREATE");
   const canEdit = can(permissions, "OFFERS", "EDIT");
   const canDelete = can(permissions, "OFFERS", "DELETE");
   const canExport = can(permissions, "OFFERS", "EXPORT");
@@ -151,6 +153,9 @@ async function OffersPage({
             totalPages: offers.totalPages,
             totalItems: offers.totalItems,
             pageSize: offers.pageSize,
+            hasNextPage: offers.hasNextPage,
+            hasPreviousPage: offers.hasPreviousPage,
+            exactTotal: offers.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} oferta"

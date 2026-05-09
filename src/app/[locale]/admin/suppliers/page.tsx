@@ -170,6 +170,9 @@ async function SuppliersPage({
             totalPages: suppliers.totalPages,
             totalItems: suppliers.totalItems,
             pageSize: suppliers.pageSize,
+            hasNextPage: suppliers.hasNextPage,
+            hasPreviousPage: suppliers.hasPreviousPage,
+            exactTotal: suppliers.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} furnitore"

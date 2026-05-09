@@ -56,6 +56,7 @@ async function InvoicesPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const canCreate = can(permissions, "INVOICES", "CREATE");
   const [invoices, options] = await Promise.all([
     getInvoiceOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -63,10 +64,11 @@ async function InvoicesPage({
       sort,
       direction,
     }),
-    getInvoiceBuilderOptions(typedLocale),
+    canCreate
+      ? getInvoiceBuilderOptions(typedLocale)
+      : Promise.resolve({ clients: [], items: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "INVOICES", "CREATE");
   const canEdit = can(permissions, "INVOICES", "EDIT");
   const canDelete = can(permissions, "INVOICES", "DELETE");
   const canExport = can(permissions, "INVOICES", "EXPORT");
@@ -161,6 +163,9 @@ async function InvoicesPage({
             totalPages: invoices.totalPages,
             totalItems: invoices.totalItems,
             pageSize: invoices.pageSize,
+            hasNextPage: invoices.hasNextPage,
+            hasPreviousPage: invoices.hasPreviousPage,
+            exactTotal: invoices.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} fatura"

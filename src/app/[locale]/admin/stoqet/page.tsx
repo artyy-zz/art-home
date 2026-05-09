@@ -36,20 +36,23 @@ async function StoqetPage({
   const canEdit = can(permissions, "STOQET", "EDIT");
   const canDelete = can(permissions, "STOQET", "DELETE");
 
+  const needsMaterialOptions = canCreate || canEdit;
   const [materials, stocks] = await measureDetailAsync(
     "admin/stoqet.main data query",
     () =>
       Promise.all([
-        prisma.material.findMany({
-          orderBy: [{ name: "asc" }, { sku: "asc" }],
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-            unit: true,
-            stockQuantity: true,
-          },
-        }),
+        needsMaterialOptions
+          ? prisma.material.findMany({
+              orderBy: [{ name: "asc" }, { sku: "asc" }],
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                unit: true,
+                stockQuantity: true,
+              },
+            })
+          : Promise.resolve([]),
         prisma.stok.findMany({
           orderBy: [{ createdAt: "desc" }],
           include: {

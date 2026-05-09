@@ -71,6 +71,7 @@ async function DebitNotesPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const canCreate = can(permissions, "DEBIT_NOTES", "CREATE");
   const [debitNotes, options] = await Promise.all([
     getDebitNoteOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -78,10 +79,11 @@ async function DebitNotesPage({
       sort,
       direction,
     }),
-    getDebitNoteBuilderOptions(),
+    canCreate
+      ? getDebitNoteBuilderOptions()
+      : Promise.resolve({ clients: [], invoices: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "DEBIT_NOTES", "CREATE");
   const canEdit = can(permissions, "DEBIT_NOTES", "EDIT");
   const canDelete = can(permissions, "DEBIT_NOTES", "DELETE");
   const canExport = can(permissions, "DEBIT_NOTES", "EXPORT");
@@ -148,6 +150,9 @@ async function DebitNotesPage({
             totalPages: debitNotes.totalPages,
             totalItems: debitNotes.totalItems,
             pageSize: debitNotes.pageSize,
+            hasNextPage: debitNotes.hasNextPage,
+            hasPreviousPage: debitNotes.hasPreviousPage,
+            exactTotal: debitNotes.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} debit note"

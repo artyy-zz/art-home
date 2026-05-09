@@ -162,6 +162,7 @@ async function ExpensesPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "date";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const canCreate = can(permissions, "EXPENSES", "CREATE");
   const [expenses, options] = await Promise.all([
     getExpenseOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -169,10 +170,11 @@ async function ExpensesPage({
       sort,
       direction,
     }),
-    getPurchaseInvoiceBuilderOptions(typedLocale, "admin/expenses"),
+    canCreate
+      ? getPurchaseInvoiceBuilderOptions(typedLocale, "admin/expenses")
+      : Promise.resolve({ suppliers: [], items: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "EXPENSES", "CREATE");
   const canEdit = can(permissions, "EXPENSES", "EDIT");
   const canDelete = can(permissions, "EXPENSES", "DELETE");
 
@@ -229,6 +231,9 @@ async function ExpensesPage({
             totalPages: expenses.totalPages,
             totalItems: expenses.totalItems,
             pageSize: expenses.pageSize,
+            hasNextPage: expenses.hasNextPage,
+            hasPreviousPage: expenses.hasPreviousPage,
+            exactTotal: expenses.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} shpenzime"

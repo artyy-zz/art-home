@@ -72,6 +72,7 @@ async function DeliveryNotesPage({
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
   const activeType = param(resolvedSearchParams, "type") === "PURCHASE" ? "PURCHASE" : "SALES";
+  const canCreate = can(permissions, "DELIVERY_NOTES", "CREATE");
   const [deliveryNotes, options] = await Promise.all([
     getDeliveryNoteOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -80,10 +81,11 @@ async function DeliveryNotesPage({
       direction,
       type: activeType,
     }),
-    getDeliveryNoteBuilderOptions(typedLocale),
+    canCreate
+      ? getDeliveryNoteBuilderOptions(typedLocale)
+      : Promise.resolve({ clients: [], suppliers: [], items: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "DELIVERY_NOTES", "CREATE");
   const canEdit = can(permissions, "DELIVERY_NOTES", "EDIT");
   const canDelete = can(permissions, "DELIVERY_NOTES", "DELETE");
   const canExport = can(permissions, "DELIVERY_NOTES", "EXPORT");
@@ -176,6 +178,9 @@ async function DeliveryNotesPage({
             totalPages: deliveryNotes.totalPages,
             totalItems: deliveryNotes.totalItems,
             pageSize: deliveryNotes.pageSize,
+            hasNextPage: deliveryNotes.hasNextPage,
+            hasPreviousPage: deliveryNotes.hasPreviousPage,
+            exactTotal: deliveryNotes.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} flete dergesa"

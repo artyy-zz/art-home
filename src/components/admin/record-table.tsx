@@ -29,6 +29,9 @@ type Pagination = {
   totalPages: number;
   totalItems: number;
   pageSize: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  exactTotal?: boolean;
   label: string;
   previousLabel: string;
   nextLabel: string;
@@ -311,7 +314,10 @@ export function RecordTable({
             {pagination.label
               .replace("{page}", String(pagination.page))
               .replace("{totalPages}", String(pagination.totalPages))
-              .replace("{totalItems}", String(pagination.totalItems))}
+              .replace(
+                "{totalItems}",
+                `${pagination.totalItems}${pagination.exactTotal === false ? "+" : ""}`,
+              )}
           </span>
           <div className="flex items-center gap-2">
             <Link
@@ -323,10 +329,11 @@ export function RecordTable({
                 direction,
                 page: Math.max(1, pagination.page - 1),
               })}
-              aria-disabled={pagination.page <= 1}
+              aria-disabled={pagination.hasPreviousPage === false || pagination.page <= 1}
               className={cn(
                 "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
-                pagination.page <= 1 && "pointer-events-none opacity-45",
+                (pagination.hasPreviousPage === false || pagination.page <= 1) &&
+                  "pointer-events-none opacity-45",
               )}
             >
               {pagination.previousLabel}
@@ -340,10 +347,11 @@ export function RecordTable({
                 direction,
                 page: Math.min(pagination.totalPages, pagination.page + 1),
               })}
-              aria-disabled={pagination.page >= pagination.totalPages}
+              aria-disabled={pagination.hasNextPage === false || pagination.page >= pagination.totalPages}
               className={cn(
                 "rounded-full border border-black/10 bg-white/90 px-4 py-2 font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]",
-                pagination.page >= pagination.totalPages && "pointer-events-none opacity-45",
+                (pagination.hasNextPage === false || pagination.page >= pagination.totalPages) &&
+                  "pointer-events-none opacity-45",
               )}
             >
               {pagination.nextLabel}

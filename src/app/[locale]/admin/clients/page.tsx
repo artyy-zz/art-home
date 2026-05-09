@@ -166,6 +166,9 @@ async function ClientsPage({
             totalPages: clients.totalPages,
             totalItems: clients.totalItems,
             pageSize: clients.pageSize,
+            hasNextPage: clients.hasNextPage,
+            hasPreviousPage: clients.hasPreviousPage,
+            exactTotal: clients.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} kliente"

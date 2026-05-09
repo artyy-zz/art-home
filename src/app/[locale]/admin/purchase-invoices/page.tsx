@@ -62,6 +62,7 @@ async function PurchaseInvoicesPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "issuedAt";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const canCreate = can(permissions, "PURCHASE_INVOICES", "CREATE");
   const [purchaseInvoices, options] = await Promise.all([
     getPurchaseInvoiceOverviewPage({
       page: parsePage(resolvedSearchParams.page),
@@ -69,10 +70,11 @@ async function PurchaseInvoicesPage({
       sort,
       direction,
     }),
-    getPurchaseInvoiceBuilderOptions(typedLocale),
+    canCreate
+      ? getPurchaseInvoiceBuilderOptions(typedLocale)
+      : Promise.resolve({ suppliers: [], items: [] }),
   ]);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
-  const canCreate = can(permissions, "PURCHASE_INVOICES", "CREATE");
   const canEdit = can(permissions, "PURCHASE_INVOICES", "EDIT");
   const canDelete = can(permissions, "PURCHASE_INVOICES", "DELETE");
   const canExport = can(permissions, "PURCHASE_INVOICES", "EXPORT");
@@ -162,6 +164,9 @@ async function PurchaseInvoicesPage({
             totalPages: purchaseInvoices.totalPages,
             totalItems: purchaseInvoices.totalItems,
             pageSize: purchaseInvoices.pageSize,
+            hasNextPage: purchaseInvoices.hasNextPage,
+            hasPreviousPage: purchaseInvoices.hasPreviousPage,
+            exactTotal: purchaseInvoices.exactTotal,
             label:
               typedLocale === "sq"
                 ? "Faqja {page} nga {totalPages} - {totalItems} fatura blerjeje"

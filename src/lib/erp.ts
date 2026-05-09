@@ -16,8 +16,8 @@ import type { Locale } from "@/lib/i18n";
 import { localeToIntl, pickLocale } from "@/lib/i18n";
 import {
   DEFAULT_PAGE_SIZE,
-  paginatedResult,
-  paginationArgs,
+  paginatedSliceResult,
+  paginationSliceArgs,
   type PaginatedResult,
 } from "@/lib/pagination";
 import { measureAsync, measureDetailAsync, measureDetailSync } from "@/lib/perf";
@@ -57,14 +57,6 @@ function measureAdminMainQuery<T>(
   context?: Record<string, string | number | boolean | null | undefined>,
 ) {
   return measureDetailAsync(`${pageLabel}.main data query`, callback, context);
-}
-
-function measureAdminCountQuery<T>(
-  pageLabel: string,
-  callback: () => Promise<T>,
-  context?: Record<string, string | number | boolean | null | undefined>,
-) {
-  return measureDetailAsync(`${pageLabel}.count query`, callback, context);
 }
 
 function measureAdminAuxQuery<T>(
@@ -233,15 +225,6 @@ export async function getClientOverview() {
 export async function getInventoryOverview() {
   return measureAdminMainQuery("admin/inventory", () =>
     prisma.material.findMany({
-      include: {
-        bomItems: true,
-        movements: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 3,
-        },
-      },
       orderBy: [{ stockQuantity: "asc" }, { name: "asc" }],
     }),
   );
@@ -336,24 +319,21 @@ export async function getOfferOverviewPage({
               ? { number: direction }
               : { createdAt: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/offers", () =>
-      prisma.offer.findMany({
-        where,
-        include: {
-          client: true,
-          lead: true,
-          invoice: true,
-          items: true,
-        },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/offers", () => prisma.offer.count({ where })),
-  ]);
+  const items = await measureAdminMainQuery("admin/offers", () =>
+    prisma.offer.findMany({
+      where,
+      include: {
+        client: true,
+        lead: true,
+        invoice: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 type InvoiceOverview = Awaited<ReturnType<typeof getInvoiceOverview>>[number];
@@ -389,24 +369,21 @@ export async function getInvoiceOverviewPage({
               ? { number: direction }
               : { issuedAt: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/invoices", () =>
-      prisma.invoice.findMany({
-        where,
-        include: {
-          client: true,
-          offer: true,
-          items: true,
-          debitNotes: true,
-        },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/invoices", () => prisma.invoice.count({ where })),
-  ]);
+  const items = await measureAdminMainQuery("admin/invoices", () =>
+    prisma.invoice.findMany({
+      where,
+      include: {
+        client: true,
+        offer: true,
+        items: true,
+        debitNotes: true,
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 type PurchaseInvoiceOverview = Awaited<ReturnType<typeof getPurchaseInvoiceOverview>>[number];
@@ -442,24 +419,19 @@ export async function getPurchaseInvoiceOverviewPage({
               ? { number: direction }
               : { issuedAt: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/purchase-invoices", () =>
-      prisma.purchaseInvoice.findMany({
-        where,
-        include: {
-          supplier: true,
-          items: true,
-        },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/purchase-invoices", () =>
-      prisma.purchaseInvoice.count({ where }),
-    ),
-  ]);
+  const items = await measureAdminMainQuery("admin/purchase-invoices", () =>
+    prisma.purchaseInvoice.findMany({
+      where,
+      include: {
+        supplier: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getClientOverviewPage({
@@ -494,28 +466,25 @@ export async function getClientOverviewPage({
         ? { invoices: { _count: sortDirection(direction) } }
         : { name: direction };
 
-  const [clients, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/clients", () =>
-      prisma.client.findMany({
-        where,
-        include: {
-          offers: { select: { id: true } },
-          invoices: {
-            select: {
-              issuedAt: true,
-              status: true,
-              totalCents: true,
-              amountPaidCents: true,
-              debitNotes: { select: { totalCents: true } },
-            },
+  const clients = await measureAdminMainQuery("admin/clients", () =>
+    prisma.client.findMany({
+      where,
+      include: {
+        offers: { select: { id: true } },
+        invoices: {
+          select: {
+            issuedAt: true,
+            status: true,
+            totalCents: true,
+            amountPaidCents: true,
+            debitNotes: { select: { totalCents: true } },
           },
         },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/clients", () => prisma.client.count({ where })),
-  ]);
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
   const items = measureAdminMapping("admin/clients", () =>
     clients.map((client) => {
@@ -546,7 +515,7 @@ export async function getClientOverviewPage({
     );
   }
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getDeliveryNoteOverview() {
@@ -598,25 +567,20 @@ export async function getDeliveryNoteOverviewPage({
         ? { status: direction }
         : { issuedAt: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/delivery-notes", () =>
-      prisma.deliveryNote.findMany({
-        where,
-        include: {
-          client: true,
-          supplier: true,
-          items: true,
-        },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/delivery-notes", () =>
-      prisma.deliveryNote.count({ where }),
-    ),
-  ]);
+  const items = await measureAdminMainQuery("admin/delivery-notes", () =>
+    prisma.deliveryNote.findMany({
+      where,
+      include: {
+        client: true,
+        supplier: true,
+        items: true,
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getExpenseOverview() {
@@ -655,18 +619,15 @@ export async function getExpenseOverviewPage({
           ? { totalCents: sortDirection(direction) }
           : { date: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/expenses", () =>
-      prisma.expense.findMany({
-        where,
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/expenses", () => prisma.expense.count({ where })),
-  ]);
+  const items = await measureAdminMainQuery("admin/expenses", () =>
+    prisma.expense.findMany({
+      where,
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getDebitNoteOverview() {
@@ -720,31 +681,28 @@ export async function getDebitNoteOverviewPage({
           ? { totalCents: sortDirection(direction) }
           : { issuedAt: sortDirection(direction) };
 
-  const [items, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/debit-notes", () =>
-      prisma.debitNote.findMany({
-        where,
-        include: {
-          client: true,
-          invoice: {
-            include: {
-              debitNotes: true,
-            },
-          },
-          items: {
-            include: {
-              invoiceItem: true,
-            },
+  const items = await measureAdminMainQuery("admin/debit-notes", () =>
+    prisma.debitNote.findMany({
+      where,
+      include: {
+        client: true,
+        invoice: {
+          include: {
+            debitNotes: true,
           },
         },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/debit-notes", () => prisma.debitNote.count({ where })),
-  ]);
+        items: {
+          include: {
+            invoiceItem: true,
+          },
+        },
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getSupplierOverview() {
@@ -812,26 +770,23 @@ export async function getSupplierOverviewPage({
       ? { purchaseInvoices: { _count: sortDirection(direction) } }
       : { name: direction };
 
-  const [suppliers, totalItems] = await Promise.all([
-    measureAdminMainQuery("admin/suppliers", () =>
-      prisma.supplier.findMany({
-        where,
-        include: {
-          purchaseInvoices: {
-            select: {
-              issuedAt: true,
-              status: true,
-              totalCents: true,
-              amountPaidCents: true,
-            },
+  const suppliers = await measureAdminMainQuery("admin/suppliers", () =>
+    prisma.supplier.findMany({
+      where,
+      include: {
+        purchaseInvoices: {
+          select: {
+            issuedAt: true,
+            status: true,
+            totalCents: true,
+            amountPaidCents: true,
           },
         },
-        orderBy,
-        ...paginationArgs(page, pageSize),
-      }),
-    ),
-    measureAdminCountQuery("admin/suppliers", () => prisma.supplier.count({ where })),
-  ]);
+      },
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
 
   const items = measureAdminMapping("admin/suppliers", () =>
     suppliers.map((supplier) => {
@@ -864,7 +819,7 @@ export async function getSupplierOverviewPage({
     );
   }
 
-  return paginatedResult({ items, totalItems, page, pageSize });
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export async function getProductOverview(locale: Locale) {
@@ -877,7 +832,7 @@ export async function getProductOverview(locale: Locale) {
 }
 
 export async function getOfferBuilderOptions(locale: Locale) {
-  const [clients, leads, materials] = await measureAdminAuxQuery(
+  const [clients, materials] = await measureAdminAuxQuery(
     "admin/offers",
     () =>
       Promise.all([
@@ -885,17 +840,21 @@ export async function getOfferBuilderOptions(locale: Locale) {
           where: {
             deletedAt: null,
           },
+          select: {
+            id: true,
+            name: true,
+          },
           orderBy: { name: "asc" },
         }),
-        prisma.lead.findMany({
-          where: {
-            status: {
-              not: "CLOSED",
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        }),
         prisma.material.findMany({
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            type: true,
+            unit: true,
+            costPerUnitCents: true,
+          },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
       ]),
@@ -904,7 +863,6 @@ export async function getOfferBuilderOptions(locale: Locale) {
 
   return measureAdminMapping("admin/offers", () => ({
     clients,
-    leads,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
   }));
 }
@@ -918,9 +876,21 @@ export async function getInvoiceBuilderOptions(locale: Locale) {
           where: {
             deletedAt: null,
           },
+          select: {
+            id: true,
+            name: true,
+          },
           orderBy: { name: "asc" },
         }),
         prisma.material.findMany({
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            type: true,
+            unit: true,
+            costPerUnitCents: true,
+          },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
       ]),
@@ -945,9 +915,21 @@ export async function getPurchaseInvoiceBuilderOptions(
           where: {
             deletedAt: null,
           },
+          select: {
+            id: true,
+            name: true,
+          },
           orderBy: { name: "asc" },
         }),
         prisma.material.findMany({
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            type: true,
+            unit: true,
+            costPerUnitCents: true,
+          },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
       ]),
@@ -969,15 +951,31 @@ export async function getDeliveryNoteBuilderOptions(locale: Locale) {
           where: {
             deletedAt: null,
           },
+          select: {
+            id: true,
+            name: true,
+          },
           orderBy: { name: "asc" },
         }),
         prisma.supplier.findMany({
           where: {
             deletedAt: null,
           },
+          select: {
+            id: true,
+            name: true,
+          },
           orderBy: { name: "asc" },
         }),
         prisma.material.findMany({
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            type: true,
+            unit: true,
+            costPerUnitCents: true,
+          },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
       ]),
@@ -997,6 +995,10 @@ export async function getDebitNoteBuilderOptions() {
       prisma.client.findMany({
         where: {
           deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
         },
         orderBy: { name: "asc" },
       }),
@@ -1056,7 +1058,7 @@ export async function getProductBuilderOptions() {
 
 export async function getDashboardSnapshot(locale: Locale) {
   return measureAsync("erp.dashboardSnapshot", async () => {
-  const [invoices, materials, notifications, leads, movements] =
+  const [invoices, materials, notifications, movements] =
     await measureAdminMainQuery("admin/dashboard", () =>
       Promise.all([
         prisma.invoice.findMany({
@@ -1110,24 +1112,6 @@ export async function getDashboardSnapshot(locale: Locale) {
             createdAt: "desc",
           },
           take: 6,
-        }),
-        prisma.lead.findMany({
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-            description: true,
-            status: true,
-            sourceLocale: true,
-            createdAt: true,
-            updatedAt: true,
-            clientId: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 5,
         }),
         prisma.inventoryMovement.findMany({
           where: {
@@ -1282,7 +1266,6 @@ export async function getDashboardSnapshot(locale: Locale) {
     lowStockMaterials,
     notifications,
     overdueInvoices,
-    recentLeads: leads,
   };
   }, { locale });
 }
