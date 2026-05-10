@@ -24,7 +24,7 @@ type ProductCatalogItem = {
 export const publicProductCatalog = [
   {
     slug: "stone-island-wine-kitchen",
-    imageSrc: "/images/art-home/stone-island-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-1.jpg",
     nameSq: "Kuzhinë Stone Island me vitrinë vere",
     nameEn: "Stone Island Kitchen with Wine Display",
     category: FurnitureCategory.KITCHENS,
@@ -48,7 +48,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "linea-wardrobe",
-    imageSrc: "/images/art-home/walnut-wall-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-2.jpg",
     nameSq: "Kuzhinë Linea me dru teksturë",
     nameEn: "Linea Textured Wood Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -72,7 +72,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "classic-walnut-marble-kitchen",
-    imageSrc: "/images/art-home/classic-wood-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-3.jpg",
     nameSq: "Kuzhinë Walnut Marble Classic",
     nameEn: "Walnut Marble Classic Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -96,7 +96,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "atelier-media-wall",
-    imageSrc: "/images/art-home/custom-breakfast-corner.jpg",
+    imageSrc: "/images/mobiljet/mobilje-4.jpg",
     nameSq: "Kënd kompakt për mëngjes",
     nameEn: "Compact Breakfast Corner",
     category: FurnitureCategory.KITCHENS,
@@ -120,7 +120,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "studio-oak-kitchen",
-    imageSrc: "/images/art-home/dark-marble-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-5.jpg",
     nameSq: "Kuzhinë Walnut Island",
     nameEn: "Walnut Island Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -144,7 +144,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "black-heritage-kitchen",
-    imageSrc: "/images/art-home/black-luxury-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-6.jpg",
     nameSq: "Kuzhinë Black Heritage",
     nameEn: "Black Heritage Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -168,7 +168,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "rustic-island-kitchen",
-    imageSrc: "/images/art-home/compact-wood-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-7.jpg",
     nameSq: "Kuzhinë Rustic Island",
     nameEn: "Rustic Island Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -192,7 +192,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "galley-brass-kitchen",
-    imageSrc: "/images/art-home/galley-wood-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-8.jpg",
     nameSq: "Kuzhinë Galley me detaje bronzi",
     nameEn: "Galley Kitchen with Brass Details",
     category: FurnitureCategory.KITCHENS,
@@ -216,7 +216,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "oak-pantry-kitchen",
-    imageSrc: "/images/art-home/oak-storage-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-9.jpg",
     nameSq: "Kuzhinë Oak Pantry",
     nameEn: "Oak Pantry Kitchen",
     category: FurnitureCategory.KITCHENS,
@@ -240,7 +240,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "arber-dining-table",
-    imageSrc: "/images/art-home/open-plan-dining-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-10.jpg",
     nameSq: "Ambient ngrënieje Stone Suite",
     nameEn: "Stone Suite Dining Room",
     category: FurnitureCategory.TABLES,
@@ -264,7 +264,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "wine-wall-dining-room",
-    imageSrc: "/images/art-home/dining-wardrobe-wall.jpg",
+    imageSrc: "/images/mobiljet/mobilje-11.jpg",
     nameSq: "Sallë ngrënieje me wine wall",
     nameEn: "Dining Room with Wine Wall",
     category: FurnitureCategory.TABLES,
@@ -288,7 +288,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "dark-dining-wall",
-    imageSrc: "/images/art-home/industrial-dark-kitchen.jpg",
+    imageSrc: "/images/mobiljet/mobilje-12.jpg",
     nameSq: "Ambient ngrënieje Dark Wall",
     nameEn: "Dark Wall Dining Area",
     category: FurnitureCategory.TABLES,
@@ -312,7 +312,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "arched-living-room",
-    imageSrc: "/images/art-home/living-room-showcase.jpg",
+    imageSrc: "/images/mobiljet/mobilje-13.jpg",
     nameSq: "Sallon me rafte harkore",
     nameEn: "Living Room with Arched Shelving",
     category: FurnitureCategory.CUSTOM,
@@ -336,7 +336,7 @@ export const publicProductCatalog = [
   },
   {
     slug: "low-lounge-suite",
-    imageSrc: "/images/art-home/lounge-workshop-showcase.jpg",
+    imageSrc: "/images/mobiljet/mobilje-14.jpg",
     nameSq: "Low Lounge Suite",
     nameEn: "Low Lounge Suite",
     category: FurnitureCategory.CUSTOM,

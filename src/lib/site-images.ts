@@ -11,10 +11,10 @@ const productImages = Object.fromEntries(
 ) as Record<string, string>;
 
 const categoryImages: Record<FurnitureCategory, string> = {
-  KITCHENS: "/images/art-home/classic-wood-kitchen.jpg",
-  TABLES: "/images/art-home/dining-wardrobe-wall.jpg",
-  WARDROBES: "/images/art-home/oak-storage-kitchen.jpg",
-  CUSTOM: "/images/art-home/custom-breakfast-corner.jpg",
+  KITCHENS: "/images/mobiljet/mobilje-3.jpg",
+  TABLES: "/images/mobiljet/mobilje-11.jpg",
+  WARDROBES: "/images/mobiljet/mobilje-9.jpg",
+  CUSTOM: "/images/mobiljet/mobilje-4.jpg",
 };
 
 export function getProductImage(slug: string, category: FurnitureCategory) {
