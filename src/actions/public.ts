@@ -8,6 +8,24 @@ import { leadSchema, quoteRequestSchema } from "@/lib/validators";
 import type { ActionState } from "@/actions/auth";
 import { NotificationType } from "@prisma/client";
 
+export type QuoteRequestActionState = ActionState & {
+  fields?: {
+    details: string;
+    name: string;
+    phone: string;
+    email: string;
+  };
+};
+
+function quoteRequestFields(formData: FormData): QuoteRequestActionState["fields"] {
+  return {
+    details: String(formData.get("details") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    email: String(formData.get("email") ?? ""),
+  };
+}
+
 function quoteRequestError(locale: Locale, issuePath?: PropertyKey) {
   if (issuePath === "details") {
     return locale === "sq"
@@ -94,7 +112,7 @@ export async function createLeadAction(
 
 export async function createQuoteRequestAction(
   locale: Locale,
-  _prevState: ActionState | undefined,
+  _prevState: QuoteRequestActionState | undefined,
   formData: FormData,
 ) {
   const parsed = quoteRequestSchema.safeParse({
@@ -109,6 +127,7 @@ export async function createQuoteRequestAction(
 
     return {
       error: quoteRequestError(locale, firstIssue?.path[0]),
+      fields: quoteRequestFields(formData),
     };
   }
 

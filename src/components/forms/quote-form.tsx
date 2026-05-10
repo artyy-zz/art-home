@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { createQuoteRequestAction } from "@/actions/public";
-import type { ActionState } from "@/actions/auth";
+import type { QuoteRequestActionState } from "@/actions/public";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ export function QuoteForm({
 }: {
   locale: Locale;
 }) {
-  const [state, formAction] = useActionState<ActionState | undefined, FormData>(
+  const [state, formAction] = useActionState<QuoteRequestActionState | undefined, FormData>(
     createQuoteRequestAction.bind(null, locale),
     undefined,
   );
@@ -30,6 +30,7 @@ export function QuoteForm({
           name="details"
           required
           rows={7}
+          defaultValue={state?.fields?.details ?? ""}
           className={cn(inputClassName, "resize-none")}
           placeholder={
             locale === "sq"
@@ -43,20 +44,34 @@ export function QuoteForm({
           <span className="font-medium text-[var(--color-foreground)]">
             {locale === "sq" ? "Emri" : "Name"}
           </span>
-          <input name="name" required className={inputClassName} />
+          <input
+            name="name"
+            required
+            defaultValue={state?.fields?.name ?? ""}
+            className={inputClassName}
+          />
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-[var(--color-foreground)]">
             {locale === "sq" ? "Telefoni" : "Phone number"}
           </span>
-          <input name="phone" className={inputClassName} />
+          <input
+            name="phone"
+            defaultValue={state?.fields?.phone ?? ""}
+            className={inputClassName}
+          />
         </label>
       </div>
       <label className="space-y-2 text-sm">
         <span className="font-medium text-[var(--color-foreground)]">
           {locale === "sq" ? "Email" : "Email"}
         </span>
-        <input type="email" name="email" className={inputClassName} />
+        <input
+          type="email"
+          name="email"
+          defaultValue={state?.fields?.email ?? ""}
+          className={inputClassName}
+        />
       </label>
       <p className="text-xs leading-5 text-[var(--color-muted)]">
         {locale === "sq"
