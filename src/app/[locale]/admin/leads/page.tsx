@@ -79,6 +79,7 @@ function StatusEditor({
         ))}
       </select>
       <button
+        type="submit"
         className="inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border border-[rgba(65,139,98,0.24)] bg-[#418b62] text-white transition hover:bg-[#367a55] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(65,139,98,0.18)]"
         aria-label={locale === "sq" ? "Ruaj statusin" : "Save status"}
         title={locale === "sq" ? "Ruaj statusin" : "Save status"}
@@ -86,6 +87,29 @@ function StatusEditor({
         <Check className="h-4 w-4" />
       </button>
     </form>
+  );
+}
+
+function StatusCell({
+  locale,
+  requestId,
+  status,
+  canEdit,
+}: {
+  locale: Locale;
+  requestId: string;
+  status: (typeof quoteRequestStatuses)[number];
+  canEdit: boolean;
+}) {
+  if (!canEdit) {
+    return <StatusBadge locale={locale} status={status} />;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <StatusBadge locale={locale} status={status} />
+      <StatusEditor locale={locale} requestId={requestId} status={status} />
+    </div>
   );
 }
 

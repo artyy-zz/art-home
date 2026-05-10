@@ -1,6 +1,6 @@
 import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { deleteNotificationAction } from "@/actions/admin";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
@@ -12,6 +12,46 @@ import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
+function notificationGroupLabel(type: string, locale: Locale) {
+  if (type === "LEAD") {
+    return locale === "sq" ? "Kërkesat" : "Requests";
+  }
+
+  if (type === "LOW_STOCK") {
+    return locale === "sq" ? "Inventari" : "Inventory";
+  }
+
+  if (type === "UNPAID_INVOICE") {
+    return locale === "sq" ? "Faturat" : "Invoices";
+  }
+
+  if (type === "SYSTEM") {
+    return locale === "sq" ? "Sistemi" : "System";
+  }
+
+  return type
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function notificationGroupTone(type: string) {
+  if (type === "LOW_STOCK") {
+    return "warning" as const;
+  }
+
+  if (type === "UNPAID_INVOICE") {
+    return "danger" as const;
+  }
+
+  if (type === "LEAD") {
+    return "accent" as const;
+  }
+
+  return "neutral" as const;
+}
+
 async function AdminDashboardPage({
   params,
 }: PageProps<"/[locale]/admin">) {
@@ -22,6 +62,17 @@ async function AdminDashboardPage({
   const snapshot = await getDashboardSnapshot(typedLocale);
   const localeString = snapshot.intlLocale;
   const canDeleteNotifications = can(permissions, "DASHBOARD", "DELETE");
+  const notificationGroups = Array.from(
+    snapshot.notifications.reduce(
+      (groups, notification) => {
+        const current = groups.get(notification.type) ?? [];
+        current.push(notification);
+        groups.set(notification.type, current);
+        return groups;
+      },
+      new Map<string, typeof snapshot.notifications>(),
+    ),
+  );
 
   return measureDetailSync(
     "admin/dashboard.table mapping/formatting",
@@ -100,39 +151,64 @@ async function AdminDashboardPage({
             {typedLocale === "sq" ? "Njoftime dhe alert-e" : "Notifications and alerts"}
           </h2>
           <div className="mt-6 space-y-4">
-            {snapshot.notifications.map((notification) => (
-              <div key={notification.id} className="relative rounded-[22px] border-[2.25px] border-black/18 bg-white/75 p-4 pr-11">
-                {canDeleteNotifications ? (
-                  <form
-                    action={deleteNotificationAction.bind(null, typedLocale, notification.id)}
-                    className="absolute right-3 top-3"
-                  >
-                    <button
-                      type="submit"
-                      className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(140,47,43,0.22)] bg-[rgba(140,47,43,0.08)] text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(140,47,43,0.18)]"
-                      aria-label={
-                        typedLocale === "sq"
-                          ? "Fshi njoftimin"
-                          : "Delete notification"
-                      }
-                      title={
-                        typedLocale === "sq"
-                          ? "Fshi njoftimin"
-                          : "Delete notification"
-                      }
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </form>
-                ) : null}
-                <Badge tone="accent">{notification.type}</Badge>
-                <p className="mt-3 font-semibold text-[var(--color-foreground)]">
-                  {notification.title}
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
-                  {notification.message}
-                </p>
-              </div>
+            {notificationGroups.map(([type, notifications]) => (
+              <details
+                key={type}
+                open
+                className="group overflow-hidden rounded-[22px] border-[2.25px] border-black/18 bg-white/75"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden [&::-webkit-details-marker]:hidden">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Badge tone={notificationGroupTone(type)}>
+                      {notificationGroupLabel(type, typedLocale)}
+                    </Badge>
+                    <span className="text-sm font-semibold text-[var(--color-foreground)]">
+                      {notifications.length}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-[var(--color-muted)] transition group-open:rotate-180" />
+                </summary>
+                <div className="border-t border-black/10 px-3 pb-3 pt-2">
+                  <div className="space-y-3">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className="relative rounded-[18px] border border-black/10 bg-white/80 p-4 pr-11"
+                      >
+                        {canDeleteNotifications ? (
+                          <form
+                            action={deleteNotificationAction.bind(null, typedLocale, notification.id)}
+                            className="absolute right-3 top-3"
+                          >
+                            <button
+                              type="submit"
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(140,47,43,0.22)] bg-[rgba(140,47,43,0.08)] text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(140,47,43,0.18)]"
+                              aria-label={
+                                typedLocale === "sq"
+                                  ? "Fshi njoftimin"
+                                  : "Delete notification"
+                              }
+                              title={
+                                typedLocale === "sq"
+                                  ? "Fshi njoftimin"
+                                  : "Delete notification"
+                              }
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        ) : null}
+                        <p className="font-semibold text-[var(--color-foreground)]">
+                          {notification.title}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                          {notification.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </details>
             ))}
           </div>
         </Card>
