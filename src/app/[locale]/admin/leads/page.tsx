@@ -2,6 +2,7 @@ import {
   deleteQuoteRequestAction,
   updateQuoteRequestStatusAction,
 } from "@/actions/admin";
+import { QuoteRequestStatusSelect } from "@/components/admin/quote-request-status-select";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
@@ -12,9 +13,8 @@ import { parsePage } from "@/lib/pagination";
 import { measureDetailSync, withPagePerf } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/utils";
-import { Check } from "lucide-react";
 
-const quoteRequestStatuses = ["NEW", "REVIEWED", "COMPLETED"] as const;
+type QuoteRequestStatus = "NEW" | "REVIEWED" | "COMPLETED";
 
 const statusLabels = {
   sq: {
@@ -48,7 +48,7 @@ function StatusBadge({
   status,
 }: {
   locale: Locale;
-  status: (typeof quoteRequestStatuses)[number];
+  status: QuoteRequestStatus;
 }) {
   return <Badge tone={statusTones[status]}>{statusLabels[locale][status]}</Badge>;
 }
@@ -60,33 +60,14 @@ function StatusEditor({
 }: {
   locale: Locale;
   requestId: string;
-  status: (typeof quoteRequestStatuses)[number];
+  status: QuoteRequestStatus;
 }) {
   return (
-    <form
+    <QuoteRequestStatusSelect
       action={updateQuoteRequestStatusAction.bind(null, locale, requestId)}
-      className="inline-flex min-h-10 max-w-full items-stretch"
-    >
-      <select
-        name="status"
-        defaultValue={status}
-        className="min-h-10 max-w-[190px] rounded-l-full border border-r-0 border-black/10 bg-white/90 px-3 py-2 pl-4 pr-7 text-xs font-medium text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
-      >
-        {quoteRequestStatuses.map((option) => (
-          <option key={option} value={option}>
-            {statusLabels[locale][option]}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border border-[rgba(65,139,98,0.24)] bg-[#418b62] text-white transition hover:bg-[#367a55] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(65,139,98,0.18)]"
-        aria-label={locale === "sq" ? "Ruaj statusin" : "Save status"}
-        title={locale === "sq" ? "Ruaj statusin" : "Save status"}
-      >
-        <Check className="h-4 w-4" />
-      </button>
-    </form>
+      labels={statusLabels[locale]}
+      status={status}
+    />
   );
 }
 
