@@ -22,7 +22,7 @@ export function Logo({
         )}
       >
         <Image
-          src="/brand/logo.jpg"
+          src="/images/brand/logo.jpg"
           alt="Art Home logo"
           width={46}
           height={46}

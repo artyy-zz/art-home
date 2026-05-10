@@ -120,7 +120,7 @@ export async function generateSalesPdf(options: SalesPdfOptions) {
   });
 
   try {
-    const logoPath = join(process.cwd(), "public", "brand", "logo.jpg");
+    const logoPath = join(process.cwd(), "public", "images", "brand", "logo.jpg");
     const logoBytes = await readFile(logoPath);
     const logoImage = await pdf.embedJpg(logoBytes);
     page.drawImage(logoImage, {
