@@ -8,6 +8,7 @@ import {
   LeadStatus,
   MaterialType,
   OfferStatus,
+  QuoteRequestStatus,
   Unit,
 } from "@prisma/client";
 import { z } from "zod";
@@ -17,6 +18,14 @@ const optionalText = z
   .trim()
   .transform((value) => (value.length ? value : undefined))
   .optional();
+
+const optionalEmail = z.preprocess(
+  (value) => {
+    const text = typeof value === "string" ? value.trim() : "";
+    return text.length > 0 ? text : undefined;
+  },
+  z.email("Email is invalid").optional(),
+);
 
 const optionalAmount = z.preprocess(
   (value) => {
@@ -41,6 +50,23 @@ export const leadSchema = z.object({
   description: z.string().min(12, "Please describe the request in more detail").trim(),
 });
 
+export const quoteRequestSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    phone: optionalText,
+    email: optionalEmail,
+    details: z.string().trim().min(1, "Offer/request details are required"),
+  })
+  .superRefine((value, context) => {
+    if (!value.phone && !value.email) {
+      context.addIssue({
+        code: "custom",
+        path: ["contact"],
+        message: "At least one contact method is required",
+      });
+    }
+  });
+
 export const clientSchema = z.object({
   name: z.string().min(2).trim(),
   contactPerson: optionalText,
@@ -56,6 +82,10 @@ export const supplierSchema = clientSchema;
 
 export const leadStatusSchema = z.object({
   status: z.nativeEnum(LeadStatus),
+});
+
+export const quoteRequestStatusSchema = z.object({
+  status: z.nativeEnum(QuoteRequestStatus),
 });
 
 export const materialSchema = z.object({

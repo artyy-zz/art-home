@@ -46,6 +46,7 @@ import {
   offerItemSchema,
   offerSchema,
   productBomItemSchema,
+  quoteRequestStatusSchema,
   productSchema,
   purchaseInvoiceSchema,
   purchaseInvoiceUpdateSchema,
@@ -84,6 +85,11 @@ function revalidateDebitNotePaths() {
   revalidateEveryLocale("/admin/invoices");
   revalidateEveryLocale("/admin/clients");
   revalidateEveryLocale("/admin/reports");
+  revalidateEveryLocale("/admin");
+}
+
+function revalidateQuoteRequestPaths() {
+  revalidateEveryLocale("/admin/leads");
   revalidateEveryLocale("/admin");
 }
 
@@ -521,6 +527,30 @@ export async function deleteLeadAction(locale: Locale, leadId: string) {
   });
 
   revalidateEveryLocale("/admin/leads");
+}
+
+export async function updateQuoteRequestStatusAction(
+  locale: Locale,
+  quoteRequestId: string,
+  formData: FormData,
+) {
+  await ensureAllowed(locale, "LEADS", "EDIT");
+  const parsed = quoteRequestStatusSchema.safeParse({
+    status: formData.get("status"),
+  });
+
+  if (!parsed.success) {
+    throw new Error("Invalid quote request status.");
+  }
+
+  await prisma.quoteRequest.update({
+    where: { id: quoteRequestId },
+    data: {
+      status: parsed.data.status,
+    },
+  });
+
+  revalidateQuoteRequestPaths();
 }
 
 export async function createMaterialAction(locale: Locale, formData: FormData) {

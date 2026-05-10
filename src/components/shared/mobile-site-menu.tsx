@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { buttonClasses } from "@/components/shared/button";
 import type { Locale } from "@/lib/i18n";
 
 type SiteNavItem = {
@@ -15,10 +16,12 @@ export function MobileSiteMenu({
   locale,
   navItems,
   loginLabel,
+  quoteLabel,
 }: {
   locale: Locale;
   navItems: SiteNavItem[];
   loginLabel: string;
+  quoteLabel: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const close = () => setIsOpen(false);
@@ -67,6 +70,13 @@ export function MobileSiteMenu({
 
             <div className="mt-6 grid gap-3 border-t border-black/10 pt-5">
               <LanguageSwitcher locale={locale} labels="full" />
+              <Link
+                href={`/${locale}/quote`}
+                onClick={close}
+                className={buttonClasses({ className: "w-full" })}
+              >
+                {quoteLabel}
+              </Link>
               <Link
                 href={`/${locale}/login`}
                 onClick={close}

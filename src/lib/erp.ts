@@ -219,6 +219,52 @@ export async function getLeadsOverview() {
   });
 }
 
+export async function getQuoteRequestOverview() {
+  return prisma.quoteRequest.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
+type QuoteRequestOverview = Awaited<ReturnType<typeof getQuoteRequestOverview>>[number];
+
+export async function getQuoteRequestOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "createdAt",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<QuoteRequestOverview>> {
+  const search = contains(query);
+  const where: Prisma.QuoteRequestWhereInput = search
+    ? {
+        OR: [
+          { name: search },
+          { phone: search },
+          { email: search },
+          { details: search },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.QuoteRequestOrderByWithRelationInput =
+    sort === "name"
+      ? { name: direction }
+      : sort === "status"
+        ? { status: direction }
+        : { createdAt: sortDirection(direction) };
+
+  const items = await measureAdminMainQuery("admin/leads", () =>
+    prisma.quoteRequest.findMany({
+      where,
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
+
+  return paginatedSliceResult({ items, page, pageSize });
+}
+
 export async function getClientOverview() {
   const clients = await prisma.client.findMany({
     where: {

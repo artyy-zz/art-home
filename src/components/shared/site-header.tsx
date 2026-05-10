@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonClasses } from "@/components/shared/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Logo } from "@/components/shared/logo";
 import { MobileSiteMenu } from "@/components/shared/mobile-site-menu";
@@ -27,11 +28,22 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         </nav>
         <div className="hidden items-center gap-2 md:flex md:gap-3">
           <LanguageSwitcher locale={locale} />
+          <Link
+            href={`/${locale}/quote`}
+            className={buttonClasses({ size: "sm", className: "min-h-10" })}
+          >
+            {dict.common.requestQuote}
+          </Link>
           <Link href={`/${locale}/login`} className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-foreground)] transition hover:bg-black/5">
             {dict.common.login}
           </Link>
         </div>
-        <MobileSiteMenu locale={locale} navItems={navItems} loginLabel={dict.common.login} />
+        <MobileSiteMenu
+          locale={locale}
+          navItems={navItems}
+          loginLabel={dict.common.login}
+          quoteLabel={dict.common.requestQuote}
+        />
       </div>
     </header>
   );

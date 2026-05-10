@@ -3,7 +3,7 @@ export const dictionaries = {
     localeLabel: "Shqip",
     localeShort: "AL",
     common: {
-      requestQuote: "Kërko ofertë",
+      requestQuote: "Kërko Ofertë",
       learnMore: "Më shumë",
       exploreCollection: "Shiko koleksionin",
       viewAll: "Shiko të gjitha",
@@ -86,7 +86,7 @@ export const dictionaries = {
     localeLabel: "English",
     localeShort: "EN",
     common: {
-      requestQuote: "Request a quote",
+      requestQuote: "Request a Quote",
       learnMore: "Learn more",
       exploreCollection: "Explore collection",
       viewAll: "View all",

@@ -1,21 +1,27 @@
 import Link from "next/link";
 import { Card } from "@/components/shared/card";
-import { ComingSoonButton } from "@/components/shared/coming-soon-button";
 import { PlaceholderMedia } from "@/components/shared/placeholder-media";
+import { QuoteSuccessToast } from "@/components/shared/quote-success-toast";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { buttonClasses } from "@/components/shared/button";
 import { getFeaturedProducts } from "@/lib/erp";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getProductImage, siteImages } from "@/lib/site-images";
 
-export default async function HomePage({ params }: PageProps<"/[locale]">) {
+export default async function HomePage({
+  params,
+  searchParams,
+}: PageProps<"/[locale]">) {
   const { locale } = await params;
+  const resolvedSearchParams = await searchParams;
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
   const featuredProducts = await getFeaturedProducts(typedLocale);
+  const showQuoteToast = resolvedSearchParams.quote === "sent";
 
   return (
     <div className="animate-fade">
+      {showQuoteToast ? <QuoteSuccessToast locale={typedLocale} /> : null}
       <section className="px-4 pb-10 pt-8 sm:px-6 md:px-10 md:pb-20 md:pt-10">
         <div className="mx-auto grid max-w-7xl min-w-0 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="industrial-grid relative min-w-0 overflow-hidden rounded-[28px] px-5 py-7 sm:px-7 sm:py-8 md:rounded-[36px] md:px-10 md:py-12">
@@ -29,9 +35,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               {dict.home.subtitle}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ComingSoonButton variant="primary" size="lg">
+              <Link
+                href={`/${typedLocale}/quote`}
+                className={buttonClasses({ variant: "primary", size: "lg" })}
+              >
                 {dict.common.requestQuote}
-              </ComingSoonButton>
+              </Link>
               <Link
                 href={`/${typedLocale}/furniture`}
                 className={buttonClasses({ variant: "secondary", size: "lg" })}
@@ -101,14 +110,16 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
-                <ComingSoonButton
-                  variant="secondary"
-                  size="lg"
-                  className="!bg-white !text-[var(--color-panel)]"
-                  messageClassName="text-white"
+                <Link
+                  href={`/${typedLocale}/quote`}
+                  className={buttonClasses({
+                    variant: "secondary",
+                    size: "lg",
+                    className: "!bg-white !text-[var(--color-panel)]",
+                  })}
                 >
                   {dict.common.requestQuote}
-                </ComingSoonButton>
+                </Link>
                 <Link
                   href={`/${typedLocale}/about`}
                   className={buttonClasses({

@@ -83,6 +83,7 @@ export function AdminSidebar({
           module: "DASHBOARD" as const,
           exact: true,
         },
+        { href: `/${locale}/admin/leads`, label: dict.admin.leads, icon: ClipboardList, module: "LEADS" as const },
         { href: `/${locale}/admin/clients`, label: dict.admin.clients, icon: Users, module: "CLIENTS" as const },
         { href: `/${locale}/admin/suppliers`, label: dict.admin.suppliers, icon: Truck, module: "SUPPLIERS" as const },
         { href: `/${locale}/admin/inventory`, label: dict.admin.inventory, icon: Boxes, module: "INVENTORY" as const },
