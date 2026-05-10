@@ -70,7 +70,7 @@ export function MobileSiteMenu({
               <Link
                 href={`/${locale}/login`}
                 onClick={close}
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-foreground)] px-5 py-2.5 text-center text-sm font-medium text-white transition hover:bg-black"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--color-foreground)] px-5 py-2.5 text-center text-sm font-medium !text-white transition hover:bg-black visited:!text-white"
               >
                 {loginLabel}
               </Link>
