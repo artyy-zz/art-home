@@ -51,16 +51,7 @@ export default async function FurniturePage({
                 <p className="mt-5 text-sm leading-7 text-[var(--color-muted)]">
                   {product.description}
                 </p>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-black/8 bg-white/76 p-5">
-                    <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
-                      {typedLocale === "sq" ? "Përmasa" : "Dimensions"}
-                    </p>
-                    <p className="mt-2 text-sm text-[var(--color-foreground)]">
-                      {product.dimensions ||
-                        (typedLocale === "sq" ? "Sipas projektit" : "Project specific")}
-                    </p>
-                  </div>
+                <div className="mt-6 grid gap-4">
                   <div className="rounded-[24px] border border-black/8 bg-white/76 p-5">
                     <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
                       {typedLocale === "sq" ? "Materiale" : "Materials"}
