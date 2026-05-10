@@ -42,7 +42,7 @@ export const dictionaries = {
       title: "Rreth Art Home",
       intro:
         "Art Home ndërton mobilje që i japin hapësirës karakter, rregull dhe përdorim të përditshëm pa kompromis në cilësi.",
-      craftsmanshipTitle: "Kush jemi",
+      craftsmanshipTitle: "Kush jemi ne?",
       craftsmanshipBody:
         "Ne jemi një kompani e përkushtuar në krijimin e mobiljeve cilësore që kombinojnë dizajnin modern me funksionalitetin e përditshëm. Me një përvojë të gjatë në këtë industri, synimi ynë është të sjellim produkte që jo vetëm zbukurojnë hapësirën tuaj, por edhe e bëjnë atë më të rehatshme dhe praktike.",
     },
