@@ -1,14 +1,18 @@
-import { updateQuoteRequestStatusAction } from "@/actions/admin";
+import {
+  deleteQuoteRequestAction,
+  updateQuoteRequestStatusAction,
+} from "@/actions/admin";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
+import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import { getQuoteRequestOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
 import { measureDetailSync, withPagePerf } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 const quoteRequestStatuses = ["NEW", "REVIEWED", "COMPLETED"] as const;
 
@@ -51,17 +55,17 @@ function StatusCell({
   canEdit: boolean;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Badge tone={statusTones[status]}>{statusLabels[locale][status]}</Badge>
       {canEdit ? (
         <form
           action={updateQuoteRequestStatusAction.bind(null, locale, requestId)}
-          className="flex flex-wrap items-center gap-2"
+          className="inline-flex min-h-10 max-w-full items-stretch"
         >
           <select
             name="status"
             defaultValue={status}
-            className="min-h-10 rounded-full border border-black/10 bg-white/90 px-3 py-2 text-xs font-medium text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
+            className="min-h-10 max-w-[170px] rounded-l-full border border-r-0 border-black/10 bg-white/90 px-3 py-2 text-xs font-medium text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]"
           >
             {quoteRequestStatuses.map((option) => (
               <option key={option} value={option}>
@@ -69,8 +73,12 @@ function StatusCell({
               </option>
             ))}
           </select>
-          <button className={buttonClasses({ variant: "secondary", size: "sm" })}>
-            {locale === "sq" ? "Ruaj" : "Save"}
+          <button
+            className="inline-flex w-11 shrink-0 items-center justify-center rounded-r-full border border-[rgba(33,91,63,0.26)] bg-[var(--color-success)] text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(33,91,63,0.18)]"
+            aria-label={locale === "sq" ? "Ruaj statusin" : "Save status"}
+            title={locale === "sq" ? "Ruaj statusin" : "Save status"}
+          >
+            <Check className="h-4 w-4" />
           </button>
         </form>
       ) : null}
@@ -98,6 +106,7 @@ async function LeadsPage({
   });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "LEADS", "EDIT");
+  const canDelete = can(permissions, "LEADS", "DELETE");
 
   return measureDetailSync(
     "admin/leads.table mapping/formatting",
@@ -119,6 +128,7 @@ async function LeadsPage({
               ? "Nuk ka kërkesa për këtë kërkim."
               : "No quote requests match this search."
           }
+          actionsLabel={canDelete ? (typedLocale === "sq" ? "Veprime" : "Actions") : undefined}
           serverControlled
           pagination={{
             page: quoteRequests.page,
@@ -151,14 +161,7 @@ async function LeadsPage({
               status: request.status,
             },
             cells: {
-              name: (
-                <div>
-                  <p className="font-semibold">{request.name}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                    {request.sourceLocale}
-                  </p>
-                </div>
-              ),
+              name: <p className="font-semibold">{request.name}</p>,
               contact: (
                 <div className="space-y-1 text-[var(--color-muted)]">
                   <p>{request.phone || "-"}</p>
@@ -180,6 +183,18 @@ async function LeadsPage({
                 />
               ),
             },
+            actions: canDelete ? (
+              <form action={deleteQuoteRequestAction.bind(null, typedLocale, request.id)}>
+                <ConfirmDeleteButton
+                  label={typedLocale === "sq" ? "Fshi" : "Delete"}
+                  message={
+                    typedLocale === "sq"
+                      ? `A je i sigurt që dëshiron ta fshish kërkesën nga "${request.name}"?`
+                      : `Are you sure you want to delete the request from "${request.name}"?`
+                  }
+                />
+              </form>
+            ) : null,
           }))}
         />
       </Card>

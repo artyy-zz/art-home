@@ -553,6 +553,19 @@ export async function updateQuoteRequestStatusAction(
   revalidateQuoteRequestPaths();
 }
 
+export async function deleteQuoteRequestAction(
+  locale: Locale,
+  quoteRequestId: string,
+) {
+  await ensureAllowed(locale, "LEADS", "DELETE");
+
+  await prisma.quoteRequest.delete({
+    where: { id: quoteRequestId },
+  });
+
+  revalidateQuoteRequestPaths();
+}
+
 export async function createMaterialAction(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "INVENTORY", "CREATE");
 
