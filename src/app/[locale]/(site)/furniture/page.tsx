@@ -36,7 +36,7 @@ export default async function FurniturePage({
             >
               <PlaceholderMedia
                 label={product.name}
-                src={getProductImage(product.slug, product.category)}
+                src={getProductImage(product.slug, product.category, product.name)}
                 className="min-h-[240px] sm:min-h-[300px]"
               />
               <div className="p-5 sm:p-6 md:p-8">

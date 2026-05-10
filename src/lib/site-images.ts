@@ -6,8 +6,22 @@ export const siteImages = {
   about: "/images/art-home/about-workshop.jpg",
 } as const;
 
+function imageLookupKey(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const productImages = Object.fromEntries(
-  publicProductCatalog.map((product) => [product.slug, product.imageSrc]),
+  publicProductCatalog.flatMap((product) => [
+    [imageLookupKey(product.slug), product.imageSrc],
+    [imageLookupKey(product.nameSq), product.imageSrc],
+    [imageLookupKey(product.nameEn), product.imageSrc],
+  ]),
 ) as Record<string, string>;
 
 const categoryImages: Record<FurnitureCategory, string> = {
@@ -17,6 +31,14 @@ const categoryImages: Record<FurnitureCategory, string> = {
   CUSTOM: "/images/mobiljet/mobilje-4.jpg",
 };
 
-export function getProductImage(slug: string, category: FurnitureCategory) {
-  return productImages[slug] ?? categoryImages[category];
+export function getProductImage(
+  slug: string,
+  category: FurnitureCategory,
+  name?: string,
+) {
+  return (
+    productImages[imageLookupKey(slug)] ??
+    (name ? productImages[imageLookupKey(name)] : undefined) ??
+    categoryImages[category]
+  );
 }

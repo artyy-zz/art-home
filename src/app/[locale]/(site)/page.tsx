@@ -66,7 +66,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               <Card key={product.id} className="overflow-hidden rounded-[30px]">
                 <PlaceholderMedia
                   label={product.name}
-                  src={getProductImage(product.slug, product.category)}
+                  src={getProductImage(product.slug, product.category, product.name)}
                 />
                 <div className="p-6">
                   <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">

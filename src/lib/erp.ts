@@ -12,6 +12,7 @@ import {
 } from "@prisma/client";
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { categoryCopy } from "@/lib/company";
+import { publicProductCatalog } from "@/data/product-catalog";
 import type { Locale } from "@/lib/i18n";
 import { localeToIntl, pickLocale } from "@/lib/i18n";
 import {
@@ -159,11 +160,45 @@ export function localizeProduct(product: ProductWithBom, locale: Locale) {
   };
 }
 
+function localizeCatalogProduct(
+  product: (typeof publicProductCatalog)[number],
+  locale: Locale,
+) {
+  const copy = categoryCopy[product.category];
+  const unitCostCents = product.laborCostCents;
+
+  return {
+    id: product.slug,
+    slug: product.slug,
+    category: product.category,
+    categoryTitle: pickLocale(locale, copy.titleSq, copy.titleEn),
+    categoryBody: pickLocale(locale, copy.bodySq, copy.bodyEn),
+    name: locale === "sq" ? product.nameSq : product.nameEn,
+    summary: locale === "sq" ? product.summarySq : product.summaryEn,
+    description: locale === "sq" ? product.descriptionSq : product.descriptionEn,
+    dimensions: product.dimensions,
+    materialNotes:
+      locale === "sq" ? product.materialNotesSq : product.materialNotesEn,
+    featured: product.featured,
+    basePriceCents: product.basePriceCents,
+    laborCostCents: product.laborCostCents,
+    unitCostCents,
+    estimatedProfitCents: product.basePriceCents - unitCostCents,
+    bomItems: [],
+  };
+}
+
 export async function getPublicProducts(locale: Locale) {
   const products = await prisma.product.findMany({
     ...productWithBomArgs,
     orderBy: [{ featured: "desc" }, { category: "asc" }, { createdAt: "desc" }],
   });
+
+  if (products.length === 0) {
+    return publicProductCatalog.map((product) =>
+      localizeCatalogProduct(product, locale),
+    );
+  }
 
   return products.map((product) => localizeProduct(product, locale));
 }
