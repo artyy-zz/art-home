@@ -1,0 +1,363 @@
+
+> arthome@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://26.108.41.110:3000
+- Environments: .env
+✓ Ready in 321ms
+
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 4.0ms nodeEnv=development
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF_DETAIL] admin/layout.i18n/locale loading 18.1ms
+[PERF_DETAIL] admin/leads.i18n/locale loading 10.1ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 45.0ms
+[PERF] auth.currentUser.lookup 46.1ms
+[PERF] auth.requireStaffSession 46.5ms locale=sq
+[PERF] auth.requireStaffSession 44.8ms locale=sq
+[PERF] auth.requireAdminSession 47.2ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 45.4ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 45.7ms locale=sq module=LEADS action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 47.9ms locale=sq
+[PERF] page.serverRender admin/leads 68.1ms
+ GET /sq/admin/leads 307 in 1170ms (next.js: 936ms, generate-params: 699ms, application-code: 234ms)
+[PERF_DETAIL] prisma.connection startup 501.9ms nodeEnv=development
+ GET /sq/quote 200 in 1671ms (next.js: 1550ms, generate-params: 306ms, application-code: 121ms)
+[PERF] prisma.query 227.4ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 227.4ms model=Product operation=findMany
+ GET /sq?quote=sent 200 in 2.1s (next.js: 649ms, generate-params: 378ms, application-code: 1441ms)
+ GET /sq/quote 200 in 97ms (next.js: 13ms, generate-params: 8ms, application-code: 83ms)
+✓ Compiled in 243ms
+ GET /sq/quote 200 in 276ms (next.js: 99ms, generate-params: 6ms, application-code: 177ms)
+ GET / 307 in 69ms (next.js: 34ms, application-code: 35ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF] prisma.query 586.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 586.7ms model=Product operation=findMany
+ GET /sq 200 in 724ms (next.js: 43ms, generate-params: 5ms, application-code: 681ms)
+ GET /sq/quote 200 in 47ms (next.js: 12ms, generate-params: 7ms, application-code: 35ms)
+ GET /sq/quote 200 in 41ms (next.js: 17ms, generate-params: 13ms, application-code: 24ms)
+ GET /sq/login 200 in 649ms (next.js: 543ms, generate-params: 358ms, application-code: 106ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 271.8ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 271.8ms model=Product operation=findMany
+ GET /sq 200 in 410ms (next.js: 26ms, generate-params: 11ms, application-code: 384ms)
+ GET /sq/quote 200 in 45ms (next.js: 12ms, generate-params: 7ms, application-code: 34ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF] prisma.query 222.4ms model=QuoteRequest operation=create
+[PERF_DETAIL] prisma.query await 222.4ms model=QuoteRequest operation=create
+[PERF] prisma.query 272.5ms model=Notification operation=create
+[PERF_DETAIL] prisma.query await 272.5ms model=Notification operation=create
+[PERF] prisma.query 216.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 216.6ms model=Product operation=findMany
+ GET /sq?quote=sent 200 in 278ms (next.js: 10ms, generate-params: 6ms, application-code: 268ms)
+ POST /sq/quote 303 in 848ms (next.js: 10ms, generate-params: 6ms, application-code: 838ms)
+  └─ ƒ createQuoteRequestAction("sq", undefined, {}) in 503ms src/actions/public.ts
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.0ms nodeEnv=development
+ GET /sq/login 200 in 41ms (next.js: 11ms, generate-params: 6ms, application-code: 30ms)
+[PERF] prisma.query 219.7ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 219.7ms model=User operation=findUnique
+[PERF] auth.authenticate.userLookup 222.6ms email=artiibela0@gmail.com
+[PERF] auth.authenticate.bcryptCompare 81.8ms
+[PERF] prisma.query 220.2ms model=User operation=update
+[PERF_DETAIL] prisma.query await 220.2ms model=User operation=update
+[PERF] auth.authenticate.lastLoginUpdate 222.6ms userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] auth.createSession.signJwt 7.0ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] admin/layout.i18n/locale loading 14.1ms
+[PERF_DETAIL] admin/dashboard.i18n/locale loading 7.0ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 15.5ms
+[PERF] prisma.query 312.0ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 312.0ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 331.1ms
+[PERF] auth.requireStaffSession 331.6ms locale=sq
+[PERF] auth.requireStaffSession 329.6ms locale=sq
+[PERF] auth.requireAdminSession 332.4ms locale=sq
+[PERF_DETAIL] admin/dashboard.auth/session 330.4ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.requirePermission 330.8ms locale=sq module=DASHBOARD action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 333.6ms locale=sq
+[PERF] permissions.userMatrix 0.5ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/dashboard.permissions 1.1ms locale=sq module=DASHBOARD action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.8ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.1ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 229.8ms model=Invoice operation=findMany
+[PERF_DETAIL] prisma.query await 229.8ms model=Invoice operation=findMany
+[PERF] prisma.query 609.1ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] prisma.query await 609.1ms model=InventoryMovement operation=findMany
+[PERF] prisma.query 610.6ms model=Notification operation=findMany
+[PERF_DETAIL] prisma.query await 610.6ms model=Notification operation=findMany
+[PERF] prisma.query 611.4ms model=Material operation=findMany
+[PERF_DETAIL] prisma.query await 611.4ms model=Material operation=findMany
+[PERF_DETAIL] admin/dashboard.main data query 614.3ms locale=sq
+[PERF] erp.dashboardSnapshot 615.4ms locale=sq
+[PERF_DETAIL] admin/dashboard.table mapping/formatting 10.4ms locale=sq
+[PERF] page.serverRender admin/dashboard 973.2ms
+ GET /sq/admin 200 in 1585ms (next.js: 526ms, generate-params: 362ms, application-code: 1059ms)
+ POST /sq/login 303 in 2.2s (next.js: 10ms, generate-params: 6ms, application-code: 2.2s)
+  └─ ƒ loginAction("sq", undefined, {}) in 542ms src/actions/auth.ts
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] admin/leads.i18n/locale loading 8.9ms
+[PERF] auth.session.lookup 23.0ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 315.2ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 315.2ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 341.9ms
+[PERF] auth.requireStaffSession 342.4ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 342.8ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 343.1ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.6ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 225.9ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 225.9ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 228.8ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 2.8ms locale=sq rows=1
+[PERF] page.serverRender admin/leads 590.4ms
+ GET /sq/admin/leads 200 in 834ms (next.js: 155ms, generate-params: 9ms, application-code: 680ms)
+[PERF] auth.session.lookup 9.7ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.0ms nodeEnv=development
+[PERF] prisma.query 365.3ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 365.3ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 378.0ms
+[PERF] auth.requireStaffSession 378.4ms locale=sq
+[PERF] permissions.assertPermission.session 378.7ms locale=sq module=LEADS action=EDIT
+[PERF] permissions.userMatrix 0.0ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF] permissions.assertPermission.allowed 0.3ms locale=sq module=LEADS action=EDIT userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 226.7ms model=QuoteRequest operation=update
+[PERF_DETAIL] prisma.query await 226.7ms model=QuoteRequest operation=update
+[PERF_DETAIL] admin/layout.i18n/locale loading 13.3ms
+[PERF_DETAIL] admin/leads.i18n/locale loading 8.2ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.1ms locale=sq
+[PERF] auth.session.lookup 12.0ms
+[PERF] prisma.query 312.0ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 312.0ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 327.0ms
+[PERF] auth.requireStaffSession 327.3ms locale=sq
+[PERF] auth.requireStaffSession 325.9ms locale=sq
+[PERF] auth.requireAdminSession 327.8ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 326.3ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 326.5ms locale=sq module=LEADS action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 328.5ms locale=sq
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.4ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.5ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.2ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] auth.session.lookup 2.4ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF] prisma.query 317.4ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 317.4ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 322.0ms
+[PERF] auth.requireStaffSession 322.3ms locale=sq
+[PERF] permissions.assertPermission.session 322.6ms locale=sq module=LEADS action=EDIT
+[PERF] permissions.userMatrix 0.0ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF] permissions.assertPermission.allowed 0.2ms locale=sq module=LEADS action=EDIT userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF] prisma.query 558.6ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 558.6ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 560.5ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 0.3ms locale=sq rows=1
+[PERF] page.serverRender admin/leads 904.0ms
+ POST /sq/admin/leads 200 in 1566ms (next.js: 11ms, generate-params: 7ms, application-code: 1555ms)
+  └─ ƒ updateQuoteRequestStatusAction("sq", "cmp00mbhb0000un4op9xep0ft", {}) in 610ms src/actions/admin.ts
+[PERF] prisma.query 225.1ms model=QuoteRequest operation=update
+[PERF_DETAIL] prisma.query await 225.1ms model=QuoteRequest operation=update
+[PERF_DETAIL] admin/layout.i18n/locale loading 5.8ms
+[PERF_DETAIL] admin/leads.i18n/locale loading 3.7ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 11.8ms
+[PERF] prisma.query 317.2ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 317.2ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 332.5ms
+[PERF] auth.requireStaffSession 332.9ms locale=sq
+[PERF] auth.requireStaffSession 332.2ms locale=sq
+[PERF] auth.requireAdminSession 333.6ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 332.9ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 333.2ms locale=sq module=LEADS action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 334.3ms locale=sq
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.4ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.4ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.0ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 222.1ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 222.1ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 223.9ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 0.4ms locale=sq rows=1
+[PERF] page.serverRender admin/leads 567.3ms
+ POST /sq/admin/leads 200 in 1149ms (next.js: 10ms, generate-params: 6ms, application-code: 1139ms)
+  └─ ƒ updateQuoteRequestStatusAction("sq", "cmp00mbhb0000un4op9xep0ft", {}) in 551ms src/actions/admin.ts
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.7ms nodeEnv=development
+[PERF] prisma.query 281.1ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 281.1ms model=Product operation=findMany
+ GET /sq 200 in 345ms (next.js: 16ms, generate-params: 13ms, application-code: 329ms)
+ POST /sq/admin/leads 303 in 380ms (next.js: 13ms, generate-params: 8ms, application-code: 367ms)
+  └─ ƒ logoutAction("sq") in 5ms src/actions/auth.ts
+✓ Compiled in 207ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.7ms nodeEnv=development
+[PERF] prisma.query 268.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 268.5ms model=Product operation=findMany
+ GET /sq 200 in 415ms (next.js: 87ms, generate-params: 6ms, application-code: 328ms)
+[PERF] prisma.query 272.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 272.9ms model=Product operation=findMany
+ GET /sq 200 in 369ms (next.js: 6ms, generate-params: 39µs, application-code: 363ms)
+[PERF] prisma.query 269.8ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 269.8ms model=Product operation=findMany
+ GET /sq 200 in 348ms (next.js: 7ms, generate-params: 33µs, application-code: 341ms)
+[PERF] prisma.query 317.4ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 317.4ms model=Product operation=findMany
+ GET /sq 200 in 413ms (next.js: 37ms, generate-params: 26µs, application-code: 377ms)
+[PERF] prisma.query 226.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 226.6ms model=Product operation=findMany
+ GET /sq 200 in 286ms (next.js: 9ms, generate-params: 6ms, application-code: 276ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF] prisma.query 225.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 225.5ms model=Product operation=findMany
+ GET /sq 200 in 283ms (next.js: 4ms, generate-params: 26µs, application-code: 280ms)
+[PERF] prisma.query 235.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 235.7ms model=Product operation=findMany
+ GET /sq 200 in 299ms (next.js: 3ms, generate-params: 27µs, application-code: 296ms)
+[PERF] prisma.query 244.1ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 244.1ms model=Product operation=findMany
+ GET /sq 200 in 300ms (next.js: 3ms, generate-params: 26µs, application-code: 296ms)
+[PERF] prisma.query 634.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 634.9ms model=Product operation=findMany
+[PERF] prisma.query 256.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 256.3ms model=Product operation=findMany
+[PERF] prisma.query 676.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 676.3ms model=Product operation=findMany
+[PERF] prisma.query 227.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 227.6ms model=Product operation=findMany
+ GET /sq 200 in 868ms (next.js: 107ms, generate-params: 26µs, application-code: 761ms)
+ GET /sq 200 in 388ms (next.js: 4ms, generate-params: 27µs, application-code: 384ms)
+ GET /sq 200 in 874ms (next.js: 73ms, generate-params: 33µs, application-code: 800ms)
+ GET /sq 200 in 313ms (next.js: 12ms, generate-params: 7ms, application-code: 301ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.0ms nodeEnv=development
+[PERF] prisma.query 374.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 374.7ms model=Product operation=findMany
+[PERF] prisma.query 304.0ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 304.0ms model=Product operation=findMany
+ GET /sq 200 in 461ms (next.js: 4ms, generate-params: 104µs, application-code: 458ms)
+ GET /sq 200 in 395ms (next.js: 7ms, generate-params: 30µs, application-code: 388ms)
+[PERF] prisma.query 225.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 225.7ms model=Product operation=findMany
+[PERF] prisma.query 236.2ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 236.2ms model=Product operation=findMany
+[PERF] prisma.query 243.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 243.6ms model=Product operation=findMany
+[PERF] prisma.query 246.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 246.9ms model=Product operation=findMany
+ GET /sq 200 in 447ms (next.js: 99ms, generate-params: 36µs, application-code: 347ms)
+ GET /sq 200 in 444ms (next.js: 9ms, generate-params: 31µs, application-code: 435ms)
+ GET /sq 200 in 450ms (next.js: 48ms, generate-params: 30µs, application-code: 402ms)
+ GET /sq 200 in 444ms (next.js: 134ms, generate-params: 27µs, application-code: 310ms)
+[PERF] prisma.query 227.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 227.3ms model=Product operation=findMany
+ GET /sq 200 in 284ms (next.js: 16ms, generate-params: 6ms, application-code: 268ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 223.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 223.6ms model=Product operation=findMany
+ GET /sq 200 in 426ms (next.js: 12ms, generate-params: 7ms, application-code: 413ms)
+ GET /sq/quote 200 in 170ms (next.js: 122ms, generate-params: 6ms, application-code: 48ms)
+✓ Compiled in 895ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.2ms nodeEnv=development
+[PERF] prisma.query 372.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 372.9ms model=Product operation=findMany
+[PERF] prisma.query 273.1ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 273.1ms model=Product operation=findMany
+ GET /sq 200 in 573ms (next.js: 88ms, generate-params: 8ms, application-code: 484ms)
+ GET /sq 200 in 399ms (next.js: 29ms, generate-params: 30µs, application-code: 370ms)
+[PERF] prisma.query 227.4ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 227.4ms model=Product operation=findMany
+ GET /sq 200 in 468ms (next.js: 12ms, generate-params: 36µs, application-code: 456ms)
+[PERF] prisma.query 235.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 235.3ms model=Product operation=findMany
+ GET /sq 200 in 294ms (next.js: 12ms, generate-params: 7ms, application-code: 283ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+[PERF] prisma.query 225.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 225.7ms model=Product operation=findMany
+ GET /sq 200 in 267ms (next.js: 3ms, generate-params: 28µs, application-code: 263ms)
+[PERF] prisma.query 597.1ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 597.1ms model=Product operation=findMany
+[PERF] prisma.query 603.4ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 603.4ms model=Product operation=findMany
+[PERF] prisma.query 643.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 643.5ms model=Product operation=findMany
+[PERF] prisma.query 242.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 242.3ms model=Product operation=findMany
+ GET /sq 200 in 887ms (next.js: 167ms, generate-params: 28µs, application-code: 720ms)
+ GET /sq 200 in 890ms (next.js: 136ms, generate-params: 34µs, application-code: 754ms)
+ GET /sq 200 in 893ms (next.js: 92ms, generate-params: 32µs, application-code: 801ms)
+ GET /sq 200 in 327ms (next.js: 4ms, generate-params: 30µs, application-code: 323ms)
+[PERF] prisma.query 551.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 551.5ms model=Product operation=findMany
+[PERF] prisma.query 276.8ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 276.8ms model=Product operation=findMany
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.9ms nodeEnv=development
+ GET /sq 200 in 782ms (next.js: 4ms, generate-params: 58µs, application-code: 778ms)
+ GET /sq 200 in 352ms (next.js: 10ms, generate-params: 6ms, application-code: 343ms)
+[PERF] prisma.query 235.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 235.9ms model=Product operation=findMany
+ GET /sq 200 in 305ms (next.js: 8ms, generate-params: 26µs, application-code: 297ms)
+[PERF] prisma.query 249.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 249.9ms model=Product operation=findMany
+ GET /sq 200 in 352ms (next.js: 56ms, generate-params: 29µs, application-code: 296ms)
+[PERF] prisma.query 227.8ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 227.8ms model=Product operation=findMany
+[PERF] prisma.query 241.6ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 241.6ms model=Product operation=findMany
+ GET /sq 200 in 344ms (next.js: 8ms, generate-params: 29µs, application-code: 336ms)
+ GET /sq 200 in 345ms (next.js: 48ms, generate-params: 27µs, application-code: 297ms)
+[PERF] prisma.query 224.9ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 224.9ms model=Product operation=findMany
+ GET /sq 200 in 274ms (next.js: 10ms, generate-params: 7ms, application-code: 264ms)
+[PERF] prisma.query 229.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 229.5ms model=Product operation=findMany
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.9ms nodeEnv=development
+ GET /sq 200 in 272ms (next.js: 4ms, generate-params: 26µs, application-code: 269ms)
+[PERF] prisma.query 225.4ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 225.4ms model=Product operation=findMany
+ GET /sq 200 in 280ms (next.js: 3ms, generate-params: 31µs, application-code: 277ms)
+ GET /sq/quote 200 in 146ms (next.js: 103ms, generate-params: 6ms, application-code: 43ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+ POST /sq/quote 200 in 41ms (next.js: 10ms, generate-params: 6ms, application-code: 31ms)
+  └─ ƒ createQuoteRequestAction("sq", undefined, {}) in 1ms src/actions/public.ts
+✓ Compiled in 122ms
+ GET /sq/quote 200 in 691ms (next.js: 494ms, generate-params: 8ms, application-code: 196ms)
+ GET /sq/quote 200 in 132ms (next.js: 4ms, generate-params: 27µs, application-code: 128ms)
+ GET /sq/quote 200 in 88ms (next.js: 4ms, generate-params: 25µs, application-code: 84ms)
+ GET /sq/quote 200 in 88ms (next.js: 38ms, generate-params: 26µs, application-code: 50ms)
+✓ Compiled in 72ms
+ GET /sq/quote 200 in 249ms (next.js: 159ms, generate-params: 8ms, application-code: 90ms)
+ GET /sq/quote 200 in 166ms (next.js: 11ms, generate-params: 7ms, application-code: 155ms)
+✓ Compiled in 673ms
+✓ Compiled in 596ms
+✓ Compiled in 70ms
+✓ Compiled in 212ms
+✓ Compiled in 65ms
