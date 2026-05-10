@@ -90,29 +90,6 @@ function StatusEditor({
   );
 }
 
-function StatusCell({
-  locale,
-  requestId,
-  status,
-  canEdit,
-}: {
-  locale: Locale;
-  requestId: string;
-  status: (typeof quoteRequestStatuses)[number];
-  canEdit: boolean;
-}) {
-  if (!canEdit) {
-    return <StatusBadge locale={locale} status={status} />;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-4">
-      <StatusBadge locale={locale} status={status} />
-      <StatusEditor locale={locale} requestId={requestId} status={status} />
-    </div>
-  );
-}
-
 async function LeadsPage({
   params,
   searchParams,
@@ -155,7 +132,7 @@ async function LeadsPage({
               ? "Nuk ka kërkesa për këtë kërkim."
               : "No quote requests match this search."
           }
-          actionsLabel={canDelete ? (typedLocale === "sq" ? "Veprime" : "Actions") : undefined}
+          actionsLabel={canEdit || canDelete ? (typedLocale === "sq" ? "Veprime" : "Actions") : undefined}
           serverControlled
           pagination={{
             page: quoteRequests.page,
@@ -201,17 +178,19 @@ async function LeadsPage({
                 </p>
               ),
               createdAt: formatDate(request.createdAt, localeString),
-              status: (
-                <StatusCell
-                  locale={typedLocale}
-                  requestId={request.id}
-                  status={request.status}
-                  canEdit={canEdit}
-                />
-              ),
+              status: <StatusBadge locale={typedLocale} status={request.status} />,
             },
-            actions: canDelete ? (
-              <form action={deleteQuoteRequestAction.bind(null, typedLocale, request.id)}>
+            actions: (
+              <>
+                {canEdit ? (
+                  <StatusEditor
+                    locale={typedLocale}
+                    requestId={request.id}
+                    status={request.status}
+                  />
+                ) : null}
+                {canDelete ? (
+                  <form action={deleteQuoteRequestAction.bind(null, typedLocale, request.id)}>
                 <ConfirmDeleteButton
                   label={typedLocale === "sq" ? "Fshi" : "Delete"}
                   message={
@@ -220,8 +199,10 @@ async function LeadsPage({
                       : `Are you sure you want to delete the request from "${request.name}"?`
                   }
                 />
-              </form>
-            ) : null,
+                  </form>
+                ) : null}
+              </>
+            ),
           }))}
         />
       </Card>
