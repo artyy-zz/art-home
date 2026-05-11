@@ -5,6 +5,19 @@ export const COMPANY = {
   phone: "+383 49 313 215",
   email: "bujar.bela@artnet-ks.com",
   address: "Lipjan, Kosovo",
+  documents: {
+    legalName: '"ART NET" SH.P.K',
+    address: "Fushe Kosove, Rr. Nëna Terezë",
+    phone: "049/313/215, 160/740",
+    email: "sales@artnet-ks.com",
+    nui: "810200808",
+    vatNumber: "330347717",
+    bankAccounts: [
+      "PCB: 1116008135000133",
+      "TEB: 20-14-0001396833-82",
+      "BPB: 1300001002508377",
+    ],
+  },
   instagram: "https://www.instagram.com/mobileria_arthome_/",
   facebook: "https://www.facebook.com/profile.php?id=61574449680489",
 } as const;

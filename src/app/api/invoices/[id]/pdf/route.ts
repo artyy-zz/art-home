@@ -25,11 +25,14 @@ async function GETHandler(
   }
 
   const pdfBytes = await generateSalesPdf({
-    title: "Sales Invoice",
+    title: "Faturë",
     number: invoice.number,
     clientName: invoice.client.name,
+    clientAddress: invoice.client.address,
     clientEmail: invoice.client.email,
     clientPhone: invoice.client.phone,
+    clientNui: invoice.client.nui,
+    clientVatNumber: invoice.client.vatNumber,
     createdAt: invoice.issuedAt,
     dueDate: invoice.dueDate,
     notes: invoice.notes,

@@ -25,11 +25,14 @@ async function GETHandler(
   }
 
   const pdfBytes = await generatePurchasePdf({
-    title: "Purchase Invoice",
+    title: "Faturë Blerje",
     number: invoice.number,
     supplierName: invoice.supplier.name,
+    supplierAddress: invoice.supplier.address,
     supplierEmail: invoice.supplier.email,
     supplierPhone: invoice.supplier.phone,
+    supplierNui: invoice.supplier.nui,
+    supplierVatNumber: invoice.supplier.vatNumber,
     createdAt: invoice.issuedAt,
     dueDate: invoice.dueDate,
     notes: invoice.notes,
