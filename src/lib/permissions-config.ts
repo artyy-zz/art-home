@@ -15,7 +15,6 @@ export const permissionModules = [
   "REPORTS",
   "WORKER_HOURS",
   "USERS",
-  "ROLES",
 ] as const;
 
 export const permissionActions = [
@@ -50,7 +49,6 @@ export const permissionModuleLabels = {
   REPORTS: { sq: "Raportet", en: "Reports" },
   WORKER_HOURS: { sq: "Orët e Punëtorëve", en: "Worker Hours" },
   USERS: { sq: "Përdoruesit", en: "Users" },
-  ROLES: { sq: "Rolet & Lejet", en: "Roles & Permissions" },
 } as const satisfies Record<PermissionModuleKey, { sq: string; en: string }>;
 
 export const permissionActionLabels = {
@@ -78,7 +76,6 @@ export const adminModulePaths = {
   REPORTS: "/admin/reports",
   WORKER_HOURS: "/admin/worker-hours",
   USERS: "/admin/users",
-  ROLES: "/admin/roles",
 } as const satisfies Record<PermissionModuleKey, string>;
 
 export const roleLabels = {

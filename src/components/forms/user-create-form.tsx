@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { PermissionChecklist, createEmptyPermissionMatrix } from "@/components/admin/permission-checklist";
 import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { PasswordInput } from "@/components/forms/password-input";
 import { buttonClasses } from "@/components/shared/button";
@@ -8,28 +9,20 @@ import type { Locale } from "@/lib/i18n";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
-type RoleOption = {
-  id: string;
-  name: string;
-  key: string | null;
-};
-
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 export function UserCreateForm({
   locale,
-  roles,
   action,
 }: {
   locale: Locale;
-  roles: RoleOption[];
   action: FormAction;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
   const [error, setError] = useState("");
-  const defaultRoleId = roles.find((role) => role.key === "STAFF")?.id ?? "";
+  const emptyPermissionMatrix = createEmptyPermissionMatrix();
 
   async function handleSubmit(formData: FormData) {
     setError("");
@@ -50,23 +43,22 @@ export function UserCreateForm({
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="grid gap-4 md:grid-cols-4">
+    <form ref={formRef} action={handleSubmit} className="grid gap-4 md:grid-cols-3">
       <input name="name" required className={inputClassName} placeholder={locale === "sq" ? "Emri" : "Name"} />
       <input name="email" required type="email" className={inputClassName} placeholder="Email" />
       <PasswordInput className={inputClassName} placeholder={locale === "sq" ? "Fjalekalimi" : "Password"} buttonClassName="hover:bg-black/5" />
-      <select name="roleId" defaultValue={defaultRoleId} required className={inputClassName}>
-        {roles.map((role) => (
-          <option key={role.id} value={role.id}>
-            {role.name}
-          </option>
-        ))}
-      </select>
+      <div className="md:col-span-3">
+        <p className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">
+          {locale === "sq" ? "Lejet e perdoruesit" : "User permissions"}
+        </p>
+        <PermissionChecklist locale={locale} matrix={emptyPermissionMatrix} />
+      </div>
       {error ? (
-        <p className="rounded-2xl bg-[rgba(140,47,43,0.09)] px-4 py-3 text-sm text-[var(--color-danger)] md:col-span-4">
+        <p className="rounded-2xl bg-[rgba(140,47,43,0.09)] px-4 py-3 text-sm text-[var(--color-danger)] md:col-span-3">
           {error}
         </p>
       ) : null}
-      <div className="flex flex-wrap justify-end gap-2 md:col-span-4">
+      <div className="flex flex-wrap justify-end gap-2 md:col-span-3">
         {closeCreateFormPanel ? (
           <button
             type="button"

@@ -1,18 +1,21 @@
-import { withPagePerf } from "@/lib/perf";
-import { createUserAction, deleteUserAction, updateUserRoleAction } from "@/actions/admin";
+import { createUserAction, deleteUserAction, updateUserPermissionsAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
+import {
+  PermissionChecklist,
+  createEmptyPermissionMatrix,
+  permissionStats,
+} from "@/components/admin/permission-checklist";
 import { RecordTable } from "@/components/admin/record-table";
 import { UserCreateForm } from "@/components/forms/user-create-form";
 import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
-import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
-import { can, getAssignableRoles, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
+import { measureDetailAsync, measureDetailSync, withPagePerf } from "@/lib/perf";
+import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
-import { Check, Pencil, X } from "lucide-react";
-import Link from "next/link";
+import { Check } from "lucide-react";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -22,26 +25,12 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-function usersHref(
-  locale: Locale,
-  searchParams: Record<string, string | string[] | undefined>,
-  editUserId?: string,
-) {
-  const params = new URLSearchParams();
-
-  for (const key of ["q", "sort", "dir"]) {
-    const value = param(searchParams, key);
-    if (value) {
-      params.set(key, value);
-    }
-  }
-
-  if (editUserId) {
-    params.set("edit", editUserId);
-  }
-
-  const query = params.toString();
-  return `/${locale}/admin/users${query ? `?${query}` : ""}`;
+function isProtectedOwnerUser(user: { email: string; role: string; roleRecord?: { isOwner: boolean } | null }) {
+  return (
+    user.email.toLowerCase() === "artiibela0@gmail.com" ||
+    user.role === "OWNER" ||
+    Boolean(user.roleRecord?.isOwner)
+  );
 }
 
 async function UsersPage({
@@ -56,20 +45,6 @@ async function UsersPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
-  const editUserId = param(resolvedSearchParams, "edit");
-  const assignableRoles = await measureDetailAsync(
-    "admin/users.main data query",
-    () => getAssignableRoles(),
-    { locale: typedLocale, query: "roles" },
-  );
-  const roles = measureDetailSync(
-    "admin/users.table mapping/formatting",
-    () =>
-      assignableRoles.filter(
-        (role) => !role.isOwner || user.role === "OWNER" || user.roleRecord?.isOwner,
-      ),
-    { locale: typedLocale, rows: assignableRoles.length, target: "roles" },
-  );
   const users = await measureDetailAsync(
     "admin/users.main data query",
     () =>
@@ -84,8 +59,10 @@ async function UsersPage({
           roleRecord: {
             select: {
               id: true,
+              key: true,
               name: true,
               isOwner: true,
+              isSystem: true,
             },
           },
           lastLoginAt: true,
@@ -94,144 +71,166 @@ async function UsersPage({
       }),
     { locale: typedLocale, query: "users" },
   );
+  const userMatrices = new Map(
+    await Promise.all(
+      users.map(async (record) => [record.id, await getUserPermissionMatrix(record)] as const),
+    ),
+  );
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "USERS", "CREATE");
   const canEdit = can(permissions, "USERS", "EDIT");
   const canDelete = can(permissions, "USERS", "DELETE");
-  const currentUserIsOwner = user.role === "OWNER" || Boolean(user.roleRecord?.isOwner);
+  const currentUserIsOwner = isProtectedOwnerUser(user);
 
   return measureDetailSync(
     "admin/users.table mapping/formatting",
     () => (
-    <div className="space-y-6">
-      {canCreate ? (
-        <CreateFormPanel
-          title={typedLocale === "sq" ? "Shto përdorues" : "Add user"}
-          buttonLabel={typedLocale === "sq" ? "Shto përdorues" : "Add user"}
-          cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
-        >
-          <UserCreateForm
-            locale={typedLocale}
-            roles={roles.map((role) => ({
-              id: role.id,
-              name: role.name,
-              key: role.key,
-            }))}
-            action={createUserAction.bind(null, typedLocale)}
+      <div className="space-y-6">
+        {canCreate ? (
+          <CreateFormPanel
+            title={typedLocale === "sq" ? "Shto perdorues" : "Add user"}
+            buttonLabel={typedLocale === "sq" ? "Shto perdorues" : "Add user"}
+            cancelLabel={typedLocale === "sq" ? "Anulo" : "Cancel"}
+          >
+            <UserCreateForm
+              locale={typedLocale}
+              action={createUserAction.bind(null, typedLocale)}
+            />
+          </CreateFormPanel>
+        ) : null}
+
+        <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
+          <RecordTable
+            currentPath={`/${typedLocale}/admin/users`}
+            query={query}
+            sort={sort}
+            direction={direction}
+            searchPlaceholder={
+              typedLocale === "sq" ? "Kerko perdorues ose email" : "Search users or email"
+            }
+            searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
+            emptyMessage={
+              typedLocale === "sq"
+                ? "Nuk ka perdorues per kete kerkim."
+                : "No users match this search."
+            }
+            actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+            columns={[
+              { key: "name", label: typedLocale === "sq" ? "Perdoruesi" : "User", sortable: true },
+              { key: "permissions", label: typedLocale === "sq" ? "Lejet" : "Permissions", sortable: true },
+              { key: "lastLogin", label: typedLocale === "sq" ? "Hyrja e fundit" : "Last login", sortable: true },
+              { key: "createdAt", label: typedLocale === "sq" ? "Krijuar" : "Created", sortable: true },
+            ]}
+            rows={users.map((record) => {
+              const matrix = userMatrices.get(record.id) ?? createEmptyPermissionMatrix();
+              const stats = permissionStats(matrix);
+              const isProtectedOwner = isProtectedOwnerUser(record);
+
+              return {
+                id: record.id,
+                searchText: `${record.name} ${record.email}`,
+                sortValues: {
+                  name: record.name,
+                  permissions: stats.enabled,
+                  lastLogin: record.lastLoginAt,
+                  createdAt: record.createdAt,
+                },
+                cells: {
+                  name: (
+                    <div>
+                      <p className="font-semibold">{record.name}</p>
+                      <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
+                    </div>
+                  ),
+                  permissions: isProtectedOwner
+                    ? typedLocale === "sq"
+                      ? "Te gjitha"
+                      : "All"
+                    : `${stats.enabled}/${stats.total}`,
+                  lastLogin: record.lastLoginAt ? formatDate(record.lastLoginAt, localeString) : "-",
+                  createdAt: formatDate(record.createdAt, localeString),
+                },
+                actions: canDelete && record.id !== user.id && (!isProtectedOwner || currentUserIsOwner) ? (
+                  <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
+                    <ConfirmDeleteButton
+                      label={typedLocale === "sq" ? "Fshi" : "Delete"}
+                      message={
+                        typedLocale === "sq"
+                          ? `A je i sigurt qe deshiron ta fshish perdoruesin "${record.name}"?`
+                          : `Are you sure you want to delete user "${record.name}"?`
+                      }
+                      className="gap-2"
+                    />
+                  </form>
+                ) : null,
+              };
+            })}
           />
-        </CreateFormPanel>
-      ) : null}
+        </Card>
 
-      <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
-        <RecordTable
-          currentPath={`/${typedLocale}/admin/users`}
-          query={query}
-          sort={sort}
-          direction={direction}
-          searchPlaceholder={
-            typedLocale === "sq" ? "Kërko përdorues ose email" : "Search users or email"
-          }
-          searchLabel={typedLocale === "sq" ? "Kërko" : "Search"}
-          emptyMessage={
-            typedLocale === "sq"
-              ? "Nuk ka përdorues për këtë kërkim."
-              : "No users match this search."
-          }
-          actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
-          columns={[
-            { key: "name", label: typedLocale === "sq" ? "Përdoruesi" : "User", sortable: true },
-            { key: "role", label: typedLocale === "sq" ? "Roli" : "Role", sortable: true },
-            { key: "lastLogin", label: typedLocale === "sq" ? "Hyrja e fundit" : "Last login", sortable: true },
-            { key: "createdAt", label: typedLocale === "sq" ? "Krijuar" : "Created", sortable: true },
-          ]}
-          rows={users.map((record) => {
-            const roleLabel = record.roleRecord?.name ?? record.role;
-            const isProtectedOwner = Boolean(record.roleRecord?.isOwner) || record.role === "OWNER";
-            const isEditing = editUserId === record.id;
-            const currentRoleOption = roles.find((role) => role.id === record.roleId);
-            const selectedRoleId =
-              currentRoleOption?.id ??
-              roles.find((role) => role.key === record.role)?.id ??
-              roles.find((role) => role.key === "STAFF")?.id;
+        {canEdit ? (
+          <Card className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
+                {typedLocale === "sq" ? "Lejet e perdoruesve" : "User permissions"}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                {typedLocale === "sq"
+                  ? "Ndrysho cfare mund te shikoje, krijoje, ndryshoje, fshije ose eksportoje secili perdorues."
+                  : "Control what each user can view, create, edit, delete, or export."}
+              </p>
+            </div>
+            <div className="space-y-4">
+              {users.map((record) => {
+                const matrix = userMatrices.get(record.id) ?? createEmptyPermissionMatrix();
+                const stats = permissionStats(matrix);
+                const isProtectedOwner = isProtectedOwnerUser(record);
 
-            return {
-              id: record.id,
-              searchText: `${record.name} ${record.email} ${roleLabel}`,
-              sortValues: {
-                name: record.name,
-                role: roleLabel,
-                lastLogin: record.lastLoginAt,
-                createdAt: record.createdAt,
-              },
-              cells: {
-                name: (
-                  <div>
-                    <p className="font-semibold">{record.name}</p>
-                    <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
-                  </div>
-                ),
-                role: roleLabel,
-                lastLogin: record.lastLoginAt ? formatDate(record.lastLoginAt, localeString) : "-",
-                createdAt: formatDate(record.createdAt, localeString),
-              },
-              actions: (
-                <>
-                  {canEdit && !isProtectedOwner ? (
-                    isEditing ? (
-                      <form action={updateUserRoleAction.bind(null, typedLocale, record.id)} className="flex flex-wrap justify-end gap-2">
-                        <select
-                          name="roleId"
-                          defaultValue={selectedRoleId}
-                          className="h-10 rounded-full border border-black/10 bg-white/90 px-3 text-sm text-[var(--color-foreground)]"
+                return (
+                  <details
+                    key={record.id}
+                    className="rounded-2xl border border-black/10 bg-white/70 p-4"
+                  >
+                    <summary className="cursor-pointer list-none">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-[var(--color-foreground)]">{record.name}</p>
+                          <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
+                        </div>
+                        <span className="rounded-full bg-black/[0.05] px-3 py-1 text-xs font-semibold text-[var(--color-muted)]">
+                          {isProtectedOwner
+                            ? typedLocale === "sq"
+                              ? "Te gjitha lejet"
+                              : "All permissions"
+                            : `${stats.enabled}/${stats.total}`}
+                        </span>
+                      </div>
+                    </summary>
+                    <div className="mt-4">
+                      {isProtectedOwner ? (
+                        <PermissionChecklist locale={typedLocale} matrix={matrix} locked />
+                      ) : (
+                        <form
+                          action={updateUserPermissionsAction.bind(null, typedLocale, record.id)}
+                          className="space-y-4"
                         >
-                          {roles.map((role) => (
-                            <option key={role.id} value={role.id}>
-                              {role.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button className={buttonClasses({ size: "sm", className: "gap-2" })}>
-                          <Check className="h-4 w-4" />
-                          {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                        </button>
-                        <Link
-                          href={usersHref(typedLocale, resolvedSearchParams)}
-                          className={buttonClasses({ variant: "secondary", size: "sm", className: "gap-2" })}
-                        >
-                          <X className="h-4 w-4" />
-                          {typedLocale === "sq" ? "Anulo" : "Cancel"}
-                        </Link>
-                      </form>
-                    ) : (
-                      <Link
-                        href={`${usersHref(typedLocale, resolvedSearchParams, record.id)}#${record.id}`}
-                        className={buttonClasses({ variant: "secondary", size: "sm", className: "gap-2" })}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                      </Link>
-                    )
-                  ) : null}
-                  {canDelete && record.id !== user.id && (!isProtectedOwner || currentUserIsOwner) ? (
-                    <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
-                      <ConfirmDeleteButton
-                        label={typedLocale === "sq" ? "Fshi" : "Delete"}
-                        message={
-                          typedLocale === "sq"
-                            ? `A je i sigurt qe deshiron ta fshish perdoruesin "${record.name}"?`
-                            : `Are you sure you want to delete user "${record.name}"?`
-                        }
-                        className="gap-2"
-                      />
-                    </form>
-                  ) : null}
-                </>
-              ),
-            };
-          })}
-        />
-      </Card>
-    </div>
+                          <PermissionChecklist locale={typedLocale} matrix={matrix} />
+                          <div className="flex justify-end">
+                            <button className={buttonClasses({ size: "sm", className: "gap-2" })}>
+                              <Check className="h-4 w-4" />
+                              {typedLocale === "sq" ? "Ruaj lejet" : "Save permissions"}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </Card>
+        ) : null}
+      </div>
     ),
     { locale: typedLocale, rows: users.length },
   );

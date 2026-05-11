@@ -42,7 +42,6 @@ const adminPerfLabels: Record<PermissionModuleKey, string> = {
   REPORTS: "admin/reports",
   WORKER_HOURS: "admin/worker-hours",
   USERS: "admin/users",
-  ROLES: "admin/roles",
 };
 
 export function unauthorizedMessage(locale: Locale) {
@@ -245,22 +244,11 @@ export const getPermissionMatrixForRole = cache(async (role: UserRole) => {
 });
 
 const getPermissionTemplateForUser = cache(async (user: PermissionUser) => {
-  if (user.roleRecord) {
-    return getPermissionMatrixForRoleRecord(user.roleRecord);
+  if (isOwnerUser(user)) {
+    return createFullMatrix();
   }
 
-  if (user.roleId) {
-    const roleRecord = await prisma.role.findUnique({
-      where: { id: user.roleId },
-      select: { id: true, key: true, name: true, isOwner: true, isSystem: true },
-    });
-
-    if (roleRecord) {
-      return getPermissionMatrixForRoleRecord(roleRecord);
-    }
-  }
-
-  return getPermissionMatrixForRole(user.role);
+  return createEmptyMatrix();
 });
 
 export const getUserPermissionMatrix = cache(async (user: PermissionUser) => {
@@ -339,14 +327,14 @@ export async function requirePermission(
 
 export async function requireOwner(locale: Locale) {
   const user = await measureDetailAsync(
-    "admin/roles.auth/session",
+    "admin/users.auth/session",
     () => requireStaffSession(locale),
-    { locale, module: "ROLES", action: "VIEW" },
+    { locale, module: "USERS", action: "VIEW" },
   );
   const isOwner = measureDetailSync(
-    "admin/roles.permissions",
+    "admin/users.owner permissions",
     () => isOwnerUser(user),
-    { locale, module: "ROLES", action: "VIEW", userId: user.id },
+    { locale, module: "USERS", action: "VIEW", userId: user.id },
   );
 
   if (!isOwner) {

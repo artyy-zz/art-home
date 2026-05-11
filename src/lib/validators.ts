@@ -295,7 +295,6 @@ export const userCreateSchema = z.object({
   name: z.string().min(2).trim(),
   email: z.email("Invalid email address").trim().toLowerCase(),
   password: z.string().min(1, "Password is required"),
-  roleId: z.string().min(1),
 });
 
 export const userRoleSchema = z.object({

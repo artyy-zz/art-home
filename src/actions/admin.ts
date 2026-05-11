@@ -251,6 +251,20 @@ function userPermissionRows(userId: string, matrix: PermissionMatrix) {
   );
 }
 
+function permissionMatrixFromFormData(formData: FormData) {
+  return Object.fromEntries(
+    permissionModules.map((module) => [
+      module,
+      Object.fromEntries(
+        permissionActions.map((action) => [
+          action,
+          formData.get(`${module}:${action}`) === "on",
+        ]),
+      ),
+    ]),
+  ) as PermissionMatrix;
+}
+
 function userPermissionOperations(userId: string, formData: FormData) {
   return permissionModules.flatMap((module) =>
     permissionActions.map((action) =>
@@ -2291,43 +2305,36 @@ export async function deleteDebitNoteAction(locale: Locale, debitNoteId: string)
 }
 
 export async function createUserAction(locale: Locale, formData: FormData) {
-  const actor = await ensureAllowed(locale, "USERS", "CREATE");
+  await ensureAllowed(locale, "USERS", "CREATE");
   const parsed = userCreateSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    roleId: formData.get("roleId"),
   });
 
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid user payload.");
   }
 
-  const role = await getRoleForAssignment(parsed.data.roleId);
-  if (role.isOwner && !isOwnerUser(actor)) {
-    throw new Error(unauthorizedMessage(locale));
-  }
-
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const rolePermissions = await getPermissionMatrixForRoleRecord(role);
+  const permissions = permissionMatrixFromFormData(formData);
   await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
         passwordHash,
-        role: fallbackUserRole(role),
-        roleId: role.id,
+        role: "STAFF",
+        roleId: null,
       },
     });
 
     await tx.userPermission.createMany({
-      data: userPermissionRows(createdUser.id, rolePermissions),
+      data: userPermissionRows(createdUser.id, permissions),
     });
   });
 
   revalidateEveryLocale("/admin/users");
-  revalidateEveryLocale("/admin/roles");
 }
 
 export async function updateUserRoleAction(
@@ -2379,7 +2386,6 @@ export async function updateUserRoleAction(
   ]);
 
   revalidateEveryLocale("/admin/users");
-  revalidateEveryLocale("/admin/roles");
 }
 
 export async function deleteUserAction(locale: Locale, userId: string) {
@@ -2393,8 +2399,14 @@ export async function deleteUserAction(locale: Locale, userId: string) {
     throw new Error("User not found.");
   }
 
-  const actorIsOwner = actor.role === "OWNER" || Boolean(actor.roleRecord?.isOwner);
-  const targetIsOwner = target.role === "OWNER" || Boolean(target.roleRecord?.isOwner);
+  const actorIsOwner =
+    actor.role === "OWNER" ||
+    Boolean(actor.roleRecord?.isOwner) ||
+    actor.email.toLowerCase() === "artiibela0@gmail.com";
+  const targetIsOwner =
+    target.role === "OWNER" ||
+    Boolean(target.roleRecord?.isOwner) ||
+    target.email.toLowerCase() === "artiibela0@gmail.com";
 
   if (target.id === actor.id || (targetIsOwner && !actorIsOwner)) {
     throw new Error(unauthorizedMessage(locale));
@@ -2405,7 +2417,6 @@ export async function deleteUserAction(locale: Locale, userId: string) {
   });
 
   revalidateEveryLocale("/admin/users");
-  revalidateEveryLocale("/admin/roles");
 }
 
 export async function updateUserPermissionsAction(
@@ -2413,7 +2424,7 @@ export async function updateUserPermissionsAction(
   userId: string,
   formData: FormData,
 ) {
-  await assertOwner(locale);
+  await ensureAllowed(locale, "USERS", "EDIT");
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
@@ -2424,13 +2435,16 @@ export async function updateUserPermissionsAction(
     throw new Error("User not found.");
   }
 
-  if (target.roleRecord?.isOwner || target.role === "OWNER") {
+  if (
+    target.roleRecord?.isOwner ||
+    target.role === "OWNER" ||
+    target.email.toLowerCase() === "artiibela0@gmail.com"
+  ) {
     throw new Error(unauthorizedMessage(locale));
   }
 
   await prisma.$transaction(userPermissionOperations(userId, formData));
 
-  revalidateEveryLocale("/admin/roles");
   revalidateEveryLocale("/admin/users");
 }
 

@@ -5,8 +5,7 @@ import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { requireAdminSession } from "@/lib/auth";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
-import { getUserPermissionMatrix, isOwnerUser, visibleModulesFromMatrix } from "@/lib/permissions";
-import { roleLabels } from "@/lib/permissions-config";
+import { getUserPermissionMatrix, visibleModulesFromMatrix } from "@/lib/permissions";
 
 export default async function AdminLayout({
   children,
@@ -35,13 +34,11 @@ export default async function AdminLayout({
   const { visibleModules, roleLabel } = measureDetailSync(
     "admin/layout.layout/sidebar work",
     () => {
-      const modules = visibleModulesFromMatrix(permissions).filter(
-        (module) => module !== "ROLES" || isOwnerUser(user),
-      );
+      const modules = visibleModulesFromMatrix(permissions);
 
       return {
         visibleModules: modules,
-        roleLabel: user.roleRecord?.name ?? roleLabels[user.role][typedLocale],
+        roleLabel: typedLocale === "sq" ? "Perdorues" : "User",
       };
     },
     { locale: typedLocale, userId: user.id },
