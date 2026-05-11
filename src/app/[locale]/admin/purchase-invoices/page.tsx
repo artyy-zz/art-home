@@ -1,18 +1,13 @@
 import { withPagePerf } from "@/lib/perf";
-import Link from "next/link";
-import { Pencil } from "lucide-react";
 import {
   createPurchaseInvoiceAction,
-  deletePurchaseInvoiceAction,
-  updatePurchaseInvoiceAction,
 } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { LazyPurchaseInvoiceBuilderForm } from "@/components/admin/lazy-admin-options";
+import { PurchaseInvoiceActions } from "@/components/admin/purchase-invoice-actions";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
-import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import {
   getPurchaseInvoiceOverviewPage,
   statusTone,
@@ -21,7 +16,7 @@ import type { Locale } from "@/lib/i18n";
 import { parsePage } from "@/lib/pagination";
 import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 const statusLabels = {
   sq: {
@@ -37,9 +32,6 @@ const statusLabels = {
     OVERDUE: "Overdue",
   },
 } as const;
-
-const inputClassName =
-  "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
 
 function param(
   searchParams: Record<string, string | string[] | undefined>,
@@ -185,70 +177,21 @@ async function PurchaseInvoicesPage({
                 ),
               },
               actions: (
-                <div className="inline-flex flex-wrap items-center justify-end gap-2">
-                  {canExport ? (
-                    <Link
-                      href={`/api/purchase-invoices/${invoice.id}/pdf`}
-                      className={buttonClasses({ variant: "secondary", size: "sm" })}
-                    >
-                      PDF
-                    </Link>
-                  ) : null}
-                  {canEdit ? (
-                    <details className="relative text-left">
-                      <summary className={buttonClasses({ variant: "secondary", size: "sm", className: "inline-flex cursor-pointer list-none gap-2 [&::-webkit-details-marker]:hidden" })}>
-                        <Pencil className="h-4 w-4" />
-                        {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                      </summary>
-                      <form
-                        action={updatePurchaseInvoiceAction.bind(null, typedLocale, invoice.id)}
-                        className="absolute right-0 z-20 mt-2 grid w-[min(90vw,380px)] gap-2 rounded-2xl border-[2.25px] border-black/18 bg-[#fbf8f4] p-3 shadow-[0_18px_48px_rgba(18,16,14,0.16)]"
-                      >
-                        <select name="status" defaultValue={invoice.status} className={inputClassName}>
-                          <option value="UNPAID">{statusLabels[typedLocale].UNPAID}</option>
-                          <option value="PARTIAL">{statusLabels[typedLocale].PARTIAL}</option>
-                          <option value="PAID">{statusLabels[typedLocale].PAID}</option>
-                          <option value="OVERDUE">{statusLabels[typedLocale].OVERDUE}</option>
-                        </select>
-                        <input
-                          name="dueDate"
-                          type="date"
-                          defaultValue={formatDateInputValue(invoice.dueDate)}
-                          className={inputClassName}
-                        />
-                        <input
-                          name="amountPaid"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          defaultValue={invoice.amountPaidCents / 100}
-                          className={inputClassName}
-                          placeholder={typedLocale === "sq" ? "Paguar EUR" : "Paid EUR"}
-                        />
-                        <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-muted)]">
-                          <input type="checkbox" name="vatEnabled" defaultChecked={invoice.vatEnabled} className="h-4 w-4" />
-                          {typedLocale === "sq" ? "Apliko TVSH" : "Apply VAT"} (18%)
-                        </label>
-                        <textarea name="notes" defaultValue={invoice.notes ?? ""} className={inputClassName} />
-                        <button className={buttonClasses({ size: "sm" })}>
-                          {typedLocale === "sq" ? "Ndrysho" : "Edit"}
-                        </button>
-                      </form>
-                    </details>
-                  ) : null}
-                  {canDelete ? (
-                    <form action={deletePurchaseInvoiceAction.bind(null, typedLocale, invoice.id)}>
-                      <ConfirmDeleteButton
-                        label={typedLocale === "sq" ? "Fshi" : "Delete"}
-                        message={
-                          typedLocale === "sq"
-                            ? `A je i sigurt qe deshiron ta fshish faturen "${invoice.number}"?`
-                            : `Are you sure you want to delete invoice "${invoice.number}"?`
-                        }
-                      />
-                    </form>
-                  ) : null}
-                </div>
+                <PurchaseInvoiceActions
+                  locale={typedLocale}
+                  invoice={{
+                    id: invoice.id,
+                    number: invoice.number,
+                    status: invoice.status,
+                    dueDate: invoice.dueDate,
+                    amountPaidCents: invoice.amountPaidCents,
+                    vatEnabled: invoice.vatEnabled,
+                    notes: invoice.notes,
+                  }}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  canExport={canExport}
+                />
               ),
             };
           })}
