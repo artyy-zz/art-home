@@ -6,6 +6,7 @@ import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
+import { calculatePercentageCents, centsToDecimalString, multiplyCentsByDecimal, parseMoneyToCents } from "@/lib/money";
 import { formatCurrency, formatDate, formatDateInputValue } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -80,11 +81,11 @@ export function DebitNoteBuilderForm({
     (item) => item.remainingQuantity > 0,
   ) ?? [];
   const subtotalCents = rows.reduce((sum, row) => {
-    const quantity = Number(row.quantity || 0);
-    const unitPrice = Number(row.unitPrice || 0);
-    return sum + Math.round(quantity * unitPrice * 100);
+    const quantity = row.quantity || "0";
+    const unitPriceCents = parseMoneyToCents(row.unitPrice || "0");
+    return sum + multiplyCentsByDecimal(unitPriceCents, quantity);
   }, 0);
-  const vatCents = vatEnabled ? Math.round(subtotalCents * 0.18) : 0;
+  const vatCents = vatEnabled ? calculatePercentageCents(subtotalCents, 18) : 0;
   const totalCents = subtotalCents + vatCents;
 
   async function handleSubmit(formData: FormData) {
@@ -219,7 +220,7 @@ export function DebitNoteBuilderForm({
                           invoiceItemId: event.target.value,
                           quantity: invoiceItem ? "1" : "",
                           unitPrice: invoiceItem
-                            ? (invoiceItem.unitPriceCents / 100).toFixed(2)
+                            ? centsToDecimalString(invoiceItem.unitPriceCents)
                             : "",
                         };
                       }),

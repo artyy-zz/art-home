@@ -30,7 +30,7 @@ type StockBuilderFormProps = {
   submitLabel: string;
   initial?: {
     name: string;
-    price: number;
+    price: string;
     rows: StockFormRow[];
   };
   onCancel?: () => void;

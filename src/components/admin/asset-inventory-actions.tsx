@@ -9,6 +9,7 @@ import {
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 
 type AssetInventoryActionsProps = {
   locale: Locale;
@@ -127,7 +128,7 @@ export function AssetInventoryActions({
                   min="0"
                   step="0.01"
                   required
-                  defaultValue={asset.valueCents / 100}
+                  defaultValue={centsToDecimalString(asset.valueCents)}
                   className={inputClassName}
                 />
               </label>

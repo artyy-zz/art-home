@@ -27,6 +27,7 @@ import {
   permissionModules,
   type PermissionMatrix,
 } from "@/lib/permissions-config";
+import { parseMoneyToCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import {
@@ -161,7 +162,7 @@ function amountPaidForStatus(
   const requestedAmountCents =
     requestedAmount == null
       ? fallbackAmountCents
-      : Math.round(requestedAmount * 100);
+      : parseMoneyToCents(requestedAmount);
 
   return Math.min(Math.max(requestedAmountCents, 0), totalCents);
 }
@@ -603,7 +604,7 @@ export async function createMaterialAction(locale: Locale, formData: FormData) {
   await prisma.material.create({
     data: {
       ...materialData,
-      costPerUnitCents: Math.round(costPerUnit * 100),
+      costPerUnitCents: parseMoneyToCents(costPerUnit),
     },
   });
 
@@ -641,7 +642,7 @@ export async function updateMaterialAction(
       unit: parsed.data.unit,
       stockQuantity: parsed.data.stockQuantity,
       lowStockThreshold: parsed.data.lowStockThreshold,
-      costPerUnitCents: Math.round(parsed.data.costPerUnit * 100),
+      costPerUnitCents: parseMoneyToCents(parsed.data.costPerUnit),
       notes: parsed.data.notes,
     },
   });
@@ -714,7 +715,7 @@ export async function createAssetInventoryAction(locale: Locale, formData: FormD
     data: {
       name: parsed.data.name,
       quantity: parsed.data.quantity,
-      valueCents: Math.round(parsed.data.value * 100),
+      valueCents: parseMoneyToCents(parsed.data.value),
       purchaseDate: parseDocumentDate(parsed.data.purchaseDate),
     },
   });
@@ -745,7 +746,7 @@ export async function updateAssetInventoryAction(
     data: {
       name: parsed.data.name,
       quantity: parsed.data.quantity,
-      valueCents: Math.round(parsed.data.value * 100),
+      valueCents: parseMoneyToCents(parsed.data.value),
       purchaseDate: parseDocumentDate(parsed.data.purchaseDate),
     },
   });
@@ -821,7 +822,7 @@ export async function createStokAction(locale: Locale, formData: FormData) {
   await prisma.stok.create({
     data: {
       name: parsed.data.name,
-      priceCents: Math.round(parsed.data.price * 100),
+      priceCents: parseMoneyToCents(parsed.data.price),
       items: {
         create: items,
       },
@@ -859,7 +860,7 @@ export async function updateStokAction(
       where: { id: stokId },
       data: {
         name: parsed.data.name,
-        priceCents: Math.round(parsed.data.price * 100),
+        priceCents: parseMoneyToCents(parsed.data.price),
         items: {
           create: items,
         },
@@ -1055,7 +1056,7 @@ export async function updateWorkerTimeEntryAction(
       return;
     }
 
-    const amountCents = Math.round(advanceAmount * 100);
+    const amountCents = parseMoneyToCents(advanceAmount);
 
     if (primaryAdvanceId) {
       await tx.workerAdvance.updateMany({
@@ -1113,7 +1114,7 @@ export async function createWorkerAdvanceAction(
     data: {
       workerId,
       date: parseDocumentDate(parsed.data.date),
-      amountCents: Math.round(parsed.data.amount * 100),
+      amountCents: parseMoneyToCents(parsed.data.amount),
     },
   });
 
@@ -1140,7 +1141,7 @@ export async function updateWorkerAdvanceAction(
     where: { id: advanceId },
     data: {
       date: parseDocumentDate(parsed.data.date),
-      amountCents: Math.round(parsed.data.amount * 100),
+      amountCents: parseMoneyToCents(parsed.data.amount),
     },
   });
 
@@ -1208,8 +1209,8 @@ export async function createProductAction(locale: Locale, formData: FormData) {
       materialNotesSq: parsed.data.materialNotesSq,
       materialNotesEn: parsed.data.materialNotesEn,
       featured: parsed.data.featured,
-      basePriceCents: Math.round(parsed.data.basePrice * 100),
-      laborCostCents: Math.round(parsed.data.laborCost * 100),
+      basePriceCents: parseMoneyToCents(parsed.data.basePrice),
+      laborCostCents: parseMoneyToCents(parsed.data.laborCost),
       bomItems: {
         create: parsed.data.bom,
       },
@@ -1264,7 +1265,7 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
       throw new Error("Selected inventory item could not be found.");
     }
 
-    const unitPriceCents = Math.round(item.unitPrice * 100);
+    const unitPriceCents = parseMoneyToCents(item.unitPrice);
 
     return {
       materialId: material.id,
@@ -1799,7 +1800,7 @@ export async function createPurchaseInvoiceAction(locale: Locale, formData: Form
       throw new Error("Selected inventory item could not be found.");
     }
 
-    const unitPriceCents = Math.round(item.unitPrice * 100);
+    const unitPriceCents = parseMoneyToCents(item.unitPrice);
 
     return {
       materialId: material.id,
@@ -2080,7 +2081,7 @@ export async function createExpenseAction(locale: Locale, formData: FormData) {
   }
 
   const totals = calculateTotals(
-    Math.round(parsed.data.amount * 100),
+    parseMoneyToCents(parsed.data.amount),
     parsed.data.vatEnabled,
     parsed.data.vatRate,
   );
@@ -2126,7 +2127,7 @@ export async function updateExpenseAction(
   }
 
   const totals = calculateTotals(
-    Math.round(parsed.data.amount * 100),
+    parseMoneyToCents(parsed.data.amount),
     parsed.data.vatEnabled,
     parsed.data.vatRate,
   );
@@ -2228,7 +2229,7 @@ export async function createDebitNoteAction(locale: Locale, formData: FormData) 
       throw new Error("Returned quantity cannot be higher than the remaining invoice quantity.");
     }
 
-    const unitPriceCents = Math.round(item.unitPrice * 100);
+    const unitPriceCents = parseMoneyToCents(item.unitPrice);
 
     return {
       invoiceItemId: invoiceItem.id,

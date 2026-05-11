@@ -23,6 +23,7 @@ import {
 } from "@/lib/pagination";
 import { measureAsync, measureDetailAsync, measureDetailSync } from "@/lib/perf";
 import { prisma } from "@/lib/prisma";
+import { calculatePercentageCents, multiplyCentsByDecimal } from "@/lib/money";
 
 const productWithBomArgs = Prisma.validator<Prisma.ProductDefaultArgs>()({
   include: {
@@ -82,7 +83,7 @@ export function calculateTotals(
   vatRate = 18,
 ) {
   const vatAmountCents = vatEnabled
-    ? Math.round((subtotalCents * vatRate) / 100)
+    ? calculatePercentageCents(subtotalCents, vatRate)
     : 0;
 
   return {
@@ -121,7 +122,7 @@ export function getAdjustedInvoiceOutstandingCents(invoice: InvoiceDebtInput) {
 
 export function computeProductUnitCost(product: ProductWithBom) {
   const materialsCost = product.bomItems.reduce(
-    (sum, item) => sum + Math.round(item.quantity * item.material.costPerUnitCents),
+    (sum, item) => sum + multiplyCentsByDecimal(item.material.costPerUnitCents, item.quantity),
     0,
   );
 

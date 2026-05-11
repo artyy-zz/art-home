@@ -6,6 +6,7 @@ import { deleteMaterialAction, updateMaterialAction } from "@/actions/admin";
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
@@ -166,7 +167,7 @@ export function InventoryActions({
                   min="0"
                   step="0.01"
                   required
-                  defaultValue={material.costPerUnitCents / 100}
+                  defaultValue={centsToDecimalString(material.costPerUnitCents)}
                   className={inputClassName}
                 />
               </label>

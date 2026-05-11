@@ -1,6 +1,7 @@
 import { FurnitureCategory } from "@prisma/client";
+import { parseMoneyToCents } from "@/lib/money";
 
-const toCents = (amount: number) => Math.round(amount * 100);
+const toCents = (amount: number) => parseMoneyToCents(amount);
 
 type ProductCatalogItem = {
   slug: string;

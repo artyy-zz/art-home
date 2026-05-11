@@ -10,6 +10,7 @@ import {
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 import { formatDateInputValue } from "@/lib/utils";
 
 const inputClassName =
@@ -133,7 +134,7 @@ export function PurchaseInvoiceActions({
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={invoice.amountPaidCents / 100}
+                defaultValue={centsToDecimalString(invoice.amountPaidCents)}
                 className={inputClassName}
                 placeholder={locale === "sq" ? "Paguar EUR" : "Paid EUR"}
               />

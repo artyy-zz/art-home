@@ -10,6 +10,7 @@ import { LazyStockBuilderForm } from "@/components/admin/lazy-admin-options";
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 
 type StockItem = {
   id: string;
@@ -101,7 +102,7 @@ export function StockActions({
                 submitLabel={locale === "sq" ? "Ruaj Stokun" : "Save Stock"}
                 initial={{
                   name: stock.name,
-                  price: stock.priceCents / 100,
+                  price: centsToDecimalString(stock.priceCents),
                   rows: stock.items.map((item) => ({
                     materialId: item.material.id,
                     quantity: item.quantity,

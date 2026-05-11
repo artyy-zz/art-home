@@ -372,7 +372,7 @@ export function LazyStockBuilderForm({
   submitLabel: string;
   initial?: {
     name: string;
-    price: number;
+    price: string;
     rows: Array<{ materialId: string; quantity: number }>;
   };
   onCancel?: () => void;

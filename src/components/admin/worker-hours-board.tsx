@@ -12,6 +12,7 @@ import {
 import { buttonClasses } from "@/components/shared/button";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 
 type WorkerEntry = {
   id: string;
@@ -86,8 +87,7 @@ function sameBoardDate(left: string, right: string) {
 }
 
 function formatMoney(amountCents: number, locale: Locale) {
-  const amount = amountCents / 100;
-  const formatted = amount.toFixed(2).replace(/\.00$/, "");
+  const formatted = centsToDecimalString(amountCents);
   return `${locale === "sq" ? formatted.replace(".", ",") : formatted} EUR`;
 }
 
@@ -204,7 +204,7 @@ function TimeEntryEditModal({
               type="number"
               min="0.01"
               step="0.01"
-              defaultValue={firstAdvance ? advanceTotalCents / 100 : ""}
+              defaultValue={firstAdvance ? centsToDecimalString(advanceTotalCents) : ""}
               placeholder={locale === "sq" ? "Lere bosh" : "Leave blank"}
               className={inputClassName}
             />

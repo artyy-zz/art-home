@@ -6,6 +6,7 @@ import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
@@ -25,14 +26,14 @@ type SupplierOption = {
 
 type PurchaseInvoiceRow = {
   materialId: string;
-  quantity: number;
-  unitPrice: number;
+  quantity: string;
+  unitPrice: string;
 };
 
 const emptyRow: PurchaseInvoiceRow = {
   materialId: "",
-  quantity: 1,
-  unitPrice: 0,
+  quantity: "1",
+  unitPrice: "0.00",
 };
 
 const inputClassName =
@@ -158,7 +159,7 @@ export function PurchaseInvoiceBuilderForm({
                       return {
                         ...item,
                         materialId: event.target.value,
-                        unitPrice: inventoryItem ? inventoryItem.unitPriceCents / 100 : 0,
+                        unitPrice: inventoryItem ? centsToDecimalString(inventoryItem.unitPriceCents) : "0.00",
                       };
                     }),
                   )
@@ -181,7 +182,7 @@ export function PurchaseInvoiceBuilderForm({
                   setRows((current) =>
                     current.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, quantity: Number(event.target.value) }
+                        ? { ...item, quantity: event.target.value }
                         : item,
                     ),
                   )
@@ -197,7 +198,7 @@ export function PurchaseInvoiceBuilderForm({
                   setRows((current) =>
                     current.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, unitPrice: Number(event.target.value) }
+                        ? { ...item, unitPrice: event.target.value }
                         : item,
                     ),
                   )

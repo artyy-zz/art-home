@@ -6,6 +6,7 @@ import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString, multiplyCentsByDecimal, parseMoneyToCents } from "@/lib/money";
 import { formatDateInputValue } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -26,14 +27,14 @@ type SupplierOption = {
 
 type ExpenseRow = {
   materialId: string;
-  quantity: number;
-  unitPrice: number;
+  quantity: string;
+  unitPrice: string;
 };
 
 const emptyRow: ExpenseRow = {
   materialId: "",
-  quantity: 1,
-  unitPrice: 0,
+  quantity: "1",
+  unitPrice: "0.00",
 };
 
 const inputClassName =
@@ -65,10 +66,14 @@ export function ExpenseBuilderForm({
   const [rows, setRows] = useState<ExpenseRow[]>([{ ...emptyRow }]);
   const [error, setError] = useState("");
 
-  const subtotal = rows
+  const subtotalCents = rows
     .filter((row) => row.materialId)
-    .reduce((sum, row) => sum + row.quantity * row.unitPrice, 0);
-  const amount = subtotal > 0 ? subtotal : Number(amountPaid || 0);
+    .reduce(
+      (sum, row) =>
+        sum + multiplyCentsByDecimal(parseMoneyToCents(row.unitPrice), row.quantity),
+      0,
+    );
+  const amountCents = subtotalCents > 0 ? subtotalCents : parseMoneyToCents(amountPaid || "0");
   const selectedSupplierLabel =
     selectedSupplierName || (locale === "sq" ? "Pa furnitor" : "No supplier");
   const expenseName =
@@ -121,7 +126,7 @@ export function ExpenseBuilderForm({
     <form ref={formRef} action={handleSubmit} className="space-y-4">
       <input type="hidden" name="name" value={expenseName} />
       <input type="hidden" name="category" value="OTHER" />
-      <input type="hidden" name="amount" value={amount.toFixed(2)} />
+      <input type="hidden" name="amount" value={centsToDecimalString(amountCents)} />
       <input type="hidden" name="vatRate" value="18" />
       <input type="hidden" name="description" value={description} />
 
@@ -221,7 +226,7 @@ export function ExpenseBuilderForm({
                       return {
                         ...item,
                         materialId: event.target.value,
-                        unitPrice: inventoryItem ? inventoryItem.unitPriceCents / 100 : 0,
+                        unitPrice: inventoryItem ? centsToDecimalString(inventoryItem.unitPriceCents) : "0.00",
                       };
                     }),
                   )
@@ -244,7 +249,7 @@ export function ExpenseBuilderForm({
                   setRows((current) =>
                     current.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, quantity: Number(event.target.value) }
+                        ? { ...item, quantity: event.target.value }
                         : item,
                     ),
                   )
@@ -260,7 +265,7 @@ export function ExpenseBuilderForm({
                   setRows((current) =>
                     current.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, unitPrice: Number(event.target.value) }
+                        ? { ...item, unitPrice: event.target.value }
                         : item,
                     ),
                   )

@@ -6,6 +6,7 @@ import { useCreateFormPanel } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 import { formatDateInputValue } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -157,7 +158,7 @@ export function OfferBuilderForm({
                         ...item,
                         materialId: event.target.value,
                         unitPrice: inventoryItem
-                          ? (inventoryItem.unitPriceCents / 100).toFixed(2)
+                          ? centsToDecimalString(inventoryItem.unitPriceCents)
                           : "",
                       };
                     }),

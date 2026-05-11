@@ -15,6 +15,7 @@ import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import { getExpenseOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { centsToDecimalString } from "@/lib/money";
 import { parsePage } from "@/lib/pagination";
 import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
@@ -106,7 +107,7 @@ function ExpenseFields({
         type="number"
         min="0"
         step="0.01"
-        defaultValue={defaults ? (defaults.amountCents / 100).toFixed(2) : ""}
+        defaultValue={defaults ? centsToDecimalString(defaults.amountCents) : ""}
         className={inputClassName}
         placeholder={locale === "sq" ? "Shuma" : "Amount"}
         required

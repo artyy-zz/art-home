@@ -3,6 +3,7 @@ import { join } from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import { COMPANY } from "@/lib/company";
+import { calculatePercentageCents, centsToDecimalString } from "@/lib/money";
 
 type PdfLineItem = {
   name: string;
@@ -103,10 +104,7 @@ type DebitNotePdfOptions = {
 };
 
 function formatMoneyValue(amountCents: number) {
-  return (amountCents / 100).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return centsToDecimalString(amountCents);
 }
 
 function formatCurrency(amountCents: number) {
@@ -154,7 +152,6 @@ function formatQuantity(quantity: number) {
   }
 
   return quantity.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
 }
@@ -573,7 +570,7 @@ function drawSalesInvoiceTable(
     const rowHeight = rowHeights[index];
     const itemText = [line.name, line.description].filter(Boolean).join("\n");
     const lineVatCents = options.vatEnabled
-      ? Math.round((line.lineTotalCents * options.vatRate) / 100)
+      ? calculatePercentageCents(line.lineTotalCents, options.vatRate)
       : 0;
     const lineGrossCents = line.lineTotalCents + lineVatCents;
     const rowCenterTop = rowTop + rowHeight / 2 - 5;
@@ -1252,7 +1249,7 @@ export async function generateDebitNotePdf(options: DebitNotePdfOptions) {
     { label: "Subtotal", value: formatCurrency(options.subtotalCents) },
     {
       label: options.vatEnabled ? `VAT ${options.vatRate}%` : "VAT disabled",
-      value: options.vatEnabled ? formatCurrency(options.vatAmountCents) : "EUR 0",
+      value: options.vatEnabled ? formatCurrency(options.vatAmountCents) : "EUR 0.00",
     },
     { label: "Total adjustment", value: formatCurrency(options.totalCents) },
   ];
