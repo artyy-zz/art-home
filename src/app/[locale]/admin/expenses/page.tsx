@@ -1,4 +1,5 @@
 import { withPagePerf } from "@/lib/perf";
+import Link from "next/link";
 import {
   createExpenseAction,
   deleteExpenseAction,
@@ -172,6 +173,7 @@ async function ExpensesPage({
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canEdit = can(permissions, "EXPENSES", "EDIT");
   const canDelete = can(permissions, "EXPENSES", "DELETE");
+  const canExport = can(permissions, "EXPENSES", "EXPORT");
 
   return measureDetailSync(
     "admin/expenses.table mapping/formatting",
@@ -283,6 +285,14 @@ async function ExpensesPage({
             },
             actions: (
               <div className="inline-flex flex-wrap items-center justify-end gap-2">
+                {canExport ? (
+                  <Link
+                    href={`/api/expenses/${expense.id}/pdf`}
+                    className={buttonClasses({ variant: "secondary", size: "sm" })}
+                  >
+                    PDF
+                  </Link>
+                ) : null}
                 {canEdit ? (
                   <details className="relative text-left">
                     <summary className={buttonClasses({ variant: "secondary", size: "sm", className: "inline-flex cursor-pointer list-none gap-2 [&::-webkit-details-marker]:hidden" })}>

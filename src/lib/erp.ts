@@ -1611,6 +1611,12 @@ export async function getPurchaseInvoiceDocumentData(id: string) {
   });
 }
 
+export async function getExpenseDocumentData(id: string) {
+  return prisma.expense.findUnique({
+    where: { id },
+  });
+}
+
 export async function getDeliveryNoteDocumentData(id: string) {
   return prisma.deliveryNote.findUnique({
     where: { id },

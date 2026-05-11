@@ -53,6 +53,20 @@ type PurchasePdfOptions = {
   totalCents: number;
 };
 
+type ExpensePdfOptions = {
+  title: string;
+  number: string;
+  supplierName: string;
+  category: string;
+  date: Date;
+  description?: string | null;
+  amountCents: number;
+  vatEnabled: boolean;
+  vatRate: number;
+  vatAmountCents: number;
+  totalCents: number;
+};
+
 type DeliveryPdfOptions = {
   title: string;
   number: string;
@@ -928,6 +942,31 @@ export async function generatePurchasePdf(options: PurchasePdfOptions) {
   drawPurchaseInvoiceFooter(page, fonts, options, totalsBottom);
 
   return pdf.save();
+}
+
+export async function generateExpensePdf(options: ExpensePdfOptions) {
+  return generatePurchasePdf({
+    title: options.title,
+    number: options.number,
+    supplierName: options.supplierName,
+    createdAt: options.date,
+    dueDate: options.date,
+    notes: options.description ?? options.category,
+    lines: [
+      {
+        name: options.category,
+        description: options.description,
+        quantity: 1,
+        unitPriceCents: options.amountCents,
+        lineTotalCents: options.amountCents,
+      },
+    ],
+    subtotalCents: options.amountCents,
+    vatEnabled: options.vatEnabled,
+    vatRate: options.vatRate,
+    vatAmountCents: options.vatAmountCents,
+    totalCents: options.totalCents,
+  });
 }
 
 export async function generateDeliveryNotePdf(options: DeliveryPdfOptions) {
