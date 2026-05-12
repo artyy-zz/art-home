@@ -10,8 +10,8 @@ export const COMPANY = {
     address: "Fushe Kosove, Rr. Nëna Terezë",
     phone: "049/313/215, 160/740",
     email: "sales@artnet-ks.com",
-    nui: "810200808",
-    vatNumber: "330347717",
+    nui: "812327501",
+    vatNumber: null,
     bankAccounts: [
       "PCB: 1116008135000133",
       "TEB: 20-14-0001396833-82",
