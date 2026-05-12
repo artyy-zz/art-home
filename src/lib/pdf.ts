@@ -89,8 +89,11 @@ type DebitNotePdfOptions = {
   title: string;
   number: string;
   clientName: string;
+  clientAddress?: string | null;
   clientEmail?: string | null;
   clientPhone?: string | null;
+  clientNui?: string | null;
+  clientVatNumber?: string | null;
   invoiceNumber: string;
   reason: string;
   issuedAt: Date;
@@ -518,6 +521,48 @@ function drawInvoiceMeta(
   });
 }
 
+function drawDebitNoteMeta(
+  page: PDFPage,
+  fonts: PdfFonts,
+  {
+    x,
+    top,
+    width,
+    issuedAt,
+    invoiceNumber,
+    number,
+  }: {
+    x: number;
+    top: number;
+    width: number;
+    issuedAt: Date;
+    invoiceNumber: string;
+    number: string;
+  },
+) {
+  const rows = [
+    ["Data", formatDocumentDate(issuedAt)],
+    ["Fatura", invoiceNumber],
+    ["Debit Note", number],
+  ];
+
+  rows.forEach(([label, value], index) => {
+    const rowTop = top + index * 28.5;
+    drawTextTop(page, label, x, rowTop, {
+      font: fonts.bold,
+      size: 10,
+      width,
+      align: "right",
+    });
+    drawTextTop(page, value, x, rowTop + 10.5, {
+      font: fonts.body,
+      size: 10,
+      width,
+      align: "right",
+    });
+  });
+}
+
 function drawSalesInvoiceTable(
   page: PDFPage,
   fonts: PdfFonts,
@@ -679,6 +724,44 @@ function drawSalesInvoiceFooter(
   const defaultNotice =
     "Vërejtje : Fatura duhet te paguhet brenda afatit te paraparë me kontratë. Në qoftëse me blerësin nuk kemi kontratë atëher afati për pagesë është 15 ditë nga data e faturës. Pas skadimit të këtij afati llogaritet kamata sipas stopave bankare 0.5% në ditë.";
   const notice = options.notes?.trim() ? `Vërejtje : ${options.notes.trim()}` : defaultNotice;
+  drawWrappedTextTop(page, notice, 45, top, {
+    font: fonts.body,
+    size: 10,
+    maxWidth: 506,
+    lineHeight: 11.5,
+  });
+}
+
+function drawDebitNoteFooter(
+  page: PDFPage,
+  fonts: PdfFonts,
+  options: DebitNotePdfOptions,
+  startTop: number,
+) {
+  let top = Math.max(startTop + 34, 435);
+
+  drawTextTop(page, "Arsyeja", 45, top, { font: fonts.bold, size: 10 });
+  top += 13;
+  top = drawWrappedTextTop(page, options.reason, 45, top, {
+    font: fonts.body,
+    size: 10,
+    maxWidth: 506,
+    lineHeight: 12,
+  });
+
+  top += 34;
+  drawTextTop(
+    page,
+    "Pergatiti: _____________________________________ Pranoi: __________________________________________",
+    45,
+    top,
+    { font: fonts.bold, size: 10 },
+  );
+
+  top += 36;
+  const defaultNotice =
+    "Verejtje : Ky dokument rregullon faturen e lidhur dhe duhet te arkivohet bashke me dokumentacionin perkates.";
+  const notice = options.notes?.trim() ? `Verejtje : ${options.notes.trim()}` : defaultNotice;
   drawWrappedTextTop(page, notice, 45, top, {
     font: fonts.body,
     size: 10,
@@ -1136,171 +1219,76 @@ export async function generateDeliveryNotePdf(options: DeliveryPdfOptions) {
 
 export async function generateDebitNotePdf(options: DebitNotePdfOptions) {
   const pdf = await PDFDocument.create();
-  const page = pdf.addPage([595, 842]);
-  const { width, height } = page.getSize();
-  const headingFont = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const bodyFont = await pdf.embedFont(StandardFonts.Helvetica);
-  const ink = rgb(0.12, 0.10, 0.09);
-  const accent = rgb(0.47, 0.18, 0.16);
-  const muted = rgb(0.42, 0.38, 0.34);
+  const page = pdf.addPage(A4_SIZE);
+  const fonts = await embedDocumentFonts(pdf);
+  let logoImage: PDFImage | null = null;
 
-  page.drawRectangle({
-    x: 0,
-    y: height - 138,
-    width,
-    height: 138,
-    color: rgb(0.97, 0.94, 0.90),
-  });
-  page.drawText("Art Home", {
-    x: 48,
-    y: height - 70,
-    size: 26,
-    font: headingFont,
-    color: ink,
-  });
-  page.drawText(options.number, {
-    x: width - 188,
-    y: height - 70,
-    size: 16,
-    font: headingFont,
-    color: ink,
-  });
-  page.drawText(options.title, {
-    x: 48,
-    y: height - 170,
-    size: 27,
-    font: headingFont,
-    color: accent,
-  });
-
-  const details = [
-    `Client: ${options.clientName}`,
-    `Email: ${options.clientEmail ?? "-"}`,
-    `Phone: ${options.clientPhone ?? "-"}`,
-    `Related invoice: ${options.invoiceNumber}`,
-    `Reason: ${options.reason}`,
-    `Date: ${formatDate(options.issuedAt)}`,
-  ];
-
-  let y = height - 210;
-  for (const detail of details) {
-    page.drawText(detail, { x: 48, y, size: 11, font: bodyFont, color: muted });
-    y -= 18;
+  try {
+    logoImage = await loadBrandLogo(pdf);
+  } catch {
+    logoImage = null;
   }
 
-  const tableTop = height - 348;
-  page.drawRectangle({
-    x: 48,
-    y: tableTop,
-    width: width - 96,
-    height: 34,
-    color: accent,
+  const tableOptions: SalesPdfOptions = {
+    title: options.title,
+    number: options.number,
+    clientName: options.clientName,
+    clientAddress: options.clientAddress,
+    clientEmail: options.clientEmail,
+    clientPhone: options.clientPhone,
+    clientNui: options.clientNui,
+    clientVatNumber: options.clientVatNumber,
+    createdAt: options.issuedAt,
+    notes: options.notes,
+    lines: options.lines,
+    subtotalCents: options.subtotalCents,
+    vatEnabled: options.vatEnabled,
+    vatRate: options.vatRate,
+    vatAmountCents: options.vatAmountCents,
+    totalCents: options.totalCents,
+  };
+
+  drawTextTop(page, options.title, 45, 88, { font: fonts.bold, size: 28 });
+  drawLogoTop(page, logoImage, 448, 76, 98, 72);
+
+  const clientBottom = drawPartyBlock(page, fonts, {
+    name: options.clientName,
+    details: buildPartyDetails({
+      address: options.clientAddress,
+      phone: options.clientPhone,
+      email: options.clientEmail,
+      nui: options.clientNui,
+      vatNumber: options.clientVatNumber,
+    }),
+    x: 45,
+    top: 205,
+    width: 210,
+    nameSize: 10,
+    detailSize: 10,
   });
-  const columns = [
-    { label: "Item", x: 60 },
-    { label: "Qty", x: 330 },
-    { label: "Unit", x: 390 },
-    { label: "Line", x: 470 },
-  ];
-  for (const column of columns) {
-    page.drawText(column.label, {
-      x: column.x,
-      y: tableTop + 11,
-      size: 10,
-      font: headingFont,
-      color: rgb(1, 1, 1),
-    });
-  }
 
-  let rowY = tableTop - 28;
-  for (const line of options.lines) {
-    page.drawText(line.name, {
-      x: 60,
-      y: rowY,
-      size: 11,
-      font: headingFont,
-      color: ink,
-      maxWidth: 240,
-    });
-    if (line.description) {
-      page.drawText(line.description, {
-        x: 60,
-        y: rowY - 14,
-        size: 9,
-        font: bodyFont,
-        color: muted,
-        maxWidth: 240,
-      });
-    }
-    page.drawText(String(line.quantity), { x: 334, y: rowY, size: 11, font: bodyFont, color: ink });
-    page.drawText(formatCurrency(line.unitPriceCents), { x: 390, y: rowY, size: 11, font: bodyFont, color: ink });
-    page.drawText(formatCurrency(line.lineTotalCents), { x: 470, y: rowY, size: 11, font: bodyFont, color: ink });
-    rowY -= line.description ? 40 : 28;
-    page.drawLine({
-      start: { x: 48, y: rowY + 10 },
-      end: { x: width - 48, y: rowY + 10 },
-      thickness: 0.6,
-      color: rgb(0.88, 0.86, 0.83),
-    });
-  }
-
-  const summaryTop = Math.max(rowY - 20, 150);
-  const summaryRows = [
-    { label: "Subtotal", value: formatCurrency(options.subtotalCents) },
-    {
-      label: options.vatEnabled ? `VAT ${options.vatRate}%` : "VAT disabled",
-      value: options.vatEnabled ? formatCurrency(options.vatAmountCents) : "EUR 0.00",
-    },
-    { label: "Total adjustment", value: formatCurrency(options.totalCents) },
-  ];
-
-  page.drawRectangle({
-    x: 320,
-    y: summaryTop - 72,
-    width: width - 368,
-    height: 92,
-    color: rgb(0.98, 0.95, 0.93),
-    borderColor: rgb(0.78, 0.66, 0.63),
-    borderWidth: 1,
+  drawDebitNoteMeta(page, fonts, {
+    x: 292,
+    top: 173,
+    width: 65,
+    issuedAt: options.issuedAt,
+    invoiceNumber: options.invoiceNumber,
+    number: options.number,
   });
-  let summaryY = summaryTop;
-  for (const row of summaryRows) {
-    page.drawText(row.label, {
-      x: 336,
-      y: summaryY,
-      size: row.label === "Total adjustment" ? 12 : 10,
-      font: row.label === "Total adjustment" ? headingFont : bodyFont,
-      color: ink,
-    });
-    page.drawText(row.value, {
-      x: 456,
-      y: summaryY,
-      size: row.label === "Total adjustment" ? 12 : 10,
-      font: row.label === "Total adjustment" ? headingFont : bodyFont,
-      color: ink,
-    });
-    summaryY -= 24;
-  }
+  drawLineTop(page, 372, 172, 372, 258, 0.8);
+  const companyBottom = drawCompanyBlock(page, fonts, 388, 184, 178);
 
-  if (options.notes) {
-    page.drawText("Notes", { x: 48, y: 120, size: 11, font: headingFont, color: ink });
-    page.drawText(options.notes, {
-      x: 48,
-      y: 102,
-      size: 10,
-      font: bodyFont,
-      color: muted,
-      maxWidth: 260,
-    });
-  }
+  const reasonTop = Math.max(274, clientBottom + 14, companyBottom + 14);
+  drawTextTop(page, "Arsyeja", 45, reasonTop, { font: fonts.bold, size: 10 });
+  const tableTop = drawWrappedTextTop(page, options.reason, 100, reasonTop, {
+    font: fonts.body,
+    size: 10,
+    maxWidth: 450,
+    lineHeight: 12,
+  }) + 10;
 
-  page.drawText("Art Home - debit note adjustment", {
-    x: 48,
-    y: 38,
-    size: 9,
-    font: bodyFont,
-    color: muted,
-  });
+  const totalsBottom = drawSalesInvoiceTable(page, fonts, tableOptions, tableTop);
+  drawDebitNoteFooter(page, fonts, options, totalsBottom);
 
   return pdf.save();
 }
