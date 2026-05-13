@@ -91,8 +91,8 @@ export function LightboxImage({
           sizes={sizes}
           className="object-cover transition duration-500 ease-out group-hover:scale-[1.06]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,14,10,0.08)_0%,rgba(18,14,10,0.68)_100%)]" />
-        <div className="relative flex h-full min-h-[220px] items-end p-4 sm:p-6">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,14,10,0.04)_0%,rgba(18,14,10,0.12)_48%,rgba(18,14,10,0.74)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
           <div>
             {overlayEyebrow ? (
               <span className="text-[11px] uppercase tracking-[0.26em] text-white/72">
@@ -113,7 +113,7 @@ export function LightboxImage({
 
       {activePhoto ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/68 px-4 py-6 backdrop-blur-md sm:px-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 px-3 py-5 backdrop-blur-md sm:px-14 sm:py-8"
           role="dialog"
           aria-modal="true"
           aria-label={activePhoto.label}
@@ -125,14 +125,13 @@ export function LightboxImage({
             aria-label="Close image preview"
           />
           <div className="relative z-10 flex h-full w-full items-center justify-center">
-            <div className="relative h-auto max-h-[86vh] w-full max-w-[min(78rem,calc(100vw-7rem))] overflow-hidden rounded-[16px] bg-neutral-950 shadow-[0_34px_100px_rgba(0,0,0,0.52)] ring-1 ring-white/10 max-sm:max-w-[calc(100vw-2rem)]">
+            <div className="relative h-[88vh] w-[92vw] overflow-hidden rounded-[18px] bg-neutral-950 shadow-[0_34px_100px_rgba(0,0,0,0.58)] ring-1 ring-white/10 max-sm:h-[82vh] max-sm:w-[94vw]">
               <Image
                 src={activePhoto.src}
                 alt={activePhoto.label}
-                width={1600}
-                height={1100}
-                sizes="(min-width: 1280px) 78rem, calc(100vw - 7rem)"
-                className="block max-h-[86vh] w-full object-contain"
+                fill
+                sizes="92vw"
+                className="object-contain"
                 priority
               />
             </div>
