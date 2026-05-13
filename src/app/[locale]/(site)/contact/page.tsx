@@ -101,7 +101,7 @@ export default async function ContactPage({
                 href={COMPANY.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-5 py-2 text-sm font-semibold leading-none text-[var(--color-foreground)] shadow-[0_10px_24px_rgba(18,16,14,0.07)] transition hover:-translate-y-0.5 hover:border-[#d62976] hover:bg-white hover:text-[#b31560]"
+                className="inline-flex w-fit items-center justify-center gap-2.5 rounded-full border border-white/20 bg-[linear-gradient(135deg,#f58529_0%,#dd2a7b_48%,#8134af_100%)] px-4 py-2 text-sm font-semibold leading-none text-white shadow-[0_10px_24px_rgba(221,42,123,0.22)] transition hover:-translate-y-0.5 hover:brightness-105"
               >
                 <InstagramIcon />
                 <span>{COMPANY.instagramUsername}</span>
@@ -110,7 +110,7 @@ export default async function ContactPage({
                 href={COMPANY.facebook}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-5 py-2 text-sm font-semibold leading-none text-[var(--color-foreground)] shadow-[0_10px_24px_rgba(18,16,14,0.07)] transition hover:-translate-y-0.5 hover:border-[#1877f2] hover:bg-white hover:text-[#1877f2]"
+                className="inline-flex w-fit items-center justify-center gap-2.5 rounded-full border border-[#1877f2] bg-[#1877f2] px-4 py-2 text-sm font-semibold leading-none text-white shadow-[0_10px_24px_rgba(24,119,242,0.2)] transition hover:-translate-y-0.5 hover:bg-[#166fe5]"
               >
                 <FacebookIcon />
                 <span>{COMPANY.facebookUsername}</span>
