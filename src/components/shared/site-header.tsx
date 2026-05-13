@@ -21,7 +21,11 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <Logo href={`/${locale}`} />
         <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--color-muted)] md:flex">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className="relative py-2 transition hover:text-[var(--color-foreground)] after:absolute after:bottom-1 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-[var(--color-accent)] after:transition-transform after:duration-300 hover:after:scale-x-100"
+            >
               {item.label}
             </Link>
           ))}

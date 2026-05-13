@@ -61,9 +61,11 @@ export function MobileSiteMenu({
                   key={item.href}
                   href={item.href}
                   onClick={close}
-                  className="rounded-2xl border border-black/8 bg-white/72 px-4 py-3 transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+                  className="group rounded-2xl border border-black/8 bg-white/72 px-4 py-3 transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
                 >
-                  {item.label}
+                  <span className="relative inline-block after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-[var(--color-accent)] after:transition-transform after:duration-300 group-hover:after:scale-x-100">
+                    {item.label}
+                  </span>
                 </Link>
               ))}
             </nav>
