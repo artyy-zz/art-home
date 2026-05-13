@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 type LightboxPhoto = {
@@ -68,6 +69,66 @@ export function LightboxImage({
     };
   }, [activeIndex, showNext, showPrevious]);
 
+  const lightbox =
+    typeof document !== "undefined" && activePhoto
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/78 p-4 backdrop-blur-md"
+            role="dialog"
+            aria-modal="true"
+            aria-label={activePhoto.label}
+          >
+            <button
+              type="button"
+              className="absolute inset-0 cursor-default"
+              onClick={() => setActiveIndex(null)}
+              aria-label="Close image preview"
+            />
+            <div className="relative z-10 flex h-full w-full items-center justify-center">
+              <div className="relative h-full max-h-[calc(100vh-3rem)] w-full max-w-[calc(100vw-2rem)]">
+                <Image
+                  src={activePhoto.src}
+                  alt={activePhoto.label}
+                  fill
+                  sizes="100vw"
+                  className="object-contain drop-shadow-[0_34px_80px_rgba(0,0,0,0.58)]"
+                  priority
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveIndex(null)}
+              className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full text-white/88 transition hover:scale-105 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+              aria-label="Close image preview"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            {hasMultiplePhotos ? (
+              <>
+                <button
+                  type="button"
+                  onClick={showPrevious}
+                  className="absolute left-2 top-1/2 z-20 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/82 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:left-8"
+                  aria-label="Show previous image"
+                >
+                  <ChevronLeft className="h-9 w-9" />
+                </button>
+                <button
+                  type="button"
+                  onClick={showNext}
+                  className="absolute right-2 top-1/2 z-20 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/82 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:right-8"
+                  aria-label="Show next image"
+                >
+                  <ChevronRight className="h-9 w-9" />
+                </button>
+              </>
+            ) : null}
+          </div>,
+          document.body,
+        )
+      : null;
+
   if (!triggerPhoto) {
     return null;
   }
@@ -110,62 +171,7 @@ export function LightboxImage({
           </div>
         </div>
       </button>
-
-      {activePhoto ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 px-3 py-5 backdrop-blur-md sm:px-14 sm:py-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label={activePhoto.label}
-        >
-          <button
-            type="button"
-            className="absolute inset-0 cursor-default"
-            onClick={() => setActiveIndex(null)}
-            aria-label="Close image preview"
-          />
-          <div className="relative z-10 flex h-full w-full items-center justify-center">
-            <div className="relative h-[88vh] w-[92vw] overflow-hidden rounded-[18px] bg-neutral-950 shadow-[0_34px_100px_rgba(0,0,0,0.58)] ring-1 ring-white/10 max-sm:h-[82vh] max-sm:w-[94vw]">
-              <Image
-                src={activePhoto.src}
-                alt={activePhoto.label}
-                fill
-                sizes="92vw"
-                className="object-contain"
-                priority
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveIndex(null)}
-              className="fixed right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full text-white/88 transition hover:scale-105 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
-              aria-label="Close image preview"
-            >
-              <X className="h-8 w-8" />
-            </button>
-            {hasMultiplePhotos ? (
-              <>
-                <button
-                  type="button"
-                  onClick={showPrevious}
-                  className="fixed left-3 top-1/2 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:left-8"
-                  aria-label="Show previous image"
-                >
-                  <ChevronLeft className="h-9 w-9" />
-                </button>
-                <button
-                  type="button"
-                  onClick={showNext}
-                  className="fixed right-3 top-1/2 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:right-8"
-                  aria-label="Show next image"
-                >
-                  <ChevronRight className="h-9 w-9" />
-                </button>
-              </>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {lightbox}
     </>
   );
 }
