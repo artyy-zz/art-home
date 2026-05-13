@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useCreateFormPanel } from "@/components/admin/create-form-panel";
+import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
@@ -54,6 +54,7 @@ export function PurchaseInvoiceBuilderForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [vatEnabled, setVatEnabled] = useState(true);
   const [rows, setRows] = useState<PurchaseInvoiceRow[]>([{ ...emptyRow }]);
@@ -64,7 +65,7 @@ export function PurchaseInvoiceBuilderForm({
     setSelectedSupplierId("");
     setVatEnabled(true);
     setRows([{ ...emptyRow }]);
-    closeCreateFormPanel?.();
+    finishCreateForm();
   }
 
   return (

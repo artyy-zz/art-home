@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { PermissionChecklist, createEmptyPermissionMatrix } from "@/components/admin/permission-checklist";
-import { useCreateFormPanel } from "@/components/admin/create-form-panel";
+import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { PasswordInput } from "@/components/forms/password-input";
 import { buttonClasses } from "@/components/shared/button";
 import type { Locale } from "@/lib/i18n";
@@ -21,6 +21,7 @@ export function UserCreateForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const [error, setError] = useState("");
   const emptyPermissionMatrix = createEmptyPermissionMatrix();
 
@@ -30,7 +31,7 @@ export function UserCreateForm({
     try {
       await action(formData);
       formRef.current?.reset();
-      closeCreateFormPanel?.();
+      finishCreateForm();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error

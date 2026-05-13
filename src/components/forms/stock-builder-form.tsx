@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
-import { useCreateFormPanel } from "@/components/admin/create-form-panel";
+import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
@@ -54,6 +54,7 @@ export function StockBuilderForm({
 }: StockBuilderFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const closeForm = onCancel ?? closeCreateFormPanel;
   const localeString = locale === "sq" ? "sq-AL" : "en-GB";
   const [rows, setRows] = useState<StockFormRow[]>(
@@ -68,7 +69,12 @@ export function StockBuilderForm({
     await action(formData);
     formRef.current?.reset();
     setRows(initial?.rows.length ? initial.rows : [{ ...emptyRow }]);
-    closeForm?.();
+    if (onCancel) {
+      onCancel();
+      return;
+    }
+
+    finishCreateForm();
   }
 
   return (

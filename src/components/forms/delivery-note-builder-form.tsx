@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useCreateFormPanel } from "@/components/admin/create-form-panel";
+import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
@@ -56,6 +56,7 @@ export function DeliveryNoteBuilderForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const [type, setType] = useState<"SALES" | "PURCHASE">("SALES");
   const [number, setNumber] = useState(suggestedNumbers.SALES);
   const [rows, setRows] = useState<DeliveryNoteRow[]>([{ ...emptyRow }]);
@@ -66,7 +67,7 @@ export function DeliveryNoteBuilderForm({
     setType("SALES");
     setNumber(suggestedNumbers.SALES);
     setRows([{ ...emptyRow }]);
-    closeCreateFormPanel?.();
+    finishCreateForm();
   }
 
   return (

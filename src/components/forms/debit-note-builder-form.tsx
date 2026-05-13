@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useCreateFormPanel } from "@/components/admin/create-form-panel";
+import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
@@ -66,6 +66,7 @@ export function DebitNoteBuilderForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const localeString = locale === "sq" ? "sq-AL" : "en-GB";
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
@@ -97,7 +98,7 @@ export function DebitNoteBuilderForm({
     setSelectedInvoiceId("");
     setVatEnabled(true);
     setRows([{ ...emptyRow }]);
-    closeCreateFormPanel?.();
+    finishCreateForm();
   }
 
   return (

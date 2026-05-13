@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -18,6 +19,25 @@ const CreateFormPanelContext = createContext<CloseCreateFormPanel | null>(null);
 
 export function useCreateFormPanel() {
   return useContext(CreateFormPanelContext);
+}
+
+export function useFinishCreateForm() {
+  const closePanel = useCreateFormPanel();
+  const pathname = usePathname() || "";
+  const router = useRouter();
+
+  return () => {
+    if (closePanel) {
+      closePanel();
+      return;
+    }
+
+    const parentPath = pathname.endsWith("/new")
+      ? pathname.slice(0, -"/new".length)
+      : pathname;
+    router.push(parentPath || "/");
+    router.refresh();
+  };
 }
 
 export function CreateFormPanel({
@@ -70,6 +90,7 @@ export function CreateActionForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closePanel = useCreateFormPanel();
+  const finishCreateForm = useFinishCreateForm();
   const [error, setError] = useState("");
 
   async function handleSubmit(formData: FormData) {
@@ -78,7 +99,7 @@ export function CreateActionForm({
     try {
       await action(formData);
       formRef.current?.reset();
-      closePanel?.();
+      finishCreateForm();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : errorMessage);
     }
