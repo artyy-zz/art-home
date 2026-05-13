@@ -44,11 +44,13 @@ export function PurchaseInvoiceBuilderForm({
   suppliers,
   items,
   action,
+  suggestedNumber,
 }: {
   locale: Locale;
   suppliers: SupplierOption[];
   items: InventoryItemOption[];
   action: FormAction;
+  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -67,7 +69,14 @@ export function PurchaseInvoiceBuilderForm({
 
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <input
+          name="number"
+          className={inputClassName}
+          defaultValue={suggestedNumber}
+          placeholder={locale === "sq" ? "Numri i fatures" : "Invoice number"}
+          required
+        />
         <select
           name="supplierId"
           className={inputClassName}

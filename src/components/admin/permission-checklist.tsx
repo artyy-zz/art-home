@@ -1,3 +1,6 @@
+"use client";
+
+import type { MouseEvent } from "react";
 import {
   permissionActionLabels,
   permissionActions,
@@ -45,6 +48,14 @@ export function PermissionChecklist({
   matrix: PermissionMatrix;
   locked?: boolean;
 }) {
+  function selectSection(event: MouseEvent<HTMLButtonElement>) {
+    const row = event.currentTarget.closest("tr");
+    const inputs = row?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:not(:disabled)');
+    inputs?.forEach((input) => {
+      input.checked = true;
+    });
+  }
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-black/10">
       <table className="min-w-full divide-y divide-black/10 text-sm">
@@ -64,7 +75,15 @@ export function PermissionChecklist({
           {visiblePermissionModules.map((permissionModule) => (
             <tr key={permissionModule}>
               <td className="px-4 py-3 font-medium text-[var(--color-foreground)]">
-                {permissionModuleLabels[permissionModule][locale]}
+                <button
+                  type="button"
+                  onClick={selectSection}
+                  disabled={locked}
+                  className="rounded-full px-2 py-1 text-left transition hover:bg-[var(--color-accent-soft)] disabled:cursor-default disabled:hover:bg-transparent"
+                  title={locale === "sq" ? "Selekto te gjitha lejet e ketij seksioni" : "Select all permissions in this section"}
+                >
+                  {permissionModuleLabels[permissionModule][locale]}
+                </button>
               </td>
               {permissionActions.map((action) => (
                 <td key={action} className="px-4 py-3 text-center">

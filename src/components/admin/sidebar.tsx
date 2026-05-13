@@ -52,13 +52,9 @@ const sidebarFetcher = (url: string) =>
 export function AdminSidebar({
   locale,
   visibleModules,
-  userName,
-  roleLabel,
 }: {
   locale: Locale;
   visibleModules: PermissionModuleKey[];
-  userName: string;
-  roleLabel: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -162,14 +158,6 @@ export function AdminSidebar({
               </button>
             </div>
 
-            <div className="mt-5 rounded-[20px] border border-white/10 bg-white/6 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/55">
-                {locale === "sq" ? "Panel i mbrojtur" : "Protected panel"}
-              </p>
-              <p className="mt-2 text-base font-semibold text-white">{userName}</p>
-              <p className="mt-1 text-xs text-white/62">{roleLabel}</p>
-            </div>
-
             <nav className="mt-5 flex flex-1 flex-col gap-2 overflow-y-auto pr-1">
               {items.map((item) => {
                 const Icon = item.icon;
@@ -233,22 +221,6 @@ export function AdminSidebar({
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
       </div>
-
-      {collapsed ? (
-        <div className="mt-8 flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/8 text-sm font-semibold text-white">
-            {userName.trim().slice(0, 1).toUpperCase()}
-          </div>
-        </div>
-      ) : (
-        <div className="mt-8 rounded-[20px] border border-white/10 bg-white/6 p-4">
-          <p className="text-xs uppercase tracking-[0.22em] text-white/55">
-            {locale === "sq" ? "Panel i mbrojtur" : "Protected panel"}
-          </p>
-          <p className="mt-2 text-base font-semibold text-white">{userName}</p>
-          <p className="mt-1 text-xs text-white/62">{roleLabel}</p>
-        </div>
-      )}
 
       <nav className={cn("mt-8 flex flex-1 flex-col gap-2 overflow-y-auto pr-1", collapsed && "items-center pr-0")}>
         {items.map((item) => {

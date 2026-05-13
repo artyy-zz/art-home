@@ -1,4 +1,5 @@
 import { logoutAction } from "@/actions/auth";
+import { AdminTopControls } from "@/components/admin/admin-top-controls";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Button } from "@/components/shared/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
@@ -31,27 +32,25 @@ export default async function AdminLayout({
     () => getUserPermissionMatrix(user),
     { locale: typedLocale, userId: user.id },
   );
-  const { visibleModules, roleLabel } = measureDetailSync(
+  const { visibleModules, createModules } = measureDetailSync(
     "admin/layout.layout/sidebar work",
     () => {
       const modules = visibleModulesFromMatrix(permissions);
 
       return {
         visibleModules: modules,
-        roleLabel: typedLocale === "sq" ? "Perdorues" : "User",
+        createModules: modules.filter((module) => permissions[module].CREATE),
       };
     },
     { locale: typedLocale, userId: user.id },
   );
 
   return (
-    <div className="min-h-screen bg-[#140f0c] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8">
+    <div className="admin-shell min-h-screen bg-[#140f0c] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:gap-6">
         <AdminSidebar
           locale={typedLocale}
           visibleModules={visibleModules}
-          userName={user.name}
-          roleLabel={roleLabel}
         />
         <div data-admin-content className="min-w-0 flex-1">
           <div className="panel-card mb-4 flex flex-col items-start justify-between gap-4 rounded-[24px] px-4 py-4 sm:flex-row sm:items-center sm:px-5 md:mb-6 lg:rounded-[30px] lg:px-6 lg:py-5">
@@ -62,6 +61,7 @@ export default async function AdminLayout({
             </div>
             <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
               <LanguageSwitcher locale={typedLocale} labels="full" inverse />
+              <AdminTopControls locale={typedLocale} createModules={createModules} />
               <form action={logoutAction.bind(null, typedLocale)}>
                 <Button variant="secondary" className="!bg-white !text-[var(--color-panel)]">
                   {dict.common.logout}

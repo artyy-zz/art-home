@@ -3,15 +3,12 @@
 import {
   createContext,
   useContext,
-  useId,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 import { useFormStatus } from "react-dom";
-import { Plus, X } from "lucide-react";
 import { buttonClasses } from "@/components/shared/button";
-import { Card } from "@/components/shared/card";
 import { cn } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -24,11 +21,6 @@ export function useCreateFormPanel() {
 }
 
 export function CreateFormPanel({
-  title,
-  buttonLabel,
-  cancelLabel,
-  children,
-  className,
 }: {
   title: string;
   buttonLabel: string;
@@ -36,47 +28,7 @@ export function CreateFormPanel({
   children: ReactNode;
   className?: string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const panelId = useId();
-  const closePanel = () => setIsOpen(false);
-
-  return (
-    <Card className={cn("rounded-[24px] p-4 sm:rounded-[28px] sm:p-5", className)}>
-      {isOpen ? (
-        <>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-              {title}
-            </h2>
-            <button
-              type="button"
-              onClick={closePanel}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/80 text-[var(--color-foreground)] transition hover:bg-white"
-              aria-label={cancelLabel}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <CreateFormPanelContext.Provider value={closePanel}>
-            <div id={panelId} className="mt-6">
-              {children}
-            </div>
-          </CreateFormPanelContext.Provider>
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className={buttonClasses({ className: "gap-2" })}
-          aria-expanded={false}
-          aria-controls={panelId}
-        >
-          <Plus className="h-4 w-4" />
-          {buttonLabel}
-        </button>
-      )}
-    </Card>
-  );
+  return null;
 }
 
 function CreateSubmitButton({

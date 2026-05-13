@@ -51,12 +51,14 @@ export function OfferBuilderForm({
   clients,
   items,
   action,
+  suggestedNumber,
 }: {
   locale: Locale;
   clients: ClientOption[];
   leads?: Array<{ id: string; name: string }>;
   items: InventoryItemOption[];
   action: FormAction;
+  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -76,6 +78,13 @@ export function OfferBuilderForm({
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
+        <input
+          name="number"
+          className={inputClassName}
+          defaultValue={suggestedNumber}
+          placeholder={locale === "sq" ? "Numri i ofertes" : "Offer number"}
+          required
+        />
         <select
           name="clientId"
           className={inputClassName}

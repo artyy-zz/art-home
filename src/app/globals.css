@@ -95,6 +95,24 @@ canvas {
   box-shadow: var(--shadow-panel);
 }
 
+:root[data-admin-theme="light"] .admin-shell {
+  background: #f4eee6;
+}
+
+:root[data-admin-theme="light"] .admin-shell .panel-card {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(244, 237, 228, 0.98) 100%),
+    #fffdf8;
+  color: #1e1a16;
+  border-color: rgba(22, 20, 18, 0.1);
+  box-shadow: 0 24px 70px rgba(19, 17, 15, 0.12);
+}
+
+:root[data-admin-theme="light"] .admin-shell .panel-card h1,
+:root[data-admin-theme="light"] .admin-shell .panel-card [class*="text-white"] {
+  color: #1e1a16;
+}
+
 .industrial-grid {
   background-image:
     linear-gradient(rgba(22, 20, 18, 0.05) 1px, transparent 1px),

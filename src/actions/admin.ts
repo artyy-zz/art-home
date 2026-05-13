@@ -1236,6 +1236,7 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
   }
 
   const parsed = offerSchema.safeParse({
+    number: formData.get("number"),
     clientId: rawClientId,
     leadId: formData.get("leadId") ?? "",
     status: formData.get("status"),
@@ -1284,10 +1285,9 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
     parsed.data.vatRate,
   );
 
-  const offerCount = await prisma.offer.count();
   await prisma.offer.create({
     data: {
-      number: `OF-${new Date().getFullYear()}-${String(offerCount + 1).padStart(3, "0")}`,
+      number: parsed.data.number,
       clientId: parsed.data.clientId,
       leadId: parsed.data.leadId,
       status: parsed.data.status,
@@ -1476,6 +1476,7 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
   }
 
   const parsed = invoiceSchema.safeParse({
+    number: formData.get("number"),
     clientId: rawClientId,
     status: formData.get("status"),
     dueDate: formData.get("dueDate"),
@@ -1530,10 +1531,9 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
     parsed.data.vatRate,
   );
 
-  const invoiceCount = await prisma.invoice.count();
   const invoice = await prisma.invoice.create({
     data: {
-      number: `INV-${new Date().getFullYear()}-${String(invoiceCount + 1).padStart(3, "0")}`,
+      number: parsed.data.number,
       clientId: parsed.data.clientId,
       status: parsed.data.status,
       dueDate: parseDocumentDate(parsed.data.dueDate),
@@ -1771,6 +1771,7 @@ export async function createPurchaseInvoiceAction(locale: Locale, formData: Form
   }
 
   const parsed = purchaseInvoiceSchema.safeParse({
+    number: formData.get("number"),
     supplierId: rawSupplierId,
     status: formData.get("status"),
     dueDate: formData.get("dueDate"),
@@ -1818,10 +1819,9 @@ export async function createPurchaseInvoiceAction(locale: Locale, formData: Form
     parsed.data.vatRate,
   );
 
-  const purchaseInvoiceCount = await prisma.purchaseInvoice.count();
   const purchaseInvoice = await prisma.purchaseInvoice.create({
     data: {
-      number: `PINV-${new Date().getFullYear()}-${String(purchaseInvoiceCount + 1).padStart(3, "0")}`,
+      number: parsed.data.number,
       supplierId: parsed.data.supplierId,
       status: parsed.data.status,
       dueDate: parseDocumentDate(parsed.data.dueDate),
@@ -1961,6 +1961,7 @@ export async function createDeliveryNoteAction(locale: Locale, formData: FormDat
 
   const parsed = deliveryNoteSchema.safeParse({
     type,
+    number: formData.get("number"),
     clientId: rawClientId ?? "",
     supplierId: rawSupplierId ?? "",
     status: formData.get("status"),
@@ -1996,14 +1997,9 @@ export async function createDeliveryNoteAction(locale: Locale, formData: FormDat
     };
   });
 
-  const deliveryNoteCount = await prisma.deliveryNote.count({
-    where: { type: parsed.data.type },
-  });
-  const prefix = parsed.data.type === DeliveryNoteType.SALES ? "SDN" : "PDN";
-
   await prisma.deliveryNote.create({
     data: {
-      number: `${prefix}-${new Date().getFullYear()}-${String(deliveryNoteCount + 1).padStart(3, "0")}`,
+      number: parsed.data.number,
       type: parsed.data.type,
       status: parsed.data.status,
       issuedAt: parseDocumentDate(parsed.data.issuedAt),
@@ -2175,6 +2171,7 @@ export async function createDebitNoteAction(locale: Locale, formData: FormData) 
   }
 
   const parsed = debitNoteSchema.safeParse({
+    number: formData.get("number"),
     clientId: rawClientId,
     invoiceId: formData.get("invoiceId"),
     issuedAt: formData.get("issuedAt"),
@@ -2247,10 +2244,9 @@ export async function createDebitNoteAction(locale: Locale, formData: FormData) 
     parsed.data.vatRate,
   );
 
-  const debitNoteCount = await prisma.debitNote.count();
   await prisma.debitNote.create({
     data: {
-      number: `DN-${new Date().getFullYear()}-${String(debitNoteCount + 1).padStart(3, "0")}`,
+      number: parsed.data.number,
       clientId: parsed.data.clientId,
       invoiceId: invoice.id,
       issuedAt: parseDocumentDate(parsed.data.issuedAt),

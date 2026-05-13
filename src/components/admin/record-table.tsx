@@ -297,11 +297,14 @@ export function RecordTable({
             {emptyMessage}
           </div>
         ) : (
-          sortedRows.map((row) => (
+          sortedRows.map((row, index) => (
             <article
               key={row.id}
               id={`mobile-${row.id}`}
-              className="rounded-[22px] border-[2.25px] border-black/18 bg-white/82 p-4 shadow-[0_14px_36px_rgba(18,16,14,0.06)]"
+              className={cn(
+                "rounded-[22px] border-[2.25px] border-black/18 p-4 shadow-[0_14px_36px_rgba(18,16,14,0.06)]",
+                index % 2 === 0 ? "bg-white/88" : "bg-[#f2eee8]",
+              )}
             >
               <dl className="grid gap-3">
                 {columns.map((column) => (
@@ -393,8 +396,15 @@ export function RecordTable({
                   </td>
                 </tr>
               ) : (
-                sortedRows.map((row) => (
-                  <tr key={row.id} id={row.id} className="bg-white/55 align-top transition hover:bg-white">
+                sortedRows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    id={row.id}
+                    className={cn(
+                      "align-top transition hover:bg-white",
+                      index % 2 === 0 ? "bg-white/75" : "bg-[#f3eee8]",
+                    )}
+                  >
                     {columns.map((column) => (
                       <td
                         key={column.key}

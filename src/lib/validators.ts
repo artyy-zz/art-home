@@ -38,6 +38,8 @@ const optionalAmount = z.preprocess(
   z.coerce.number().min(0).optional(),
 );
 
+const documentNumber = z.string().trim().min(1, "Document number is required");
+
 export const loginSchema = z.object({
   email: z.email("Invalid email address").trim(),
   password: z.string().min(8, "Password is required"),
@@ -168,6 +170,7 @@ export const offerItemSchema = z.object({
 });
 
 export const offerSchema = z.object({
+  number: documentNumber,
   clientId: z.string().min(1),
   leadId: optionalText,
   status: z.nativeEnum(OfferStatus),
@@ -179,6 +182,7 @@ export const offerSchema = z.object({
 });
 
 export const invoiceSchema = z.object({
+  number: documentNumber,
   clientId: z.string().min(1),
   status: z.nativeEnum(InvoiceStatus),
   dueDate: z.string().min(1),
@@ -199,6 +203,7 @@ export const invoiceUpdateSchema = z.object({
 });
 
 export const purchaseInvoiceSchema = z.object({
+  number: documentNumber,
   supplierId: z.string().min(1),
   status: z.nativeEnum(InvoiceStatus),
   dueDate: z.string().min(1),
@@ -226,6 +231,7 @@ export const deliveryNoteItemSchema = z.object({
 export const deliveryNoteSchema = z
   .object({
     type: z.nativeEnum(DeliveryNoteType),
+    number: documentNumber,
     clientId: optionalText,
     supplierId: optionalText,
     status: z.nativeEnum(DeliveryNoteStatus),
@@ -275,6 +281,7 @@ export const debitNoteItemSchema = z.object({
 });
 
 export const debitNoteSchema = z.object({
+  number: documentNumber,
   clientId: z.string().min(1),
   invoiceId: z.string().min(1),
   issuedAt: z.string().min(1),

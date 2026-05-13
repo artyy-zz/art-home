@@ -45,33 +45,49 @@ export function DeliveryNoteBuilderForm({
   suppliers,
   items,
   action,
+  suggestedNumbers,
 }: {
   locale: Locale;
   clients: PartyOption[];
   suppliers: PartyOption[];
   items: InventoryItemOption[];
   action: FormAction;
+  suggestedNumbers: Record<"SALES" | "PURCHASE", string>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
   const [type, setType] = useState<"SALES" | "PURCHASE">("SALES");
+  const [number, setNumber] = useState(suggestedNumbers.SALES);
   const [rows, setRows] = useState<DeliveryNoteRow[]>([{ ...emptyRow }]);
 
   async function handleSubmit(formData: FormData) {
     await action(formData);
     formRef.current?.reset();
     setType("SALES");
+    setNumber(suggestedNumbers.SALES);
     setRows([{ ...emptyRow }]);
     closeCreateFormPanel?.();
   }
 
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        <input
+          name="number"
+          className={inputClassName}
+          value={number}
+          onChange={(event) => setNumber(event.target.value)}
+          placeholder={locale === "sq" ? "Numri" : "Number"}
+          required
+        />
         <select
           name="type"
           value={type}
-          onChange={(event) => setType(event.target.value as "SALES" | "PURCHASE")}
+          onChange={(event) => {
+            const nextType = event.target.value as "SALES" | "PURCHASE";
+            setType(nextType);
+            setNumber(suggestedNumbers[nextType]);
+          }}
           className={inputClassName}
           required
         >

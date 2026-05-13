@@ -95,6 +95,10 @@ export function calculateTotals(
   };
 }
 
+function suggestedDocumentNumber(prefix: string, count: number) {
+  return `${prefix}-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
+}
+
 type InvoiceDebtInput = {
   status: InvoiceStatus;
   totalCents: number;
@@ -914,7 +918,7 @@ export async function getProductOverview(locale: Locale) {
 }
 
 export async function getOfferBuilderOptions(locale: Locale) {
-  const [clients, materials] = await measureAdminAuxQuery(
+  const [clients, materials, offerCount] = await measureAdminAuxQuery(
     "admin/offers",
     () =>
       Promise.all([
@@ -939,18 +943,20 @@ export async function getOfferBuilderOptions(locale: Locale) {
           },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
+        prisma.offer.count(),
       ]),
     { locale },
   );
 
   return measureAdminMapping("admin/offers", () => ({
+    suggestedNumber: suggestedDocumentNumber("OF", offerCount),
     clients,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
   }));
 }
 
 export async function getInvoiceBuilderOptions(locale: Locale) {
-  const [clients, materials] = await measureAdminAuxQuery(
+  const [clients, materials, invoiceCount] = await measureAdminAuxQuery(
     "admin/invoices",
     () =>
       Promise.all([
@@ -975,11 +981,13 @@ export async function getInvoiceBuilderOptions(locale: Locale) {
           },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
+        prisma.invoice.count(),
       ]),
     { locale },
   );
 
   return measureAdminMapping("admin/invoices", () => ({
+    suggestedNumber: suggestedDocumentNumber("INV", invoiceCount),
     clients,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
   }));
@@ -989,7 +997,7 @@ export async function getPurchaseInvoiceBuilderOptions(
   locale: Locale,
   pageLabel = "admin/purchase-invoices",
 ) {
-  const [suppliers, materials] = await measureAdminAuxQuery(
+  const [suppliers, materials, purchaseInvoiceCount] = await measureAdminAuxQuery(
     pageLabel,
     () =>
       Promise.all([
@@ -1014,18 +1022,20 @@ export async function getPurchaseInvoiceBuilderOptions(
           },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
+        prisma.purchaseInvoice.count(),
       ]),
     { locale },
   );
 
   return measureAdminMapping(pageLabel, () => ({
+    suggestedNumber: suggestedDocumentNumber("PINV", purchaseInvoiceCount),
     suppliers,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
   }));
 }
 
 export async function getDeliveryNoteBuilderOptions(locale: Locale) {
-  const [clients, suppliers, materials] = await measureAdminAuxQuery(
+  const [clients, suppliers, materials, salesCount, purchaseCount] = await measureAdminAuxQuery(
     "admin/delivery-notes",
     () =>
       Promise.all([
@@ -1060,11 +1070,17 @@ export async function getDeliveryNoteBuilderOptions(locale: Locale) {
           },
           orderBy: [{ type: "asc" }, { name: "asc" }],
         }),
+        prisma.deliveryNote.count({ where: { type: DeliveryNoteType.SALES } }),
+        prisma.deliveryNote.count({ where: { type: DeliveryNoteType.PURCHASE } }),
       ]),
     { locale },
   );
 
   return measureAdminMapping("admin/delivery-notes", () => ({
+    suggestedNumbers: {
+      SALES: suggestedDocumentNumber("SDN", salesCount),
+      PURCHASE: suggestedDocumentNumber("PDN", purchaseCount),
+    },
     clients,
     suppliers,
     items: materials.map((material) => localizeInventoryItem(material, locale)),
@@ -1072,7 +1088,7 @@ export async function getDeliveryNoteBuilderOptions(locale: Locale) {
 }
 
 export async function getDebitNoteBuilderOptions() {
-  const [clients, invoices] = await measureAdminAuxQuery("admin/debit-notes", () =>
+  const [clients, invoices, debitNoteCount] = await measureAdminAuxQuery("admin/debit-notes", () =>
     Promise.all([
       prisma.client.findMany({
         where: {
@@ -1096,10 +1112,12 @@ export async function getDebitNoteBuilderOptions() {
         },
         orderBy: { issuedAt: "desc" },
       }),
+      prisma.debitNote.count(),
     ]),
   );
 
   return measureAdminMapping("admin/debit-notes", () => ({
+    suggestedNumber: suggestedDocumentNumber("DN", debitNoteCount),
     clients,
     invoices: invoices.map((invoice) => ({
       id: invoice.id,

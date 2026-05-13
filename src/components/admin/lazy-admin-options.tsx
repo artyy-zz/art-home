@@ -34,22 +34,26 @@ type ItemOption = {
 };
 
 type SalesOptions = {
+  suggestedNumber: string;
   clients: ClientOption[];
   items: Required<Pick<ItemOption, "id" | "name" | "sku" | "unit" | "unitPriceCents" | "categoryTitle">>[];
 };
 
 type PurchaseOptions = {
+  suggestedNumber?: string;
   suppliers: SupplierOption[];
   items: Required<Pick<ItemOption, "id" | "name" | "sku" | "unit" | "unitPriceCents" | "categoryTitle">>[];
 };
 
 type DeliveryOptions = {
+  suggestedNumbers: Record<"SALES" | "PURCHASE", string>;
   clients: ClientOption[];
   suppliers: SupplierOption[];
   items: Required<Pick<ItemOption, "id" | "name" | "sku" | "categoryTitle">>[];
 };
 
 type DebitNoteOptions = {
+  suggestedNumber: string;
   clients: ClientOption[];
   invoices: Array<{
     id: string;
@@ -174,7 +178,7 @@ export function LazyOfferBuilderForm({
     );
   }
 
-  return <OfferBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} />;
+  return <OfferBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} suggestedNumber={data.suggestedNumber} />;
 }
 
 export function LazyInvoiceBuilderForm({
@@ -220,7 +224,7 @@ export function LazyInvoiceBuilderForm({
     );
   }
 
-  return <InvoiceBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} />;
+  return <InvoiceBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} suggestedNumber={data.suggestedNumber} />;
 }
 
 export function LazyPurchaseInvoiceBuilderForm({
@@ -262,7 +266,15 @@ export function LazyPurchaseInvoiceBuilderForm({
     );
   }
 
-  return <PurchaseInvoiceBuilderForm locale={locale} suppliers={data.suppliers} items={data.items} action={action} />;
+  return (
+    <PurchaseInvoiceBuilderForm
+      locale={locale}
+      suppliers={data.suppliers}
+      items={data.items}
+      action={action}
+      suggestedNumber={data.suggestedNumber ?? ""}
+    />
+  );
 }
 
 export function LazyDeliveryNoteBuilderForm({
@@ -300,6 +312,7 @@ export function LazyDeliveryNoteBuilderForm({
       suppliers={data.suppliers}
       items={data.items}
       action={action}
+      suggestedNumbers={data.suggestedNumbers}
     />
   );
 }
@@ -355,7 +368,7 @@ export function LazyDebitNoteBuilderForm({
     );
   }
 
-  return <DebitNoteBuilderForm locale={locale} clients={data.clients} invoices={data.invoices} action={action} />;
+  return <DebitNoteBuilderForm locale={locale} clients={data.clients} invoices={data.invoices} action={action} suggestedNumber={data.suggestedNumber} />;
 }
 
 export function LazyStockBuilderForm({
