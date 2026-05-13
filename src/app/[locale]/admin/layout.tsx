@@ -54,14 +54,20 @@ export default async function AdminLayout({
         />
         <div data-admin-content className="min-w-0 flex-1">
           <div className="panel-card mb-4 flex flex-col items-start justify-between gap-4 rounded-[24px] px-4 py-4 sm:flex-row sm:items-center sm:px-5 md:mb-6 lg:rounded-[30px] lg:px-6 lg:py-5">
-            <div>
-              <h1 className="font-display text-2xl leading-none text-white sm:text-3xl lg:text-4xl">
-                {dict.admin.insights}
-              </h1>
+            <div className="flex min-h-11 items-center">
+              <AdminTopControls
+                locale={typedLocale}
+                createModules={createModules}
+                showTheme={false}
+              />
             </div>
             <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
               <LanguageSwitcher locale={typedLocale} labels="full" inverse />
-              <AdminTopControls locale={typedLocale} createModules={createModules} />
+              <AdminTopControls
+                locale={typedLocale}
+                createModules={createModules}
+                showCreate={false}
+              />
               <form action={logoutAction.bind(null, typedLocale)}>
                 <Button variant="secondary" className="!bg-white !text-[var(--color-panel)]">
                   {dict.common.logout}

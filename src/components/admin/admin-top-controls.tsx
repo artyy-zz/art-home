@@ -37,9 +37,13 @@ const createTargets: Record<
 export function AdminTopControls({
   locale,
   createModules,
+  showCreate = true,
+  showTheme = true,
 }: {
   locale: Locale;
   createModules: PermissionModuleKey[];
+  showCreate?: boolean;
+  showTheme?: boolean;
 }) {
   const pathname = usePathname() || "";
   const allowed = useMemo(() => new Set(createModules), [createModules]);
@@ -53,7 +57,7 @@ export function AdminTopControls({
   const segments = pathname.split("/").filter(Boolean);
   const section = segments[2] ?? "";
   const target = createTargets[section];
-  const showCreate = target && allowed.has(target.module) && segments[3] !== "new";
+  const canShowCreate = target && allowed.has(target.module) && segments[3] !== "new";
 
   useEffect(() => {
     document.documentElement.dataset.adminTheme = theme;
@@ -68,24 +72,26 @@ export function AdminTopControls({
 
   return (
     <>
-      {showCreate ? (
+      {showCreate && canShowCreate ? (
         <Link href={`/${locale}/admin/${section}/new`} className={buttonClasses({ className: "gap-2" })}>
           <Plus className="h-4 w-4" />
           {target.label[locale]}
         </Link>
       ) : null}
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className={cn(
-          "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/14 bg-[#2a241f] text-white/78 transition hover:bg-white/12 hover:text-white",
-          "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/18",
-        )}
-        aria-label={theme === "dark" ? (locale === "sq" ? "Kalo në dritë" : "Switch to light mode") : locale === "sq" ? "Kalo në errësirë" : "Switch to dark mode"}
-        title={theme === "dark" ? (locale === "sq" ? "Dritë" : "Light") : locale === "sq" ? "Errësirë" : "Dark"}
-      >
-        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </button>
+      {showTheme ? (
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={cn(
+            "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/14 bg-[#2a241f] text-white/78 transition hover:bg-white/12 hover:text-white",
+            "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/18",
+          )}
+          aria-label={theme === "dark" ? (locale === "sq" ? "Kalo në dritë" : "Switch to light mode") : locale === "sq" ? "Kalo në errësirë" : "Switch to dark mode"}
+          title={theme === "dark" ? (locale === "sq" ? "Dritë" : "Light") : locale === "sq" ? "Errësirë" : "Dark"}
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+      ) : null}
     </>
   );
 }
