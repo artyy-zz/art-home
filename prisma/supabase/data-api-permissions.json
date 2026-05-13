@@ -1,0 +1,37 @@
+{
+  "schema": "public",
+  "publicContentTables": [
+    "Product"
+  ],
+  "businessTables": [
+    "User",
+    "Role",
+    "RolePermission",
+    "UserPermission",
+    "Client",
+    "Supplier",
+    "Lead",
+    "QuoteRequest",
+    "Material",
+    "Stok",
+    "StokArtikull",
+    "AssetInventory",
+    "ProductBomItem",
+    "Offer",
+    "OfferItem",
+    "Invoice",
+    "InvoiceItem",
+    "PurchaseInvoice",
+    "PurchaseInvoiceItem",
+    "DeliveryNote",
+    "DeliveryNoteItem",
+    "Expense",
+    "DebitNote",
+    "DebitNoteItem",
+    "InventoryMovement",
+    "Notification",
+    "Worker",
+    "WorkerTimeEntry",
+    "WorkerAdvance"
+  ]
+}

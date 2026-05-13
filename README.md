@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Supabase Data API permissions
+
+This project does not rely on Supabase's default public schema permissions. After Prisma creates or changes tables, run:
+
+```bash
+npm run db:permissions:apply
+```
+
+`npm run db:push`, `npm run db:migrate:dev`, and `npm run db:migrate:deploy` already run the permission step after Prisma finishes. The generated SQL lives in `prisma/supabase/public-schema-permissions.sql` and is derived from `prisma/schema.prisma` plus `prisma/supabase/data-api-permissions.json`.
+
+When adding a Prisma model, classify it in `data-api-permissions.json` as either `publicContentTables` or `businessTables`; `npm run db:permissions:check` fails until every model is covered. Public content allows anon `SELECT`; ERP/business data has explicit grants but no anon access and no authenticated row policy until a scoped RLS predicate is added. For raw SQL migrations, start from `prisma/supabase/new-table-permissions.template.sql`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
