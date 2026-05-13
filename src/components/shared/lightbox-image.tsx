@@ -113,7 +113,7 @@ export function LightboxImage({
 
       {activePhoto ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm sm:px-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/68 px-4 py-6 backdrop-blur-md sm:px-6"
           role="dialog"
           aria-modal="true"
           aria-label={activePhoto.label}
@@ -124,45 +124,43 @@ export function LightboxImage({
             onClick={() => setActiveIndex(null)}
             aria-label="Close image preview"
           />
-          <div className="relative z-10 flex h-full w-full max-w-6xl items-center justify-center">
-            <div className="relative h-[78vh] w-full overflow-hidden rounded-[24px] bg-black shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div className="relative z-10 flex h-full w-full items-center justify-center">
+            <div className="relative h-auto max-h-[86vh] w-full max-w-[min(78rem,calc(100vw-7rem))] overflow-hidden rounded-[16px] bg-neutral-950 shadow-[0_34px_100px_rgba(0,0,0,0.52)] ring-1 ring-white/10 max-sm:max-w-[calc(100vw-2rem)]">
               <Image
                 src={activePhoto.src}
                 alt={activePhoto.label}
-                fill
-                sizes="100vw"
-                className="object-contain"
+                width={1600}
+                height={1100}
+                sizes="(min-width: 1280px) 78rem, calc(100vw - 7rem)"
+                className="block max-h-[86vh] w-full object-contain"
                 priority
               />
             </div>
-            <p className="absolute bottom-4 left-4 right-4 rounded-full bg-black/42 px-5 py-3 text-center font-display text-xl leading-none text-white backdrop-blur-sm sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:text-2xl">
-              {activePhoto.label}
-            </p>
             <button
               type="button"
               onClick={() => setActiveIndex(null)}
-              className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[var(--color-foreground)] shadow-lg transition hover:scale-105 hover:bg-[var(--color-accent-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+              className="fixed right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full text-white/88 transition hover:scale-105 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
               aria-label="Close image preview"
             >
-              <X className="h-5 w-5" />
+              <X className="h-8 w-8" />
             </button>
             {hasMultiplePhotos ? (
               <>
                 <button
                   type="button"
                   onClick={showPrevious}
-                  className="absolute left-2 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[var(--color-foreground)] shadow-lg transition hover:scale-105 hover:bg-[var(--color-accent-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:left-4"
+                  className="fixed left-3 top-1/2 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:left-8"
                   aria-label="Show previous image"
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="h-9 w-9" />
                 </button>
                 <button
                   type="button"
                   onClick={showNext}
-                  className="absolute right-2 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[var(--color-foreground)] shadow-lg transition hover:scale-105 hover:bg-[var(--color-accent-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:right-4"
+                  className="fixed right-3 top-1/2 inline-flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:right-8"
                   aria-label="Show next image"
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="h-9 w-9" />
                 </button>
               </>
             ) : null}
