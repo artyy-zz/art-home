@@ -8,7 +8,7 @@ function InstagramIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
+      className="h-[18px] w-[18px] shrink-0"
       fill="none"
     >
       <rect
@@ -31,7 +31,7 @@ function FacebookIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
+      className="h-[18px] w-[18px] shrink-0"
       fill="currentColor"
     >
       <path d="M14.3 8.1h2.2V4.3c-.4-.1-1.7-.2-3.2-.2-3.2 0-5.4 2-5.4 5.6v3.1H4.4V17h3.5v7h4.3v-7h3.4l.5-4.2h-3.9V10c0-1.2.3-1.9 2.1-1.9Z" />
@@ -96,12 +96,12 @@ export default async function ContactPage({
                 </div>
               ))}
             </div>
-            <div className="mt-8 grid gap-3">
+            <div className="mt-8 grid gap-2.5">
               <a
                 href={COMPANY.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/90 px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] shadow-[0_12px_28px_rgba(18,16,14,0.08)] transition hover:-translate-y-0.5 hover:border-[#d62976] hover:bg-white hover:text-[#b31560]"
+                className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-5 py-2 text-sm font-semibold leading-none text-[var(--color-foreground)] shadow-[0_10px_24px_rgba(18,16,14,0.07)] transition hover:-translate-y-0.5 hover:border-[#d62976] hover:bg-white hover:text-[#b31560]"
               >
                 <InstagramIcon />
                 <span>{COMPANY.instagramUsername}</span>
@@ -110,7 +110,7 @@ export default async function ContactPage({
                 href={COMPANY.facebook}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/90 px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] shadow-[0_12px_28px_rgba(18,16,14,0.08)] transition hover:-translate-y-0.5 hover:border-[#1877f2] hover:bg-white hover:text-[#1877f2]"
+                className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-5 py-2 text-sm font-semibold leading-none text-[var(--color-foreground)] shadow-[0_10px_24px_rgba(18,16,14,0.07)] transition hover:-translate-y-0.5 hover:border-[#1877f2] hover:bg-white hover:text-[#1877f2]"
               >
                 <FacebookIcon />
                 <span>{COMPANY.facebookUsername}</span>
