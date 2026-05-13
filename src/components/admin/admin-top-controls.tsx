@@ -73,8 +73,14 @@ export function AdminTopControls({
   return (
     <>
       {showCreate && canShowCreate ? (
-        <Link href={`/${locale}/admin/${section}/new`} className={buttonClasses({ className: "gap-2" })}>
-          <Plus className="h-4 w-4" />
+        <Link
+          href={`/${locale}/admin/${section}/new`}
+          className={buttonClasses({
+            size: "lg",
+            className: "min-h-16 min-w-[220px] gap-3 px-8 text-lg font-semibold shadow-[0_18px_42px_rgba(18,16,14,0.24)] sm:min-w-[260px]",
+          })}
+        >
+          <Plus className="h-6 w-6" />
           {target.label[locale]}
         </Link>
       ) : null}
