@@ -8,6 +8,14 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
   const { locale } = await params;
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
+  const craftPoints = [
+    typedLocale === "sq" ? "Dizajn modern" : "Modern design",
+    typedLocale === "sq" ? "Funksionalitet" : "Functionality",
+    typedLocale === "sq" ? "Cilësi e qëndrueshme" : "Lasting quality",
+    typedLocale === "sq" ? "Matje të sakta" : "Precise measurements",
+    typedLocale === "sq" ? "Punim me porosi" : "Made-to-measure work",
+    typedLocale === "sq" ? "Mbështetje profesionale" : "Professional support",
+  ];
 
   return (
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
@@ -21,17 +29,14 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
             <p className="mt-5 text-sm leading-8 text-[var(--color-muted)]">
               {dict.about.craftsmanshipBody}
             </p>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {[
-                typedLocale === "sq" ? "Dizajn modern" : "Modern design",
-                typedLocale === "sq" ? "Funksionalitet" : "Functionality",
-                typedLocale === "sq" ? "Cilësi e qëndrueshme" : "Lasting quality",
-              ].map((item) => (
+            <div className="mt-8 grid gap-x-8 gap-y-4 md:grid-cols-2">
+              {craftPoints.map((item) => (
                 <div
                   key={item}
-                  className="rounded-[22px] border border-black/8 bg-white/72 p-4 text-sm text-[var(--color-foreground)]"
+                  className="flex items-start gap-3 text-sm font-medium leading-7 text-[var(--color-foreground)]"
                 >
-                  {item}
+                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--color-accent)]" />
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
@@ -39,6 +44,8 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
           <PlaceholderMedia
             label={typedLocale === "sq" ? "Punishtja Art Home" : "Art Home Workshop"}
             src={siteImages.about}
+            overlayEyebrow={null}
+            overlayLabel="ART HOME"
             className="min-h-[300px] sm:min-h-[360px] md:min-h-[420px]"
           />
         </div>

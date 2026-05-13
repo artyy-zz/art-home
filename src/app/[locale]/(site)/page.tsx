@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/shared/card";
+import { LightboxImage } from "@/components/shared/lightbox-image";
 import { PlaceholderMedia } from "@/components/shared/placeholder-media";
 import { QuoteSuccessToast } from "@/components/shared/quote-success-toast";
 import { SectionHeading } from "@/components/shared/section-heading";
@@ -17,6 +18,10 @@ export default async function HomePage({
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
   const featuredProducts = await getFeaturedProducts(typedLocale);
+  const featuredPhotos = featuredProducts.map((product) => ({
+    src: getProductImage(product.slug, product.category, product.name),
+    label: product.name,
+  }));
   const showQuoteToast = resolvedSearchParams.quote === "sent";
 
   return (
@@ -70,21 +75,20 @@ export default async function HomePage({
                 : "Categories designed for homes and personalized interior projects."
             }
           />
-          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {featuredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden rounded-[30px]">
-                <PlaceholderMedia
-                  label={product.name}
-                  src={getProductImage(product.slug, product.category, product.name)}
+          <div className="mt-10 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+            {featuredProducts.map((product, index) => (
+              <Card
+                key={product.id}
+                className="overflow-hidden rounded-[30px] transition duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_30px_80px_rgba(18,16,14,0.2)]"
+              >
+                <LightboxImage
+                  photos={featuredPhotos}
+                  index={index}
+                  className="min-h-[290px] rounded-[30px] sm:min-h-[340px] xl:min-h-[360px]"
+                  sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 100vw"
                 />
                 <div className="p-6">
-                  <p className="text-xs uppercase tracking-[0.26em] text-[var(--color-muted)]">
-                    {product.categoryTitle}
-                  </p>
-                  <h3 className="mt-3 break-words font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-                    {product.name}
-                  </h3>
-                  <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
+                  <p className="text-sm leading-7 text-[var(--color-muted)]">
                     {product.summary}
                   </p>
                 </div>

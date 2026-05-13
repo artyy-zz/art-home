@@ -1,5 +1,5 @@
 import { Card } from "@/components/shared/card";
-import { PlaceholderMedia } from "@/components/shared/placeholder-media";
+import { LightboxImage } from "@/components/shared/lightbox-image";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { getPublicProducts } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
@@ -11,6 +11,10 @@ export default async function FurniturePage({
   const { locale } = await params;
   const typedLocale = locale as Locale;
   const products = await getPublicProducts(typedLocale);
+  const productPhotos = products.map((product) => ({
+    src: getProductImage(product.slug, product.category, product.name),
+    label: product.name,
+  }));
 
   return (
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
@@ -29,15 +33,17 @@ export default async function FurniturePage({
           }
         />
         <div className="mt-10 grid gap-6">
-          {products.map((product) => (
+          {products.map((product, index) => (
             <Card
               key={product.id}
               className="grid overflow-hidden rounded-[26px] md:rounded-[32px] lg:grid-cols-[0.95fr_1.05fr]"
             >
-              <PlaceholderMedia
-                label={product.name}
-                src={getProductImage(product.slug, product.category, product.name)}
-                className="min-h-[240px] sm:min-h-[300px]"
+              <LightboxImage
+                photos={productPhotos}
+                index={index}
+                overlayEyebrow="Art Home"
+                className="min-h-[240px] rounded-[26px] sm:min-h-[300px] md:rounded-[32px]"
+                sizes="(min-width: 1024px) 45vw, 100vw"
               />
               <div className="p-5 sm:p-6 md:p-8">
                 <div>

@@ -3,6 +3,42 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { COMPANY, GOOGLE_MAPS_EMBED_URL } from "@/lib/company";
 import { getDictionary, type Locale } from "@/lib/i18n";
 
+function InstagramIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0"
+      fill="none"
+    >
+      <rect
+        x="4"
+        y="4"
+        width="16"
+        height="16"
+        rx="5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="2" />
+      <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0"
+      fill="currentColor"
+    >
+      <path d="M14.3 8.1h2.2V4.3c-.4-.1-1.7-.2-3.2-.2-3.2 0-5.4 2-5.4 5.6v3.1H4.4V17h3.5v7h4.3v-7h3.4l.5-4.2h-3.9V10c0-1.2.3-1.9 2.1-1.9Z" />
+    </svg>
+  );
+}
+
 export default async function ContactPage({
   params,
 }: PageProps<"/[locale]/contact">) {
@@ -60,22 +96,24 @@ export default async function ContactPage({
                 </div>
               ))}
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 grid gap-3">
               <a
                 href={COMPANY.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-sm font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+                className="inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/90 px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] shadow-[0_12px_28px_rgba(18,16,14,0.08)] transition hover:-translate-y-0.5 hover:border-[#d62976] hover:bg-white hover:text-[#b31560]"
               >
-                Instagram
+                <InstagramIcon />
+                <span>{COMPANY.instagramUsername}</span>
               </a>
               <a
                 href={COMPANY.facebook}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-sm font-medium text-[var(--color-foreground)] transition hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+                className="inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/90 px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] shadow-[0_12px_28px_rgba(18,16,14,0.08)] transition hover:-translate-y-0.5 hover:border-[#1877f2] hover:bg-white hover:text-[#1877f2]"
               >
-                Facebook
+                <FacebookIcon />
+                <span>{COMPANY.facebookUsername}</span>
               </a>
             </div>
           </Card>
@@ -84,6 +122,7 @@ export default async function ContactPage({
               title={typedLocale === "sq" ? "Harta e lokacionit Art Home" : "Art Home location map"}
               src={GOOGLE_MAPS_EMBED_URL}
               className="h-[340px] w-full rounded-[24px] border-0 sm:h-[440px]"
+              allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

@@ -19,11 +19,13 @@ export const COMPANY = {
     ],
   },
   instagram: "https://www.instagram.com/mobileria_arthome_/",
+  instagramUsername: "@mobileria_arthome_",
   facebook: "https://www.facebook.com/profile.php?id=61574449680489",
+  facebookUsername: "Mobileria Art Home",
 } as const;
 
 export const GOOGLE_MAPS_EMBED_URL =
-  "https://www.google.com/maps?q=42.5345611747001,21.158200586085872&z=16&output=embed";
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1896.8206103520151!2d21.156797038976645!3d42.53455936923394!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13548300065c9bf1%3A0xe34b13a129ea1a1f!2sMobileria%20Art%20Home!5e1!3m2!1sen!2s!4v1778696599141!5m2!1sen!2s";
 
 export const categoryCopy: Record<
   FurnitureCategory,
