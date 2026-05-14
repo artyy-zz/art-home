@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { LoginForm } from "@/components/forms/login-form";
 import { Card } from "@/components/shared/card";
 import type { Locale } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n";
+import { buildLoginMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/login">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildLoginMetadata(locale as Locale);
+}
 
 export default async function LoginPage({ params }: PageProps<"/[locale]/login">) {
   const { locale } = await params;

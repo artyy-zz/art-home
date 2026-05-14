@@ -1,9 +1,21 @@
+import Link from "next/link";
+import type { Metadata } from "next";
 import { Card } from "@/components/shared/card";
 import { LightboxImage } from "@/components/shared/lightbox-image";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { buttonClasses } from "@/components/shared/button";
 import { getPublicProducts } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { buildPageMetadata } from "@/lib/seo";
 import { getProductImage } from "@/lib/site-images";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/furniture">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildPageMetadata(locale as Locale, "furniture");
+}
 
 export default async function FurniturePage({
   params,
@@ -20,6 +32,7 @@ export default async function FurniturePage({
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
+          headingLevel={1}
           label={typedLocale === "sq" ? "Koleksioni" : "Collection"}
           title={
             typedLocale === "sq"
@@ -66,6 +79,16 @@ export default async function FurniturePage({
                       {product.materialNotes || product.categoryBody}
                     </p>
                   </div>
+                  <Link
+                    href={`/${typedLocale}/quote`}
+                    className={buttonClasses({
+                      variant: "secondary",
+                      size: "sm",
+                      className: "w-fit",
+                    })}
+                  >
+                    {typedLocale === "sq" ? "Kërko ofertë" : "Request a quote"}
+                  </Link>
                 </div>
               </div>
             </Card>

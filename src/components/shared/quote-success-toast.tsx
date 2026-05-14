@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 
@@ -27,4 +28,14 @@ export function QuoteSuccessToast({ locale }: { locale: Locale }) {
       </div>
     </div>
   );
+}
+
+export function QuoteSuccessToastFromQuery({ locale }: { locale: Locale }) {
+  const searchParams = useSearchParams();
+
+  if (searchParams.get("quote") !== "sent") {
+    return null;
+  }
+
+  return <QuoteSuccessToast locale={locale} />;
 }

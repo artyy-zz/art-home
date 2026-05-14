@@ -23,7 +23,7 @@ export function Logo({
       >
         <Image
           src="/images/brand/logo.jpg"
-          alt="Art Home logo"
+          alt="Mobileria Art Home logo"
           width={46}
           height={46}
           className="h-11 w-11 rounded-full object-cover"

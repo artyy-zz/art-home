@@ -1,20 +1,29 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Card } from "@/components/shared/card";
 import { LightboxImage } from "@/components/shared/lightbox-image";
 import { PlaceholderMedia } from "@/components/shared/placeholder-media";
-import { QuoteSuccessToast } from "@/components/shared/quote-success-toast";
+import { QuoteSuccessToastFromQuery } from "@/components/shared/quote-success-toast";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { buttonClasses } from "@/components/shared/button";
 import { getFeaturedProducts } from "@/lib/erp";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getProductImage, siteImages } from "@/lib/site-images";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildPageMetadata(locale as Locale, "home");
+}
 
 export default async function HomePage({
   params,
-  searchParams,
 }: PageProps<"/[locale]">) {
   const { locale } = await params;
-  const resolvedSearchParams = await searchParams;
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
   const featuredProducts = await getFeaturedProducts(typedLocale);
@@ -22,11 +31,12 @@ export default async function HomePage({
     src: getProductImage(product.slug, product.category, product.name),
     label: product.name,
   }));
-  const showQuoteToast = resolvedSearchParams.quote === "sent";
 
   return (
     <div className="animate-fade">
-      {showQuoteToast ? <QuoteSuccessToast locale={typedLocale} /> : null}
+      <Suspense fallback={null}>
+        <QuoteSuccessToastFromQuery locale={typedLocale} />
+      </Suspense>
       <section className="px-4 pb-10 pt-8 sm:px-6 md:px-10 md:pb-20 md:pt-10">
         <div className="mx-auto grid max-w-7xl min-w-0 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="industrial-grid relative min-w-0 overflow-hidden rounded-[28px] px-5 py-7 sm:px-7 sm:py-8 md:rounded-[36px] md:px-10 md:py-12">

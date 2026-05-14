@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { QuoteForm } from "@/components/forms/quote-form";
 import { Card } from "@/components/shared/card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { COMPANY } from "@/lib/company";
 import type { Locale } from "@/lib/i18n";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/quote">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildPageMetadata(locale as Locale, "quote");
+}
 
 export default async function QuoteRequestPage({
   params,
@@ -16,6 +26,7 @@ export default async function QuoteRequestPage({
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl space-y-8">
         <SectionHeading
+          headingLevel={1}
           label={typedLocale === "sq" ? "Ofertë" : "Quote"}
           title={typedLocale === "sq" ? "Kërko Ofertë" : "Request a Quote"}
           description={

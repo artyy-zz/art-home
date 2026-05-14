@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { Card } from "@/components/shared/card";
 import { PlaceholderMedia } from "@/components/shared/placeholder-media";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { getDictionary, type Locale } from "@/lib/i18n";
+import { buildPageMetadata } from "@/lib/seo";
 import { siteImages } from "@/lib/site-images";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/about">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildPageMetadata(locale as Locale, "about");
+}
 
 export default async function AboutPage({ params }: PageProps<"/[locale]/about">) {
   const { locale } = await params;
@@ -20,7 +30,11 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
   return (
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl space-y-10">
-        <SectionHeading title={dict.about.title} description={dict.about.intro} />
+        <SectionHeading
+          headingLevel={1}
+          title={dict.about.title}
+          description={dict.about.intro}
+        />
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <Card className="rounded-[26px] p-5 sm:p-8 md:rounded-[32px]">
             <h2 className="break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-4xl">

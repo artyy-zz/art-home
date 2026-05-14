@@ -26,6 +26,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <Link href={`/${locale}/furniture`}>{dict.nav.furniture}</Link>
             <Link href={`/${locale}/about`}>{dict.nav.about}</Link>
             <Link href={`/${locale}/contact`}>{dict.nav.contact}</Link>
+            <Link href={`/${locale}/quote`}>{dict.common.requestQuote}</Link>
           </div>
         </div>
         <div>

@@ -1,28 +1,18 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { display, sans } from "@/app/fonts";
-import { isLocale } from "@/lib/i18n";
 import { rootMetadata } from "@/lib/seo";
 import "../globals.css";
 
 export const metadata: Metadata = rootMetadata;
 
-export function generateStaticParams() {
-  return [{ locale: "sq" }, { locale: "en" }];
-}
-
-export default async function LocaleLayout({
+export default function RootRedirectLayout({
   children,
-  params,
-}: LayoutProps<"/[locale]">) {
-  const { locale } = await params;
-  if (!isLocale(locale)) {
-    notFound();
-  }
-
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
-      lang={locale}
+      lang="sq"
       data-scroll-behavior="smooth"
       className={`${sans.variable} ${display.variable} h-full`}
     >

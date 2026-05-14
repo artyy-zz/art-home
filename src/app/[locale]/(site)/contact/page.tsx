@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { Card } from "@/components/shared/card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { COMPANY, GOOGLE_MAPS_EMBED_URL } from "@/lib/company";
 import { getDictionary, type Locale } from "@/lib/i18n";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/contact">): Promise<Metadata> {
+  const { locale } = await params;
+
+  return buildPageMetadata(locale as Locale, "contact");
+}
 
 function InstagramIcon() {
   return (
@@ -66,15 +76,19 @@ export default async function ContactPage({
   return (
     <div className="px-4 py-10 sm:px-6 md:px-10 md:py-14">
       <div className="mx-auto max-w-7xl space-y-8">
-        <SectionHeading title={dict.contact.title} description={dict.contact.intro} />
+        <SectionHeading
+          headingLevel={1}
+          title={dict.contact.title}
+          description={dict.contact.intro}
+        />
         <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
           <Card className="rounded-[26px] p-5 sm:p-7 md:rounded-[30px] md:p-9">
             <p className="text-xs uppercase tracking-[0.24em] text-[var(--color-muted)]">
               {typedLocale === "sq" ? "Detajet e kontaktit" : "Contact details"}
             </p>
-            <h1 className="mt-4 break-words font-display text-4xl leading-none text-[var(--color-foreground)] sm:text-5xl">
+            <h2 className="mt-4 break-words font-display text-4xl leading-none text-[var(--color-foreground)] sm:text-5xl">
               {COMPANY.name}
-            </h1>
+            </h2>
             <div className="mt-8 space-y-5">
               {details.map((item) => (
                 <div key={item.label}>
