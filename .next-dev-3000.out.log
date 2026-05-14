@@ -361,3 +361,265 @@
 ✓ Compiled in 70ms
 ✓ Compiled in 212ms
 ✓ Compiled in 65ms
+✓ Compiled in 622ms
+ GET / 307 in 142ms (next.js: 47ms, application-code: 96ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.7ms nodeEnv=development
+[PERF] prisma.query 708.7ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 708.7ms model=Product operation=findMany
+ GET /sq 200 in 1066ms (next.js: 132ms, generate-params: 8ms, application-code: 935ms)
+ GET /sq/quote 200 in 162ms (next.js: 112ms, generate-params: 6ms, application-code: 50ms)
+ GET /sq/login 200 in 121ms (next.js: 82ms, generate-params: 5ms, application-code: 38ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF] prisma.query 226.6ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 226.6ms model=User operation=findUnique
+[PERF] auth.authenticate.userLookup 228.5ms email=artiibela0@gmail.com
+[PERF] auth.authenticate.bcryptCompare 65.3ms
+[PERF] prisma.query 228.1ms model=User operation=update
+[PERF_DETAIL] prisma.query await 228.1ms model=User operation=update
+[PERF] auth.authenticate.lastLoginUpdate 230.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] auth.createSession.signJwt 4.2ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] admin/layout.i18n/locale loading 10.0ms
+[PERF_DETAIL] admin/dashboard.i18n/locale loading 8.7ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 10.3ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.7ms nodeEnv=development
+[PERF] prisma.query 314.7ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 314.7ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 327.7ms
+[PERF] auth.requireStaffSession 327.9ms locale=sq
+[PERF] auth.requireStaffSession 325.6ms locale=sq
+[PERF] auth.requireAdminSession 328.4ms locale=sq
+[PERF_DETAIL] admin/dashboard.auth/session 326.1ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.requirePermission 326.3ms locale=sq module=DASHBOARD action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 329.1ms locale=sq
+[PERF] permissions.userMatrix 0.3ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/dashboard.permissions 0.7ms locale=sq module=DASHBOARD action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.5ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.2ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 245.1ms model=Invoice operation=findMany
+[PERF_DETAIL] prisma.query await 245.1ms model=Invoice operation=findMany
+[PERF] prisma.query 559.8ms model=Material operation=findMany
+[PERF_DETAIL] prisma.query await 559.8ms model=Material operation=findMany
+[PERF] prisma.query 576.1ms model=Notification operation=findMany
+[PERF_DETAIL] prisma.query await 576.1ms model=Notification operation=findMany
+[PERF] prisma.query 618.5ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] prisma.query await 618.5ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] admin/dashboard.main data query 624.0ms locale=sq
+[PERF] erp.dashboardSnapshot 625.4ms locale=sq
+[PERF_DETAIL] admin/dashboard.table mapping/formatting 1.2ms locale=sq
+[PERF] page.serverRender admin/dashboard 969.1ms
+ GET /sq/admin 200 in 1196ms (next.js: 141ms, generate-params: 6ms, application-code: 1054ms)
+ POST /sq/login 303 in 1801ms (next.js: 11ms, generate-params: 7ms, application-code: 1790ms)
+  └─ ƒ loginAction("sq", undefined, {}) in 539ms src/actions/auth.ts
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF_DETAIL] admin/leads.i18n/locale loading 7.8ms
+[PERF] auth.session.lookup 20.2ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 319.6ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 319.6ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 343.0ms
+[PERF] auth.requireStaffSession 343.4ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 343.7ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 344.0ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.userMatrix 0.1ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.3ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 230.9ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 230.9ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 236.1ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 1.3ms locale=sq rows=4
+[PERF] page.serverRender admin/leads 597.4ms
+ GET /sq/admin/leads 200 in 832ms (next.js: 154ms, generate-params: 8ms, application-code: 677ms)
+[PERF_DETAIL] admin/layout.i18n/locale loading 12.5ms
+[PERF_DETAIL] admin/leads.i18n/locale loading 6.8ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 60.1ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 315.6ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 315.6ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 378.6ms
+[PERF] auth.requireStaffSession 378.9ms locale=sq
+[PERF] auth.requireStaffSession 377.5ms locale=sq
+[PERF] auth.requireAdminSession 379.5ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 378.0ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 378.2ms locale=sq module=LEADS action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 380.1ms locale=sq
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.4ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.5ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.0ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 223.5ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 223.5ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 225.6ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 0.4ms locale=sq rows=4
+[PERF] page.serverRender admin/leads 618.2ms
+ GET /sq/admin/leads 200 in 705ms (next.js: 10ms, generate-params: 7ms, application-code: 695ms)
+[PERF_DETAIL] admin/dashboard.i18n/locale loading 6.4ms
+[PERF] auth.session.lookup 9.6ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 1.8ms nodeEnv=development
+[PERF] prisma.query 313.7ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 313.7ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 326.1ms
+[PERF] auth.requireStaffSession 326.5ms locale=sq
+[PERF_DETAIL] admin/dashboard.auth/session 326.9ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.requirePermission 327.1ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.userMatrix 0.1ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/dashboard.permissions 0.4ms locale=sq module=DASHBOARD action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 226.7ms model=Notification operation=findMany
+[PERF_DETAIL] prisma.query await 226.7ms model=Notification operation=findMany
+[PERF] prisma.query 228.0ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] prisma.query await 228.0ms model=InventoryMovement operation=findMany
+[PERF] prisma.query 234.4ms model=Material operation=findMany
+[PERF_DETAIL] prisma.query await 234.4ms model=Material operation=findMany
+[PERF] prisma.query 240.0ms model=Invoice operation=findMany
+[PERF_DETAIL] prisma.query await 240.0ms model=Invoice operation=findMany
+[PERF_DETAIL] admin/dashboard.main data query 241.8ms locale=sq
+[PERF] erp.dashboardSnapshot 242.3ms locale=sq
+[PERF_DETAIL] admin/dashboard.table mapping/formatting 0.6ms locale=sq
+[PERF] page.serverRender admin/dashboard 580.3ms
+ GET /sq/admin 200 in 613ms (next.js: 12ms, generate-params: 7ms, application-code: 602ms)
+ GET /sq/login 200 in 37ms (next.js: 11ms, generate-params: 8ms, application-code: 26ms)
+ GET /sq/login 200 in 91ms (next.js: 9ms, generate-params: 6ms, application-code: 82ms)
+[PERF] prisma.query 233.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 233.3ms model=Product operation=findMany
+ GET /sq 200 in 278ms (next.js: 9ms, generate-params: 6ms, application-code: 268ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.1ms nodeEnv=development
+ GET /sq/quote 200 in 36ms (next.js: 11ms, generate-params: 8ms, application-code: 25ms)
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=true
+[PERF] prisma.query 273.2ms model=QuoteRequest operation=create
+[PERF_DETAIL] prisma.query await 273.2ms model=QuoteRequest operation=create
+[PERF] prisma.query 238.9ms model=Notification operation=create
+[PERF_DETAIL] prisma.query await 238.9ms model=Notification operation=create
+[PERF] prisma.query 225.3ms model=Product operation=findMany
+[PERF_DETAIL] prisma.query await 225.3ms model=Product operation=findMany
+ GET /sq?quote=sent 200 in 287ms (next.js: 12ms, generate-params: 7ms, application-code: 275ms)
+ POST /sq/quote 303 in 868ms (next.js: 11ms, generate-params: 7ms, application-code: 858ms)
+  └─ ƒ createQuoteRequestAction("sq", undefined, {}) in 518ms src/actions/public.ts
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.0ms nodeEnv=development
+ GET /sq/login 200 in 41ms (next.js: 18ms, generate-params: 14ms, application-code: 24ms)
+[PERF] prisma.query 223.6ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 223.6ms model=User operation=findUnique
+[PERF] auth.authenticate.userLookup 225.4ms email=artiibela0@gmail.com
+[PERF] auth.authenticate.bcryptCompare 60.4ms
+[PERF] prisma.query 248.9ms model=User operation=update
+[PERF_DETAIL] prisma.query await 248.9ms model=User operation=update
+[PERF] auth.authenticate.lastLoginUpdate 250.8ms userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] auth.createSession.signJwt 0.8ms
+[PERF_DETAIL] admin/layout.i18n/locale loading 7.7ms
+[PERF_DETAIL] admin/dashboard.i18n/locale loading 7.4ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 17.8ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.0ms nodeEnv=development
+[PERF] prisma.query 312.8ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 312.8ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 333.0ms
+[PERF] auth.requireStaffSession 333.3ms locale=sq
+[PERF] auth.requireStaffSession 331.0ms locale=sq
+[PERF] auth.requireAdminSession 333.9ms locale=sq
+[PERF_DETAIL] admin/dashboard.auth/session 331.4ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.requirePermission 331.6ms locale=sq module=DASHBOARD action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 334.5ms locale=sq
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/dashboard.permissions 0.4ms locale=sq module=DASHBOARD action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.4ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.0ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 229.7ms model=Material operation=findMany
+[PERF_DETAIL] prisma.query await 229.7ms model=Material operation=findMany
+[PERF] prisma.query 267.7ms model=Invoice operation=findMany
+[PERF_DETAIL] prisma.query await 267.7ms model=Invoice operation=findMany
+[PERF] prisma.query 279.9ms model=Notification operation=findMany
+[PERF_DETAIL] prisma.query await 279.9ms model=Notification operation=findMany
+[PERF] prisma.query 281.3ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] prisma.query await 281.3ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] admin/dashboard.main data query 282.9ms locale=sq
+[PERF] erp.dashboardSnapshot 283.3ms locale=sq
+[PERF_DETAIL] admin/dashboard.table mapping/formatting 0.7ms locale=sq
+[PERF] page.serverRender admin/dashboard 630.2ms
+ GET /sq/admin 200 in 689ms (next.js: 10ms, generate-params: 6ms, application-code: 679ms)
+ POST /sq/login 303 in 1271ms (next.js: 9ms, generate-params: 6ms, application-code: 1261ms)
+  └─ ƒ loginAction("sq", undefined, {}) in 552ms src/actions/auth.ts
+[PERF_DETAIL] admin/leads.i18n/locale loading 5.5ms
+[PERF] auth.session.lookup 10.6ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.1ms nodeEnv=development
+[PERF] prisma.query 330.5ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 330.5ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 344.7ms
+[PERF] auth.requireStaffSession 345.2ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 345.7ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 346.2ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.userMatrix 0.2ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.8ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 224.3ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 224.3ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 226.3ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 0.3ms locale=sq rows=5
+[PERF] page.serverRender admin/leads 583.4ms
+ GET /sq/admin/leads 200 in 614ms (next.js: 10ms, generate-params: 7ms, application-code: 603ms)
+[PERF_DETAIL] admin/layout.i18n/locale loading 13.6ms
+[PERF_DETAIL] admin/leads.i18n/locale loading 6.0ms
+[PERF_DETAIL] admin/layout.i18n/dictionary loading 0.0ms locale=sq
+[PERF] auth.session.lookup 21.5ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.1ms nodeEnv=development
+[PERF] prisma.query 312.8ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 312.8ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 336.9ms
+[PERF] auth.requireStaffSession 337.1ms locale=sq
+[PERF] auth.requireStaffSession 335.6ms locale=sq
+[PERF] auth.requireAdminSession 337.5ms locale=sq
+[PERF_DETAIL] admin/leads.auth/session 336.0ms locale=sq module=LEADS action=VIEW
+[PERF] permissions.requirePermission 336.2ms locale=sq module=LEADS action=VIEW
+[PERF_DETAIL] admin/layout.auth/session 338.0ms locale=sq
+[PERF] permissions.userMatrix 0.1ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/leads.permissions 0.4ms locale=sq module=LEADS action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.permissions 0.5ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF_DETAIL] admin/layout.layout/sidebar work 0.0ms locale=sq userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 224.5ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] prisma.query await 224.5ms model=QuoteRequest operation=findMany
+[PERF_DETAIL] admin/leads.main data query 226.9ms
+[PERF_DETAIL] admin/leads.table mapping/formatting 0.3ms locale=sq rows=5
+[PERF] page.serverRender admin/leads 576.5ms
+ GET /sq/admin/leads 200 in 633ms (next.js: 10ms, generate-params: 6ms, application-code: 624ms)
+[PERF_DETAIL] admin/dashboard.i18n/locale loading 6.0ms
+[PERF] auth.session.lookup 9.9ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=development reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.1ms nodeEnv=development
+[PERF] prisma.query 323.0ms model=User operation=findUnique
+[PERF_DETAIL] prisma.query await 323.0ms model=User operation=findUnique
+[PERF] auth.currentUser.lookup 336.2ms
+[PERF] auth.requireStaffSession 336.4ms locale=sq
+[PERF_DETAIL] admin/dashboard.auth/session 336.7ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.requirePermission 336.9ms locale=sq module=DASHBOARD action=VIEW
+[PERF] permissions.userMatrix 0.1ms userId=cmoxbhoeq0004jf0a0ed2ch8q role=OWNER roleId=cmoxbg5200000unug46t3vkr2
+[PERF_DETAIL] admin/dashboard.permissions 0.3ms locale=sq module=DASHBOARD action=VIEW userId=cmoxbhoeq0004jf0a0ed2ch8q
+[PERF] prisma.query 238.0ms model=Invoice operation=findMany
+[PERF_DETAIL] prisma.query await 238.0ms model=Invoice operation=findMany
+[PERF] prisma.query 247.9ms model=Notification operation=findMany
+[PERF_DETAIL] prisma.query await 247.9ms model=Notification operation=findMany
+[PERF] prisma.query 249.7ms model=Material operation=findMany
+[PERF_DETAIL] prisma.query await 249.7ms model=Material operation=findMany
+[PERF] prisma.query 251.3ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] prisma.query await 251.3ms model=InventoryMovement operation=findMany
+[PERF_DETAIL] admin/dashboard.main data query 253.5ms locale=sq
+[PERF] erp.dashboardSnapshot 254.0ms locale=sq
+[PERF_DETAIL] admin/dashboard.table mapping/formatting 1.1ms locale=sq
+[PERF] page.serverRender admin/dashboard 601.6ms
+ GET /sq/admin 200 in 637ms (next.js: 12ms, generate-params: 8ms, application-code: 625ms)
+✓ Compiled in 265ms
+✓ Compiled in 65ms
+✓ Compiled in 64ms
+✓ Compiled in 61ms
+✓ Compiled in 67ms
+✓ Compiled in 65ms
+✓ Compiled in 145ms
+✓ Compiled in 63ms

@@ -1,0 +1,120 @@
+⨯ ReferenceError: StatusCell is not defined
+    at <unknown> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at async measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status} {
+  digest: '1406239270'
+}
+[browser] Uncaught ReferenceError: StatusCell is not defined
+    at <anonymous> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>:1:18)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at  measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status}
+⨯ ReferenceError: StatusCell is not defined
+    at <unknown> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at async measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status} {
+  digest: '1406239270'
+}
+[browser] Uncaught ReferenceError: StatusCell is not defined
+    at <anonymous> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>:1:18)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at  measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status}
+⨯ ReferenceError: StatusCell is not defined
+    at <unknown> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at async measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status} {
+  digest: '1406239270'
+}
+[browser] Uncaught ReferenceError: StatusCell is not defined
+    at <anonymous> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>:1:18)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at  measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status}
+⨯ ReferenceError: StatusCell is not defined
+    at <unknown> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at async measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status} {
+  digest: '1406239270'
+}
+[browser] Uncaught ReferenceError: StatusCell is not defined
+    at <anonymous> (src\app\[locale]\admin\leads\page.tsx:181:18)
+    at Array.map (<anonymous>:1:18)
+    at LeadsPage.locale (src\app\[locale]\admin\leads\page.tsx:158:37)
+    at measureDetailSync (src\lib\perf.ts:69:12)
+    at LeadsPage (src\app\[locale]\admin\leads\page.tsx:114:27)
+    at  measureAsync (src\lib\perf.ts:31:12)
+  179 |               createdAt: formatDate(request.createdAt, localeString),
+  180 |               status: (
+> 181 |                 <StatusCell
+      |                  ^
+  182 |                   locale={typedLocale}
+  183 |                   requestId={request.id}
+  184 |                   status={request.status}
