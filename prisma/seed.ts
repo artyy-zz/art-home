@@ -3,7 +3,7 @@ import { PrismaClient, UserRole } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const ownerEmail = process.env.OWNER_EMAIL ?? "owner@arthome.al";
+const ownerEmail = process.env.OWNER_EMAIL ?? "owner@arthome-ks.com";
 const ownerName = process.env.OWNER_NAME ?? "Art Home Owner";
 const ownerPassword = process.env.OWNER_PASSWORD ?? "Admin123!";
 
