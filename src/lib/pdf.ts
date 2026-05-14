@@ -590,7 +590,7 @@ function addContinuationPage(
 ) {
   const page = pdf.addPage(A4_SIZE);
 
-  drawTextTop(page, `${title} - vazhdim`, 45, 48, { font: fonts.bold, size: 18 });
+  drawTextTop(page, title, 45, 48, { font: fonts.bold, size: 18 });
   drawTextTop(page, number, 45, 70, { font: fonts.body, size: 10 });
   drawLogoTop(page, logoImage, 426, 28, 124, 92);
 
@@ -794,9 +794,9 @@ function drawSalesInvoiceFooter(
   let top = Math.max(startTop + 34, 435);
   top = drawWrappedTextTop(
     page,
-    companyDocumentInfo.bankAccounts
+    `Mënyrat e pagesës: ${companyDocumentInfo.bankAccounts
       .map((account) => `[${account}]`)
-      .join(" - "),
+      .join(" - ")}`,
     45,
     top,
     { font: fonts.body, size: 10, maxWidth: 506, lineHeight: 12 },
