@@ -7,6 +7,7 @@ import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
 import { centsToDecimalString } from "@/lib/money";
+import { formatDateInputValue } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 
@@ -39,18 +40,22 @@ const emptyRow: PurchaseInvoiceRow = {
 const inputClassName =
   "w-full rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.12)]";
 
+function defaultDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 15);
+  return formatDateInputValue(date);
+}
+
 export function PurchaseInvoiceBuilderForm({
   locale,
   suppliers,
   items,
   action,
-  suggestedNumber,
 }: {
   locale: Locale;
   suppliers: SupplierOption[];
   items: InventoryItemOption[];
   action: FormAction;
-  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -74,7 +79,6 @@ export function PurchaseInvoiceBuilderForm({
         <input
           name="number"
           className={inputClassName}
-          defaultValue={suggestedNumber}
           placeholder={locale === "sq" ? "Numri i fatures" : "Invoice number"}
           required
         />
@@ -103,6 +107,7 @@ export function PurchaseInvoiceBuilderForm({
           name="dueDate"
           type="date"
           className={inputClassName}
+          defaultValue={defaultDueDate()}
           required
         />
       </div>

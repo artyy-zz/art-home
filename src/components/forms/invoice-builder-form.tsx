@@ -42,7 +42,7 @@ const inputClassName =
 
 function defaultDueDate() {
   const date = new Date();
-  date.setDate(date.getDate() + 14);
+  date.setDate(date.getDate() + 15);
   return formatDateInputValue(date);
 }
 
@@ -51,13 +51,11 @@ export function InvoiceBuilderForm({
   clients,
   items,
   action,
-  suggestedNumber,
 }: {
   locale: Locale;
   clients: ClientOption[];
   items: InventoryItemOption[];
   action: FormAction;
-  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -81,7 +79,6 @@ export function InvoiceBuilderForm({
         <input
           name="number"
           className={inputClassName}
-          defaultValue={suggestedNumber}
           placeholder={locale === "sq" ? "Numri i fatures" : "Invoice number"}
           required
         />

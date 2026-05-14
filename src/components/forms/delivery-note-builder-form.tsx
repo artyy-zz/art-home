@@ -45,27 +45,25 @@ export function DeliveryNoteBuilderForm({
   suppliers,
   items,
   action,
-  suggestedNumbers,
 }: {
   locale: Locale;
   clients: PartyOption[];
   suppliers: PartyOption[];
   items: InventoryItemOption[];
   action: FormAction;
-  suggestedNumbers: Record<"SALES" | "PURCHASE", string>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
   const finishCreateForm = useFinishCreateForm();
   const [type, setType] = useState<"SALES" | "PURCHASE">("SALES");
-  const [number, setNumber] = useState(suggestedNumbers.SALES);
+  const [number, setNumber] = useState("");
   const [rows, setRows] = useState<DeliveryNoteRow[]>([{ ...emptyRow }]);
 
   async function handleSubmit(formData: FormData) {
     await action(formData);
     formRef.current?.reset();
     setType("SALES");
-    setNumber(suggestedNumbers.SALES);
+    setNumber("");
     setRows([{ ...emptyRow }]);
     finishCreateForm();
   }
@@ -87,7 +85,6 @@ export function DeliveryNoteBuilderForm({
           onChange={(event) => {
             const nextType = event.target.value as "SALES" | "PURCHASE";
             setType(nextType);
-            setNumber(suggestedNumbers[nextType]);
           }}
           className={inputClassName}
           required

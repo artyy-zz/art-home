@@ -42,7 +42,7 @@ const emptyRow: OfferRow = {
 
 function defaultValidUntil() {
   const date = new Date();
-  date.setDate(date.getDate() + 14);
+  date.setDate(date.getDate() + 15);
   return formatDateInputValue(date);
 }
 
@@ -51,14 +51,12 @@ export function OfferBuilderForm({
   clients,
   items,
   action,
-  suggestedNumber,
 }: {
   locale: Locale;
   clients: ClientOption[];
   leads?: Array<{ id: string; name: string }>;
   items: InventoryItemOption[];
   action: FormAction;
-  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -82,7 +80,6 @@ export function OfferBuilderForm({
         <input
           name="number"
           className={inputClassName}
-          defaultValue={suggestedNumber}
           placeholder={locale === "sq" ? "Numri i ofertes" : "Offer number"}
           required
         />

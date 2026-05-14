@@ -178,7 +178,7 @@ export function LazyOfferBuilderForm({
     );
   }
 
-  return <OfferBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} suggestedNumber={data.suggestedNumber} />;
+  return <OfferBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} />;
 }
 
 export function LazyInvoiceBuilderForm({
@@ -224,7 +224,7 @@ export function LazyInvoiceBuilderForm({
     );
   }
 
-  return <InvoiceBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} suggestedNumber={data.suggestedNumber} />;
+  return <InvoiceBuilderForm locale={locale} clients={data.clients} items={data.items} action={action} />;
 }
 
 export function LazyPurchaseInvoiceBuilderForm({
@@ -272,7 +272,6 @@ export function LazyPurchaseInvoiceBuilderForm({
       suppliers={data.suppliers}
       items={data.items}
       action={action}
-      suggestedNumber={data.suggestedNumber ?? ""}
     />
   );
 }
@@ -312,7 +311,6 @@ export function LazyDeliveryNoteBuilderForm({
       suppliers={data.suppliers}
       items={data.items}
       action={action}
-      suggestedNumbers={data.suggestedNumbers}
     />
   );
 }
@@ -368,7 +366,7 @@ export function LazyDebitNoteBuilderForm({
     );
   }
 
-  return <DebitNoteBuilderForm locale={locale} clients={data.clients} invoices={data.invoices} action={action} suggestedNumber={data.suggestedNumber} />;
+  return <DebitNoteBuilderForm locale={locale} clients={data.clients} invoices={data.invoices} action={action} />;
 }
 
 export function LazyStockBuilderForm({

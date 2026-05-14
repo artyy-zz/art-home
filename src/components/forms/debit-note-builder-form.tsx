@@ -56,13 +56,11 @@ export function DebitNoteBuilderForm({
   clients,
   invoices,
   action,
-  suggestedNumber,
 }: {
   locale: Locale;
   clients: ClientOption[];
   invoices: InvoiceOption[];
   action: FormAction;
-  suggestedNumber: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const closeCreateFormPanel = useCreateFormPanel();
@@ -107,7 +105,6 @@ export function DebitNoteBuilderForm({
         <input
           name="number"
           className={inputClassName}
-          defaultValue={suggestedNumber}
           placeholder={locale === "sq" ? "Numri" : "Number"}
           required
         />

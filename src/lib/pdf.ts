@@ -792,13 +792,11 @@ function drawSalesInvoiceFooter(
   startTop: number,
 ) {
   let top = Math.max(startTop + 34, 435);
-  drawTextTop(page, "Bankat", 45, top, { font: fonts.bold, size: 10 });
-  top += 12;
   top = drawWrappedTextTop(
     page,
-    `Mënyra e pagesës: ${companyDocumentInfo.bankAccounts
+    companyDocumentInfo.bankAccounts
       .map((account) => `[${account}]`)
-      .join(" - ")}`,
+      .join(" - "),
     45,
     top,
     { font: fonts.body, size: 10, maxWidth: 506, lineHeight: 12 },

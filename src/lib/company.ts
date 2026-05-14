@@ -13,9 +13,7 @@ export const COMPANY = {
     nui: null,
     vatNumber: null,
     bankAccounts: [
-      "PCB: 1116008135000133",
-      "TEB: 20-14-0001396833-82",
-      "BPB: 1300001002508377",
+      "BPB: 1300001004256511",
     ],
   },
   instagram: "https://www.instagram.com/mobileria_arthome_/",

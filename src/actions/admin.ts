@@ -1599,7 +1599,7 @@ export async function convertOfferToInvoiceAction(locale: Locale, offerId: strin
       offerId: offer.id,
       status: offer.status === OfferStatus.ACCEPTED ? InvoiceStatus.UNPAID : InvoiceStatus.UNPAID,
       notes: offer.notes,
-      dueDate: addDays(new Date(), 14),
+      dueDate: addDays(new Date(), 15),
       ...calculateTotals(offer.subtotalCents, offer.vatEnabled, offer.vatRate),
       items: {
         create: offer.items.map((item) => ({
