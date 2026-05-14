@@ -163,6 +163,14 @@ function formatVatRate(rate: number) {
   return Number.isInteger(rate) ? String(rate) : rate.toFixed(2).replace(/\.?0+$/, "");
 }
 
+function getVatInclusiveUnitPriceCents(line: PdfLineItem, vatEnabled: boolean, vatRate: number) {
+  if (!vatEnabled) {
+    return line.unitPriceCents;
+  }
+
+  return line.unitPriceCents + calculatePercentageCents(line.unitPriceCents, vatRate);
+}
+
 function topToY(page: PDFPage, top: number, size = 0) {
   return page.getSize().height - top - size;
 }
@@ -385,11 +393,14 @@ function drawLogoTop(page: PDFPage, logoImage: PDFImage | null, x: number, top: 
     return;
   }
 
+  const scaledLogo = logoImage.scaleToFit(width, height);
+  const boxY = topToY(page, top + height);
+
   page.drawImage(logoImage, {
-    x,
-    y: topToY(page, top + height),
-    width,
-    height,
+    x: x + (width - scaledLogo.width) / 2,
+    y: boxY + (height - scaledLogo.height) / 2,
+    width: scaledLogo.width,
+    height: scaledLogo.height,
   });
 }
 
@@ -468,7 +479,7 @@ function drawCompanyBlock(
       `Adresa: ${companyDocumentInfo.address}`,
       `Tel : ${companyDocumentInfo.phone}`,
       `E-mail: ${companyDocumentInfo.email}`,
-      `NUI ${companyDocumentInfo.nui}`,
+      companyDocumentInfo.nui ? `NUI ${companyDocumentInfo.nui}` : null,
       companyDocumentInfo.vatNumber ? `TVSH ${companyDocumentInfo.vatNumber}` : null,
     ].filter((detail): detail is string => Boolean(detail)),
     x,
@@ -563,15 +574,42 @@ function drawDebitNoteMeta(
   });
 }
 
-function drawSalesInvoiceTable(
-  page: PDFPage,
+type PdfTableRenderResult = {
+  page: PDFPage;
+  bottom: number;
+};
+
+const tablePageBottomLimit = 735;
+
+function addContinuationPage(
+  pdf: PDFDocument,
+  fonts: PdfFonts,
+  logoImage: PDFImage | null,
+  title: string,
+  number: string,
+) {
+  const page = pdf.addPage(A4_SIZE);
+
+  drawTextTop(page, `${title} - vazhdim`, 45, 48, { font: fonts.bold, size: 18 });
+  drawTextTop(page, number, 45, 70, { font: fonts.body, size: 10 });
+  drawLogoTop(page, logoImage, 426, 28, 124, 92);
+
+  return page;
+}
+
+function drawPaginatedSalesInvoiceTable(
+  pdf: PDFDocument,
+  firstPage: PDFPage,
   fonts: PdfFonts,
   options: SalesPdfOptions,
+  logoImage: PDFImage | null,
+  displayTitle: string,
   tableTop = 274,
-) {
+): PdfTableRenderResult {
   const tableX = 45;
-  const headerHeight = 29;
-  const widths = [146, 60, 60, 60, 60, 60, 60];
+  const headerHeight = 41;
+  const continuationTableTop = 142;
+  const widths = [116, 44, 55, 66, 56, 47, 56, 66];
   const columnStarts = widths.reduce<number[]>(
     (starts, width) => [...starts, starts[starts.length - 1] + width],
     [tableX],
@@ -583,74 +621,9 @@ function drawSalesInvoiceTable(
       : [{ name: "-", quantity: 0, unitPriceCents: 0, lineTotalCents: 0 }];
   const rowHeights = lineItems.map((line) => {
     const itemText = [line.name, line.description].filter(Boolean).join("\n");
-    const lineCount = wrapText(itemText, fonts.body, 10, widths[0] - 16).length;
-    return Math.max(61, 18 + lineCount * 12);
+    const lineCount = wrapText(itemText, fonts.body, 9.5, widths[0] - 14).length;
+    return Math.max(50, 18 + lineCount * 11);
   });
-  const tableHeight = headerHeight + rowHeights.reduce((sum, height) => sum + height, 0);
-  const tableBottom = tableTop + tableHeight;
-
-  drawRectangleTop(page, tableX, tableTop, tableWidth, tableHeight, {
-    borderColor: tableBorder,
-    borderWidth: 0.8,
-  });
-  for (const start of columnStarts.slice(1, -1)) {
-    drawLineTop(page, start, tableTop, start, tableBottom);
-  }
-  drawLineTop(page, tableX, tableTop + headerHeight, tableX + tableWidth, tableTop + headerHeight);
-
-  const headers = ["Artikulli", "Cope", "Çmimi për\nnjësi", "Vlera", "Tatimi", "Vlera e\ntatimit", "Gjithsejt"];
-  headers.forEach((header, index) => {
-    header.split("\n").forEach((line, lineIndex) => {
-      drawTextTop(page, line, columnStarts[index] + 4, tableTop + 8 + lineIndex * 10.5, {
-        font: fonts.bold,
-        size: 9,
-        width: widths[index] - 8,
-        align: index === 0 ? "left" : "center",
-      });
-    });
-  });
-
-  let rowTop = tableTop + headerHeight;
-  lineItems.forEach((line, index) => {
-    const rowHeight = rowHeights[index];
-    const itemText = [line.name, line.description].filter(Boolean).join("\n");
-    const lineVatCents = options.vatEnabled
-      ? calculatePercentageCents(line.lineTotalCents, options.vatRate)
-      : 0;
-    const lineGrossCents = line.lineTotalCents + lineVatCents;
-    const rowCenterTop = rowTop + rowHeight / 2 - 5;
-    const numericValues = [
-      formatQuantity(line.quantity),
-      formatMoneyValue(line.unitPriceCents),
-      formatMoneyValue(line.lineTotalCents),
-      options.vatEnabled ? `TVSH ${formatVatRate(options.vatRate)}%` : "Pa TVSH",
-      formatMoneyValue(lineVatCents),
-      formatMoneyValue(lineGrossCents),
-    ];
-
-    drawWrappedTextTop(page, itemText, columnStarts[0] + 8, rowTop + 12, {
-      font: fonts.body,
-      size: 10,
-      maxWidth: widths[0] - 16,
-      lineHeight: 10.5,
-    });
-
-    numericValues.forEach((value, valueIndex) => {
-      const columnIndex = valueIndex + 1;
-      drawTextTop(page, value, columnStarts[columnIndex] + 8, rowCenterTop, {
-        font: fonts.body,
-        size: 10,
-        width: widths[columnIndex] - 16,
-        align: columnIndex === 4 ? "center" : "right",
-      });
-    });
-
-    rowTop += rowHeight;
-    if (index < lineItems.length - 1) {
-      drawLineTop(page, tableX, rowTop, tableX + tableWidth, rowTop, 0.6);
-    }
-  });
-
   const totals = [
     ["Nëntotali", formatCurrency(options.subtotalCents), false],
     [
@@ -661,35 +634,155 @@ function drawSalesInvoiceTable(
     ["Gjithsejt", formatCurrency(options.totalCents), true],
   ] as const;
   const totalRowHeight = 18.8;
-  const valueX = tableX + tableWidth - widths[6];
-  const valueWidth = widths[6];
+  const totalsHeight = totalRowHeight * totals.length;
+  const valueX = tableX + tableWidth - widths[7];
+  const valueWidth = widths[7];
   const labelWidth = 93;
 
-  drawRectangleTop(page, valueX, tableBottom, valueWidth, totalRowHeight * totals.length, {
-    borderColor: tableBorder,
-    borderWidth: 0.8,
-  });
-  for (let index = 1; index < totals.length; index += 1) {
-    drawLineTop(page, valueX, tableBottom + totalRowHeight * index, valueX + valueWidth, tableBottom + totalRowHeight * index);
+  const drawHeader = (page: PDFPage, segmentTop: number) => {
+    const headers = [
+      "Artikulli",
+      "Cope",
+      "Çmimi për\nnjësi",
+      "Çmimi për\nnjësi me\nTVSH",
+      "Vlera",
+      "Tatimi",
+      "Vlera e\ntatimit",
+      "Gjithsejt",
+    ];
+
+    headers.forEach((header, index) => {
+      header.split("\n").forEach((line, lineIndex) => {
+        drawTextTop(page, line, columnStarts[index] + 4, segmentTop + 7 + lineIndex * 10, {
+          font: fonts.bold,
+          size: 8.1,
+          width: widths[index] - 8,
+          align: index === 0 ? "left" : "center",
+        });
+      });
+    });
+  };
+
+  const drawTotals = (page: PDFPage, totalsTop: number) => {
+    drawRectangleTop(page, valueX, totalsTop, valueWidth, totalsHeight, {
+      borderColor: tableBorder,
+      borderWidth: 0.8,
+    });
+    for (let index = 1; index < totals.length; index += 1) {
+      drawLineTop(page, valueX, totalsTop + totalRowHeight * index, valueX + valueWidth, totalsTop + totalRowHeight * index);
+    }
+
+    totals.forEach(([label, value, isTotal], index) => {
+      const totalTop = totalsTop + totalRowHeight * index + 4.5;
+      drawTextTop(page, label, valueX - labelWidth - 8, totalTop, {
+        font: isTotal ? fonts.bold : fonts.body,
+        size: 10,
+        width: labelWidth,
+        align: "right",
+      });
+      drawTextTop(page, value, valueX + 6, totalTop, {
+        font: isTotal ? fonts.bold : fonts.body,
+        size: 10,
+        width: valueWidth - 12,
+        align: "right",
+      });
+    });
+  };
+
+  let currentPage = firstPage;
+  let currentTop = tableTop;
+  let rowIndex = 0;
+
+  while (rowIndex < lineItems.length) {
+    let rowsOnPage = 0;
+    let rowsHeight = 0;
+
+    while (rowIndex + rowsOnPage < lineItems.length) {
+      const candidateHeight = rowHeights[rowIndex + rowsOnPage];
+      const isLastCandidate = rowIndex + rowsOnPage === lineItems.length - 1;
+      const reservedHeight = isLastCandidate ? totalsHeight + 8 : 0;
+      const candidateBottom = currentTop + headerHeight + rowsHeight + candidateHeight + reservedHeight;
+
+      if (rowsOnPage > 0 && candidateBottom > tablePageBottomLimit) {
+        break;
+      }
+
+      rowsOnPage += 1;
+      rowsHeight += candidateHeight;
+
+      if (candidateBottom > tablePageBottomLimit) {
+        break;
+      }
+    }
+
+    const segmentBottom = currentTop + headerHeight + rowsHeight;
+    const isLastSegment = rowIndex + rowsOnPage >= lineItems.length;
+
+    drawRectangleTop(currentPage, tableX, currentTop, tableWidth, segmentBottom - currentTop, {
+      borderColor: tableBorder,
+      borderWidth: 0.8,
+    });
+    for (const start of columnStarts.slice(1, -1)) {
+      drawLineTop(currentPage, start, currentTop, start, segmentBottom);
+    }
+    drawLineTop(currentPage, tableX, currentTop + headerHeight, tableX + tableWidth, currentTop + headerHeight);
+    drawHeader(currentPage, currentTop);
+
+    let rowTop = currentTop + headerHeight;
+    for (let offset = 0; offset < rowsOnPage; offset += 1) {
+      const line = lineItems[rowIndex + offset];
+      const rowHeight = rowHeights[rowIndex + offset];
+      const itemText = [line.name, line.description].filter(Boolean).join("\n");
+      const lineVatCents = options.vatEnabled
+        ? calculatePercentageCents(line.lineTotalCents, options.vatRate)
+        : 0;
+      const lineGrossCents = line.lineTotalCents + lineVatCents;
+      const rowCenterTop = rowTop + rowHeight / 2 - 4.5;
+      const numericValues = [
+        formatQuantity(line.quantity),
+        formatMoneyValue(line.unitPriceCents),
+        formatMoneyValue(getVatInclusiveUnitPriceCents(line, options.vatEnabled, options.vatRate)),
+        formatMoneyValue(line.lineTotalCents),
+        options.vatEnabled ? `TVSH ${formatVatRate(options.vatRate)}%` : "Pa TVSH",
+        formatMoneyValue(lineVatCents),
+        formatMoneyValue(lineGrossCents),
+      ];
+
+      drawWrappedTextTop(currentPage, itemText, columnStarts[0] + 7, rowTop + 10, {
+        font: fonts.body,
+        size: 9.5,
+        maxWidth: widths[0] - 14,
+        lineHeight: 10.5,
+      });
+
+      numericValues.forEach((value, valueIndex) => {
+        const columnIndex = valueIndex + 1;
+        drawTextTop(currentPage, value, columnStarts[columnIndex] + 5, rowCenterTop, {
+          font: fonts.body,
+          size: columnIndex === 5 ? 8.2 : 8.8,
+          width: widths[columnIndex] - 10,
+          align: columnIndex === 5 ? "center" : "right",
+        });
+      });
+
+      rowTop += rowHeight;
+      if (offset < rowsOnPage - 1) {
+        drawLineTop(currentPage, tableX, rowTop, tableX + tableWidth, rowTop, 0.6);
+      }
+    }
+
+    rowIndex += rowsOnPage;
+
+    if (isLastSegment) {
+      drawTotals(currentPage, segmentBottom);
+      return { page: currentPage, bottom: segmentBottom + totalsHeight };
+    }
+
+    currentPage = addContinuationPage(pdf, fonts, logoImage, displayTitle, options.number);
+    currentTop = continuationTableTop;
   }
 
-  totals.forEach(([label, value, isTotal], index) => {
-    const totalTop = tableBottom + totalRowHeight * index + 4.5;
-    drawTextTop(page, label, valueX - labelWidth - 8, totalTop, {
-      font: isTotal ? fonts.bold : fonts.body,
-      size: 10,
-      width: labelWidth,
-      align: "right",
-    });
-    drawTextTop(page, value, valueX + 6, totalTop, {
-      font: isTotal ? fonts.bold : fonts.body,
-      size: 10,
-      width: valueWidth - 12,
-      align: "right",
-    });
-  });
-
-  return tableBottom + totalRowHeight * totals.length;
+  return { page: currentPage, bottom: currentTop };
 }
 
 function drawSalesInvoiceFooter(
@@ -730,6 +823,192 @@ function drawSalesInvoiceFooter(
     maxWidth: 506,
     lineHeight: 11.5,
   });
+}
+
+function drawPaginatedPurchaseInvoiceTable(
+  pdf: PDFDocument,
+  firstPage: PDFPage,
+  fonts: PdfFonts,
+  options: PurchasePdfOptions,
+  logoImage: PDFImage | null,
+  displayTitle: string,
+): PdfTableRenderResult {
+  const tableX = 28.5;
+  const tableTop = 286.5;
+  const continuationTableTop = 142;
+  const headerHeight = 36;
+  const widths = [190, 54, 96, 104, 96];
+  const columnStarts = widths.reduce<number[]>(
+    (starts, width) => [...starts, starts[starts.length - 1] + width],
+    [tableX],
+  );
+  const tableWidth = widths.reduce((sum, width) => sum + width, 0);
+  const lineItems =
+    options.lines.length > 0
+      ? options.lines
+      : [{ name: "-", quantity: 0, unitPriceCents: 0, lineTotalCents: 0 }];
+  const rowHeights = lineItems.map((line) => {
+    const itemText = [line.name, line.description].filter(Boolean).join("\n");
+    const lineCount = wrapText(itemText, fonts.body, 9.5, widths[0] - 12).length;
+    return Math.max(35, 14 + lineCount * 10.8);
+  });
+  const totals = [
+    ["Nëntotali", formatCurrency(options.subtotalCents), false],
+    [
+      options.vatEnabled ? `TVSH ${formatVatRate(options.vatRate)}%` : "Pa TVSH",
+      formatCurrency(options.vatAmountCents),
+      false,
+    ],
+    ["Gjithsejt", formatCurrency(options.totalCents), true],
+  ] as const;
+  const totalRowHeight = 18.8;
+  const totalsHeight = totalRowHeight * totals.length;
+  const valueX = columnStarts[4];
+  const valueWidth = widths[4];
+  const labelWidth = 120;
+
+  const drawHeader = (page: PDFPage, segmentTop: number) => {
+    const headers = ["Llogaria kontabël", "Sasia", "Çmimi për\nnjësi", "Çmimi për\nnjësi me TVSH", "Gjithsejt"];
+
+    headers.forEach((header, index) => {
+      header.split("\n").forEach((line, lineIndex) => {
+        drawTextTop(page, line, columnStarts[index] + 6, segmentTop + 6 + lineIndex * 10.5, {
+          font: fonts.bold,
+          size: 8.8,
+          width: widths[index] - 12,
+          align: index === 0 ? "left" : "right",
+        });
+      });
+    });
+  };
+
+  const drawTotals = (page: PDFPage, totalsTop: number) => {
+    drawRectangleTop(page, valueX, totalsTop, valueWidth, totalsHeight, {
+      borderColor: tableBorder,
+      borderWidth: 0.8,
+    });
+    for (let index = 1; index < totals.length; index += 1) {
+      drawLineTop(page, valueX, totalsTop + totalRowHeight * index, valueX + valueWidth, totalsTop + totalRowHeight * index);
+    }
+
+    totals.forEach(([label, value, isTotal], index) => {
+      const totalTop = totalsTop + totalRowHeight * index + 4.5;
+      drawTextTop(page, label, valueX - labelWidth - 8, totalTop, {
+        font: isTotal ? fonts.bold : fonts.body,
+        size: 10,
+        width: labelWidth,
+        align: "right",
+      });
+      drawTextTop(page, value, valueX + 6, totalTop, {
+        font: isTotal ? fonts.bold : fonts.body,
+        size: 10,
+        width: valueWidth - 12,
+        align: "right",
+      });
+    });
+  };
+
+  let currentPage = firstPage;
+  let currentTop = tableTop;
+  let rowIndex = 0;
+
+  while (rowIndex < lineItems.length) {
+    let rowsOnPage = 0;
+    let rowsHeight = 0;
+
+    while (rowIndex + rowsOnPage < lineItems.length) {
+      const candidateHeight = rowHeights[rowIndex + rowsOnPage];
+      const isLastCandidate = rowIndex + rowsOnPage === lineItems.length - 1;
+      const reservedHeight = isLastCandidate ? totalsHeight + 8 : 0;
+      const candidateBottom = currentTop + headerHeight + rowsHeight + candidateHeight + reservedHeight;
+
+      if (rowsOnPage > 0 && candidateBottom > tablePageBottomLimit) {
+        break;
+      }
+
+      rowsOnPage += 1;
+      rowsHeight += candidateHeight;
+
+      if (candidateBottom > tablePageBottomLimit) {
+        break;
+      }
+    }
+
+    const segmentBottom = currentTop + headerHeight + rowsHeight;
+    const isLastSegment = rowIndex + rowsOnPage >= lineItems.length;
+
+    drawRectangleTop(currentPage, tableX, currentTop, tableWidth, segmentBottom - currentTop, {
+      borderColor: tableBorder,
+      borderWidth: 0.8,
+    });
+    for (const start of columnStarts.slice(1, -1)) {
+      drawLineTop(currentPage, start, currentTop, start, segmentBottom);
+    }
+    drawLineTop(currentPage, tableX, currentTop + headerHeight, tableX + tableWidth, currentTop + headerHeight);
+    drawHeader(currentPage, currentTop);
+
+    let rowTop = currentTop + headerHeight;
+    for (let offset = 0; offset < rowsOnPage; offset += 1) {
+      const line = lineItems[rowIndex + offset];
+      const rowHeight = rowHeights[rowIndex + offset];
+      const itemText = [line.name, line.description].filter(Boolean).join("\n");
+      const rowCenterTop = rowTop + rowHeight / 2 - 5;
+
+      drawWrappedTextTop(currentPage, itemText, columnStarts[0] + 6, rowTop + 8, {
+        font: fonts.body,
+        size: 9.5,
+        maxWidth: widths[0] - 12,
+        lineHeight: 10.8,
+      });
+      drawTextTop(currentPage, formatQuantity(line.quantity), columnStarts[1] + 6, rowCenterTop, {
+        font: fonts.body,
+        size: 9,
+        width: widths[1] - 12,
+        align: "center",
+      });
+      drawTextTop(currentPage, formatMoneyValue(line.unitPriceCents), columnStarts[2] + 6, rowCenterTop, {
+        font: fonts.body,
+        size: 9,
+        width: widths[2] - 12,
+        align: "right",
+      });
+      drawTextTop(
+        currentPage,
+        formatMoneyValue(getVatInclusiveUnitPriceCents(line, options.vatEnabled, options.vatRate)),
+        columnStarts[3] + 6,
+        rowCenterTop,
+        {
+          font: fonts.body,
+          size: 9,
+          width: widths[3] - 12,
+          align: "right",
+        },
+      );
+      drawTextTop(currentPage, formatMoneyValue(line.lineTotalCents), columnStarts[4] + 6, rowCenterTop, {
+        font: fonts.body,
+        size: 9,
+        width: widths[4] - 12,
+        align: "right",
+      });
+
+      rowTop += rowHeight;
+      if (offset < rowsOnPage - 1) {
+        drawLineTop(currentPage, tableX, rowTop, tableX + tableWidth, rowTop, 0.6);
+      }
+    }
+
+    rowIndex += rowsOnPage;
+
+    if (isLastSegment) {
+      drawTotals(currentPage, segmentBottom);
+      return { page: currentPage, bottom: segmentBottom + totalsHeight };
+    }
+
+    currentPage = addContinuationPage(pdf, fonts, logoImage, displayTitle, options.number);
+    currentTop = continuationTableTop;
+  }
+
+  return { page: currentPage, bottom: currentTop };
 }
 
 function drawDebitNoteFooter(
@@ -784,7 +1063,7 @@ export async function generateSalesPdf(options: SalesPdfOptions) {
 
   const displayTitle = options.title === "Sales Invoice" ? "Faturë" : options.title;
   drawTextTop(page, displayTitle, 45, 88, { font: fonts.bold, size: 28 });
-  drawLogoTop(page, logoImage, 448, 76, 98, 72);
+  drawLogoTop(page, logoImage, 420, 60, 130, 96);
 
   const clientBottom = drawPartyBlock(page, fonts, {
     name: options.clientName,
@@ -814,129 +1093,15 @@ export async function generateSalesPdf(options: SalesPdfOptions) {
   const companyBottom = drawCompanyBlock(page, fonts, 388, 184, 178);
 
   const tableTop = Math.max(274, clientBottom + 14, companyBottom + 14);
-  const totalsBottom = drawSalesInvoiceTable(page, fonts, options, tableTop);
-  drawSalesInvoiceFooter(page, fonts, options, totalsBottom);
+  const tableResult = drawPaginatedSalesInvoiceTable(pdf, page, fonts, options, logoImage, displayTitle, tableTop);
+  if (tableResult.bottom > 640) {
+    const footerPage = addContinuationPage(pdf, fonts, logoImage, displayTitle, options.number);
+    drawSalesInvoiceFooter(footerPage, fonts, options, 150);
+  } else {
+    drawSalesInvoiceFooter(tableResult.page, fonts, options, tableResult.bottom);
+  }
 
   return pdf.save();
-}
-
-function drawPurchaseInvoiceTable(page: PDFPage, fonts: PdfFonts, options: PurchasePdfOptions) {
-  const tableX = 28.5;
-  const tableTop = 286.5;
-  const headerHeight = 19;
-  const widths = [220, 66, 159, 95];
-  const columnStarts = widths.reduce<number[]>(
-    (starts, width) => [...starts, starts[starts.length - 1] + width],
-    [tableX],
-  );
-  const tableWidth = widths.reduce((sum, width) => sum + width, 0);
-  const lineItems =
-    options.lines.length > 0
-      ? options.lines
-      : [{ name: "-", quantity: 0, unitPriceCents: 0, lineTotalCents: 0 }];
-  const rowHeights = lineItems.map((line) => {
-    const itemText = [line.name, line.description].filter(Boolean).join("\n");
-    const lineCount = wrapText(itemText, fonts.body, 10, widths[0] - 12).length;
-    return Math.max(35, 14 + lineCount * 11);
-  });
-  const tableHeight = headerHeight + rowHeights.reduce((sum, height) => sum + height, 0);
-  const tableBottom = tableTop + tableHeight;
-
-  drawRectangleTop(page, tableX, tableTop, tableWidth, tableHeight, {
-    borderColor: tableBorder,
-    borderWidth: 0.8,
-  });
-  for (const start of columnStarts.slice(1, -1)) {
-    drawLineTop(page, start, tableTop, start, tableBottom);
-  }
-  drawLineTop(page, tableX, tableTop + headerHeight, tableX + tableWidth, tableTop + headerHeight);
-
-  const headers = ["Llogaria kontabël", "Sasia", "Çmimi për njësi", "Gjithsejt"];
-  headers.forEach((header, index) => {
-    drawTextTop(page, header, columnStarts[index] + 6, tableTop + 6, {
-      font: fonts.bold,
-      size: 10,
-      width: widths[index] - 12,
-      align: index === 0 ? "left" : "right",
-    });
-  });
-
-  let rowTop = tableTop + headerHeight;
-  lineItems.forEach((line, index) => {
-    const rowHeight = rowHeights[index];
-    const itemText = [line.name, line.description].filter(Boolean).join("\n");
-    const rowCenterTop = rowTop + rowHeight / 2 - 5;
-
-    drawWrappedTextTop(page, itemText, columnStarts[0] + 6, rowTop + 8, {
-      font: fonts.body,
-      size: 10,
-      maxWidth: widths[0] - 12,
-      lineHeight: 10.8,
-    });
-    drawTextTop(page, formatQuantity(line.quantity), columnStarts[1] + 6, rowCenterTop, {
-      font: fonts.body,
-      size: 10,
-      width: widths[1] - 12,
-      align: "center",
-    });
-    drawTextTop(page, formatMoneyValue(line.unitPriceCents), columnStarts[2] + 6, rowCenterTop, {
-      font: fonts.body,
-      size: 10,
-      width: widths[2] - 12,
-      align: "right",
-    });
-    drawTextTop(page, formatMoneyValue(line.lineTotalCents), columnStarts[3] + 6, rowCenterTop, {
-      font: fonts.body,
-      size: 10,
-      width: widths[3] - 12,
-      align: "right",
-    });
-
-    rowTop += rowHeight;
-    if (index < lineItems.length - 1) {
-      drawLineTop(page, tableX, rowTop, tableX + tableWidth, rowTop, 0.6);
-    }
-  });
-
-  const totals = [
-    ["Nëntotali", formatCurrency(options.subtotalCents), false],
-    [
-      options.vatEnabled ? `TVSH ${formatVatRate(options.vatRate)}%` : "Pa TVSH",
-      formatCurrency(options.vatAmountCents),
-      false,
-    ],
-    ["Gjithsejt", formatCurrency(options.totalCents), true],
-  ] as const;
-  const totalRowHeight = 18.8;
-  const valueX = columnStarts[3];
-  const valueWidth = widths[3];
-  const labelWidth = 120;
-
-  drawRectangleTop(page, valueX, tableBottom, valueWidth, totalRowHeight * totals.length, {
-    borderColor: tableBorder,
-    borderWidth: 0.8,
-  });
-  for (let index = 1; index < totals.length; index += 1) {
-    drawLineTop(page, valueX, tableBottom + totalRowHeight * index, valueX + valueWidth, tableBottom + totalRowHeight * index);
-  }
-
-  totals.forEach(([label, value, isTotal], index) => {
-    const totalTop = tableBottom + totalRowHeight * index + 4.5;
-    drawTextTop(page, label, valueX - labelWidth - 8, totalTop, {
-      font: isTotal ? fonts.bold : fonts.body,
-      size: 10,
-      width: labelWidth,
-      align: "right",
-    });
-    drawTextTop(page, value, valueX + 6, totalTop, {
-      font: isTotal ? fonts.bold : fonts.body,
-      size: 10,
-      width: valueWidth - 12,
-      align: "right",
-    });
-  });
-
-  return tableBottom + totalRowHeight * totals.length;
 }
 
 function drawPurchaseInvoiceFooter(
@@ -981,7 +1146,7 @@ export async function generatePurchasePdf(options: PurchasePdfOptions) {
 
   const displayTitle = options.title === "Purchase Invoice" ? "Faturë Blerje" : options.title;
   drawTextTop(page, displayTitle, 28.5, 28.5, { font: fonts.bold, size: 18 });
-  drawLogoTop(page, logoImage, 475, 58, 92, 68);
+  drawLogoTop(page, logoImage, 446, 46, 122, 90);
 
   drawPartyBlock(page, fonts, {
     name: options.supplierName,
@@ -1018,8 +1183,13 @@ export async function generatePurchasePdf(options: PurchasePdfOptions) {
     lineHeight: 12,
   });
 
-  const totalsBottom = drawPurchaseInvoiceTable(page, fonts, options);
-  drawPurchaseInvoiceFooter(page, fonts, options, totalsBottom);
+  const tableResult = drawPaginatedPurchaseInvoiceTable(pdf, page, fonts, options, logoImage, displayTitle);
+  if (tableResult.bottom > 690) {
+    const footerPage = addContinuationPage(pdf, fonts, logoImage, displayTitle, options.number);
+    drawPurchaseInvoiceFooter(footerPage, fonts, options, 150);
+  } else {
+    drawPurchaseInvoiceFooter(tableResult.page, fonts, options, tableResult.bottom);
+  }
 
   return pdf.save();
 }
@@ -1249,7 +1419,7 @@ export async function generateDebitNotePdf(options: DebitNotePdfOptions) {
   };
 
   drawTextTop(page, options.title, 45, 88, { font: fonts.bold, size: 28 });
-  drawLogoTop(page, logoImage, 448, 76, 98, 72);
+  drawLogoTop(page, logoImage, 420, 60, 130, 96);
 
   const clientBottom = drawPartyBlock(page, fonts, {
     name: options.clientName,
@@ -1287,8 +1457,13 @@ export async function generateDebitNotePdf(options: DebitNotePdfOptions) {
     lineHeight: 12,
   }) + 10;
 
-  const totalsBottom = drawSalesInvoiceTable(page, fonts, tableOptions, tableTop);
-  drawDebitNoteFooter(page, fonts, options, totalsBottom);
+  const tableResult = drawPaginatedSalesInvoiceTable(pdf, page, fonts, tableOptions, logoImage, options.title, tableTop);
+  if (tableResult.bottom > 640) {
+    const footerPage = addContinuationPage(pdf, fonts, logoImage, options.title, options.number);
+    drawDebitNoteFooter(footerPage, fonts, options, 150);
+  } else {
+    drawDebitNoteFooter(tableResult.page, fonts, options, tableResult.bottom);
+  }
 
   return pdf.save();
 }

@@ -1,10 +1,6 @@
 import { createUserAction, deleteUserAction, updateUserPermissionsAction } from "@/actions/admin";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
-import {
-  PermissionChecklist,
-  createEmptyPermissionMatrix,
-  permissionStats,
-} from "@/components/admin/permission-checklist";
+import { PermissionChecklist } from "@/components/admin/permission-checklist";
 import { RecordTable } from "@/components/admin/record-table";
 import { UserCreateForm } from "@/components/forms/user-create-form";
 import { buttonClasses } from "@/components/shared/button";
@@ -13,6 +9,7 @@ import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import type { Locale } from "@/lib/i18n";
 import { measureDetailAsync, measureDetailSync, withPagePerf } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
+import { createEmptyPermissionMatrix, permissionStats } from "@/lib/permissions-config";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Check } from "lucide-react";

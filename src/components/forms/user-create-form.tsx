@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { PermissionChecklist, createEmptyPermissionMatrix } from "@/components/admin/permission-checklist";
+import { PermissionChecklist } from "@/components/admin/permission-checklist";
 import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { PasswordInput } from "@/components/forms/password-input";
 import { buttonClasses } from "@/components/shared/button";
 import type { Locale } from "@/lib/i18n";
+import { createEmptyPermissionMatrix } from "@/lib/permissions-config";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
 

@@ -2,15 +2,15 @@ import { FurnitureCategory } from "@prisma/client";
 
 export const COMPANY = {
   name: "Art Home",
-  phone: "+383 49 313 215",
-  email: "bujar.bela@artnet-ks.com",
-  address: "Lipjan, Kosovo",
+  phone: "049/313/215",
+  email: "mobileriaarthome@gmail.com",
+  address: "PRISHTINË-FERIZAJ, 3",
   documents: {
-    legalName: '"ART NET" SH.P.K',
-    address: "Fushe Kosove, Rr. Nëna Terezë",
-    phone: "049/313/215, 160/740",
-    email: "sales@artnet-ks.com",
-    nui: "812327501",
+    legalName: "Mobileria Art Home SH.P.K.",
+    address: "PRISHTINË-FERIZAJ, 3",
+    phone: "049/313/215",
+    email: "mobileriaarthome@gmail.com",
+    nui: null,
     vatNumber: null,
     bankAccounts: [
       "PCB: 1116008135000133",

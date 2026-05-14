@@ -32,6 +32,33 @@ export type PermissionMatrix = Record<
   Record<PermissionActionKey, boolean>
 >;
 
+export const visiblePermissionModules = permissionModules;
+
+export function createEmptyPermissionMatrix() {
+  return Object.fromEntries(
+    permissionModules.map((permissionModule) => [
+      permissionModule,
+      Object.fromEntries(permissionActions.map((action) => [action, false])),
+    ]),
+  ) as PermissionMatrix;
+}
+
+export function permissionStats(matrix: PermissionMatrix) {
+  let enabled = 0;
+  let total = 0;
+
+  for (const permissionModule of visiblePermissionModules) {
+    for (const action of permissionActions) {
+      total += 1;
+      if (matrix[permissionModule][action]) {
+        enabled += 1;
+      }
+    }
+  }
+
+  return { enabled, total };
+}
+
 export const permissionModuleLabels = {
   DASHBOARD: { sq: "Dashboard", en: "Dashboard" },
   LEADS: { sq: "Kërkesat", en: "Requests" },

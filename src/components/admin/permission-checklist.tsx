@@ -5,39 +5,12 @@ import {
   permissionActionLabels,
   permissionActions,
   permissionModuleLabels,
-  permissionModules,
+  visiblePermissionModules,
   type PermissionMatrix,
 } from "@/lib/permissions-config";
 import type { Locale } from "@/lib/i18n";
 
 export const checkboxClassName = "h-4 w-4 accent-[var(--color-accent-strong)]";
-
-export const visiblePermissionModules = permissionModules;
-
-export function permissionStats(matrix: PermissionMatrix) {
-  let enabled = 0;
-  let total = 0;
-
-  for (const permissionModule of visiblePermissionModules) {
-    for (const action of permissionActions) {
-      total += 1;
-      if (matrix[permissionModule][action]) {
-        enabled += 1;
-      }
-    }
-  }
-
-  return { enabled, total };
-}
-
-export function createEmptyPermissionMatrix() {
-  return Object.fromEntries(
-    permissionModules.map((permissionModule) => [
-      permissionModule,
-      Object.fromEntries(permissionActions.map((action) => [action, false])),
-    ]),
-  ) as PermissionMatrix;
-}
 
 export function PermissionChecklist({
   locale,
