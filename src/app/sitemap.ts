@@ -17,14 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date("2026-05-14"),
       changeFrequency: "monthly" as const,
       priority: route === "" ? 1 : 0.8,
-      alternates: {
-        languages: Object.fromEntries(
-          locales.map((alternateLocale) => [
-            alternateLocale,
-            absoluteUrl(`/${alternateLocale}${route}`),
-          ]),
-        ),
-      },
     })),
   );
 }

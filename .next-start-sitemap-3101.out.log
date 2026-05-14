@@ -1,0 +1,10 @@
+
+> arthome@0.1.0 start
+> next start --port 3101
+
+▲ Next.js 16.2.4
+- Local:         http://localhost:3101
+- Network:       http://26.108.41.110:3101
+✓ Ready in 115ms
+[PERF_DETAIL] prisma.module init 0.0ms nodeEnv=production reusedClient=false
+[PERF_DETAIL] prisma.client.create 2.3ms nodeEnv=production
