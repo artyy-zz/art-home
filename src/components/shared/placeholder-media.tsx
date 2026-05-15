@@ -29,6 +29,7 @@ export function PlaceholderMedia({
           alt={label}
           fill
           priority={priority}
+          loading={priority ? undefined : "lazy"}
           sizes="(min-width: 1280px) 42vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover"
         />

@@ -5,7 +5,7 @@ import { LightboxImage } from "@/components/shared/lightbox-image";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { buttonClasses } from "@/components/shared/button";
 import { getPublicProducts } from "@/lib/erp";
-import type { Locale } from "@/lib/i18n";
+import { locales, type Locale } from "@/lib/i18n";
 import { buildPageMetadata } from "@/lib/seo";
 import { getProductImage } from "@/lib/site-images";
 
@@ -15,6 +15,10 @@ export async function generateMetadata({
   const { locale } = await params;
 
   return buildPageMetadata(locale as Locale, "furniture");
+}
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
 }
 
 export default async function FurniturePage({

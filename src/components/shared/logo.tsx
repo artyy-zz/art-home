@@ -22,10 +22,11 @@ export function Logo({
         )}
       >
         <Image
-          src="/images/brand/logo.jpg"
+          src="/images/brand/logo.avif"
           alt="Mobileria Art Home logo"
           width={46}
           height={46}
+          sizes="46px"
           className="h-11 w-11 rounded-full object-cover"
         />
       </span>

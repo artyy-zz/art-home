@@ -10,7 +10,7 @@ import {
   Prisma,
   type Material,
 } from "@prisma/client";
-import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { categoryCopy } from "@/lib/company";
 import { publicProductCatalog } from "@/data/product-catalog";
 import type { Locale } from "@/lib/i18n";
@@ -194,18 +194,19 @@ function localizeCatalogProduct(
 }
 
 export async function getPublicProducts(locale: Locale) {
-  const products = await prisma.product.findMany({
-    ...productWithBomArgs,
-    orderBy: [{ featured: "desc" }, { category: "asc" }, { createdAt: "desc" }],
-  });
+  return publicProductCatalog
+    .map((product) => localizeCatalogProduct(product, locale))
+    .sort((left, right) => {
+      if (left.featured !== right.featured) {
+        return left.featured ? -1 : 1;
+      }
 
-  if (products.length === 0) {
-    return publicProductCatalog.map((product) =>
-      localizeCatalogProduct(product, locale),
-    );
-  }
+      if (left.category !== right.category) {
+        return left.category.localeCompare(right.category);
+      }
 
-  return products.map((product) => localizeProduct(product, locale));
+      return 0;
+    });
 }
 
 export async function getFeaturedProducts(locale: Locale) {
@@ -1156,217 +1157,258 @@ export async function getProductBuilderOptions() {
   });
 }
 
+function numberFromDb(value: bigint | number | null | undefined) {
+  return typeof value === "bigint" ? Number(value) : (value ?? 0);
+}
+
 export async function getDashboardSnapshot(locale: Locale) {
   return measureAsync("erp.dashboardSnapshot", async () => {
-  const [invoices, materials, notifications, movements] =
-    await measureAdminMainQuery("admin/dashboard", () =>
-      Promise.all([
-        prisma.invoice.findMany({
-          select: {
-            id: true,
-            number: true,
-            status: true,
-            subtotalCents: true,
-            vatAmountCents: true,
-            totalCents: true,
-            amountPaidCents: true,
-            dueDate: true,
-            issuedAt: true,
-            client: {
-              select: {
-                name: true,
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const nextMonthStart = addMonths(currentMonthStart, 1);
+    const seriesStart = startOfMonth(subMonths(now, 5));
+
+    const [
+      monthlyInvoiceTotals,
+      monthlyProfitRows,
+      outstandingDebtRows,
+      bestSellingProductGroups,
+      revenueSeriesRows,
+      materialUsageRows,
+      lowStockMaterials,
+      notifications,
+      overdueInvoices,
+    ] = await measureAdminMainQuery(
+      "admin/dashboard",
+      () =>
+        Promise.all([
+          prisma.invoice.aggregate({
+            where: {
+              issuedAt: {
+                gte: currentMonthStart,
+                lt: nextMonthStart,
               },
             },
-            items: {
-              select: {
-                productName: true,
-                quantity: true,
-                lineTotalCents: true,
-                unitCostCents: true,
+            _sum: {
+              subtotalCents: true,
+              vatAmountCents: true,
+              totalCents: true,
+            },
+          }),
+          prisma.$queryRaw<Array<{ monthlyProfitCents: bigint | number | null }>>`
+            SELECT COALESCE(SUM(ii."lineTotalCents" - ii."unitCostCents" * ii."quantity"), 0) AS "monthlyProfitCents"
+            FROM "InvoiceItem" ii
+            INNER JOIN "Invoice" i ON i.id = ii."invoiceId"
+            WHERE i."issuedAt" >= ${currentMonthStart}
+              AND i."issuedAt" < ${nextMonthStart}
+          `,
+          prisma.$queryRaw<Array<{ outstandingDebtCents: bigint | number | null }>>`
+            SELECT COALESCE(
+              SUM(
+                GREATEST(
+                  i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
+                  0
+                )
+              ),
+              0
+            ) AS "outstandingDebtCents"
+            FROM "Invoice" i
+            LEFT JOIN (
+              SELECT "invoiceId", SUM("totalCents") AS "totalCents"
+              FROM "DebitNote"
+              GROUP BY "invoiceId"
+            ) dn ON dn."invoiceId" = i.id
+            WHERE i."status"::text <> ${InvoiceStatus.PAID}
+          `,
+          prisma.invoiceItem.groupBy({
+            by: ["productName"],
+            _sum: {
+              quantity: true,
+              lineTotalCents: true,
+            },
+            orderBy: {
+              _sum: {
+                quantity: "desc",
               },
             },
-            debitNotes: {
-              select: {
-                totalCents: true,
-              },
-            },
-          },
-          orderBy: {
-            issuedAt: "desc",
-          },
-        }),
-        prisma.material.findMany({
-          select: {
-            id: true,
-            name: true,
-            unit: true,
-            stockQuantity: true,
-            lowStockThreshold: true,
-          },
-          orderBy: {
-            stockQuantity: "asc",
-          },
-        }),
-        prisma.notification.findMany({
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 6,
-        }),
-        prisma.inventoryMovement.findMany({
-          where: {
-            kind: InventoryMovementKind.CONSUMPTION,
-          },
-          select: {
-            quantity: true,
-            material: {
-              select: {
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 200,
-        }),
-      ]),
-    { locale },
-  );
-
-  const currentMonthStart = startOfMonth(new Date());
-  const currentMonthEnd = endOfMonth(new Date());
-  const thisMonthInvoices = invoices.filter((invoice) => {
-    const issuedAt = new Date(invoice.issuedAt);
-    return issuedAt >= currentMonthStart && issuedAt <= currentMonthEnd;
-  });
-
-  const monthlyRevenueCents = thisMonthInvoices.reduce(
-    (sum, invoice) => sum + invoice.totalCents,
-    0,
-  );
-  const monthlyRevenueBeforeVatCents = thisMonthInvoices.reduce(
-    (sum, invoice) => sum + invoice.subtotalCents,
-    0,
-  );
-  const monthlyVatCents = thisMonthInvoices.reduce(
-    (sum, invoice) => sum + invoice.vatAmountCents,
-    0,
-  );
-  const monthlyProfitCents = thisMonthInvoices.reduce(
-    (sum, invoice) =>
-      sum +
-      invoice.items.reduce(
-        (inner, item) =>
-          inner + (item.lineTotalCents - item.unitCostCents * item.quantity),
-        0,
-      ),
-    0,
-  );
-  const outstandingDebtCents = invoices.reduce(
-    (sum, invoice) => sum + getAdjustedInvoiceOutstandingCents(invoice),
-    0,
-  );
-
-  const topProductsMap = new Map<
-    string,
-    { name: string; quantity: number; revenueCents: number }
-  >();
-
-  for (const invoice of invoices) {
-    for (const item of invoice.items) {
-      const current = topProductsMap.get(item.productName) ?? {
-        name: item.productName,
-        quantity: 0,
-        revenueCents: 0,
-      };
-
-      current.quantity += item.quantity;
-      current.revenueCents += item.lineTotalCents;
-      topProductsMap.set(item.productName, current);
-    }
-  }
-
-  const bestSellingProducts = Array.from(topProductsMap.values())
-    .sort((left, right) => right.quantity - left.quantity)
-    .slice(0, 4);
-
-  const revenueSeries = Array.from({ length: 6 }, (_, index) => {
-    const month = subMonths(new Date(), 5 - index);
-    const start = startOfMonth(month);
-    const end = endOfMonth(month);
-    const monthInvoices = invoices.filter((invoice) => {
-      const issuedAt = new Date(invoice.issuedAt);
-      return issuedAt >= start && issuedAt <= end;
-    });
-
-    return {
-      month: format(month, "MMM"),
-      revenue: monthInvoices.reduce((sum, invoice) => sum + invoice.totalCents, 0) / 100,
-      profit:
-        monthInvoices.reduce(
-          (sum, invoice) =>
-            sum +
-            invoice.items.reduce(
-              (inner, item) =>
-                inner + (item.lineTotalCents - item.unitCostCents * item.quantity),
-              0,
+            take: 4,
+          }),
+          prisma.$queryRaw<
+            Array<{
+              month: Date;
+              revenueCents: bigint | number | null;
+              profitCents: bigint | number | null;
+              vatCents: bigint | number | null;
+            }>
+          >`
+            WITH invoice_months AS (
+              SELECT
+                date_trunc('month', "issuedAt") AS month,
+                COALESCE(SUM("totalCents"), 0) AS "revenueCents",
+                COALESCE(SUM("vatAmountCents"), 0) AS "vatCents"
+              FROM "Invoice"
+              WHERE "issuedAt" >= ${seriesStart}
+                AND "issuedAt" < ${nextMonthStart}
+              GROUP BY 1
             ),
-          0,
-        ) / 100,
-      vat:
-        monthInvoices.reduce((sum, invoice) => sum + invoice.vatAmountCents, 0) / 100,
-    };
-  });
+            profit_months AS (
+              SELECT
+                date_trunc('month', i."issuedAt") AS month,
+                COALESCE(SUM(ii."lineTotalCents" - ii."unitCostCents" * ii."quantity"), 0) AS "profitCents"
+              FROM "InvoiceItem" ii
+              INNER JOIN "Invoice" i ON i.id = ii."invoiceId"
+              WHERE i."issuedAt" >= ${seriesStart}
+                AND i."issuedAt" < ${nextMonthStart}
+              GROUP BY 1
+            )
+            SELECT
+              COALESCE(invoice_months.month, profit_months.month) AS month,
+              COALESCE(invoice_months."revenueCents", 0) AS "revenueCents",
+              COALESCE(profit_months."profitCents", 0) AS "profitCents",
+              COALESCE(invoice_months."vatCents", 0) AS "vatCents"
+            FROM invoice_months
+            FULL OUTER JOIN profit_months USING (month)
+            ORDER BY month ASC
+          `,
+          prisma.$queryRaw<Array<{ name: string; quantity: number | null }>>`
+            SELECT
+              m."name",
+              COALESCE(SUM(im."quantity"), 0)::double precision AS "quantity"
+            FROM "InventoryMovement" im
+            INNER JOIN "Material" m ON m.id = im."materialId"
+            WHERE im."kind"::text = ${InventoryMovementKind.CONSUMPTION}
+            GROUP BY m.id, m."name"
+            ORDER BY "quantity" DESC
+            LIMIT 5
+          `,
+          prisma.material.findMany({
+            where: {
+              stockQuantity: {
+                lte: prisma.material.fields.lowStockThreshold,
+              },
+            },
+            select: {
+              id: true,
+              name: true,
+              unit: true,
+              stockQuantity: true,
+              lowStockThreshold: true,
+            },
+            orderBy: {
+              stockQuantity: "asc",
+            },
+          }),
+          prisma.notification.findMany({
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 6,
+          }),
+          prisma.invoice.findMany({
+            where: {
+              status: {
+                not: InvoiceStatus.PAID,
+              },
+              OR: [
+                { dueDate: { lt: now } },
+                { status: InvoiceStatus.OVERDUE },
+              ],
+            },
+            select: {
+              id: true,
+              number: true,
+              status: true,
+              totalCents: true,
+              amountPaidCents: true,
+              dueDate: true,
+              client: {
+                select: {
+                  name: true,
+                },
+              },
+              debitNotes: {
+                select: {
+                  totalCents: true,
+                },
+              },
+            },
+            orderBy: [{ dueDate: "asc" }, { issuedAt: "desc" }],
+            take: 5,
+          }),
+        ]),
+      { locale },
+    );
 
-  const materialUsageMap = new Map<string, { name: string; quantity: number }>();
-  for (const movement of movements) {
-    const current = materialUsageMap.get(movement.material.name) ?? {
-      name: movement.material.name,
-      quantity: 0,
-    };
-    current.quantity += movement.quantity;
-    materialUsageMap.set(movement.material.name, current);
-  }
+    const monthlyRevenueCents = monthlyInvoiceTotals._sum.totalCents ?? 0;
+    const monthlyRevenueBeforeVatCents =
+      monthlyInvoiceTotals._sum.subtotalCents ?? 0;
+    const monthlyVatCents = monthlyInvoiceTotals._sum.vatAmountCents ?? 0;
+    const monthlyProfitCents = numberFromDb(
+      monthlyProfitRows[0]?.monthlyProfitCents,
+    );
+    const outstandingDebtCents = numberFromDb(
+      outstandingDebtRows[0]?.outstandingDebtCents,
+    );
 
-  const materialUsage = Array.from(materialUsageMap.values())
-    .sort((left, right) => right.quantity - left.quantity)
-    .slice(0, 5);
-
-  const overdueInvoices = invoices
-    .filter((invoice) => invoice.status !== InvoiceStatus.PAID)
-    .slice(0, 5)
-    .map((invoice) => ({
-      id: invoice.id,
-      number: invoice.number,
-      client: invoice.client.name,
-      dueDate: invoice.dueDate,
-      totalCents: invoice.totalCents,
-      outstandingCents: getAdjustedInvoiceOutstandingCents(invoice),
-      status: invoice.status,
+    const bestSellingProducts = bestSellingProductGroups.map((product) => ({
+      name: product.productName,
+      quantity: product._sum.quantity ?? 0,
+      revenueCents: product._sum.lineTotalCents ?? 0,
     }));
 
-  const lowStockMaterials = materials.filter(
-    (material) => material.stockQuantity <= material.lowStockThreshold,
-  );
+    const revenueSeriesByMonth = new Map(
+      revenueSeriesRows.map((row) => [
+        format(row.month, "yyyy-MM"),
+        {
+          revenueCents: numberFromDb(row.revenueCents),
+          profitCents: numberFromDb(row.profitCents),
+          vatCents: numberFromDb(row.vatCents),
+        },
+      ]),
+    );
 
-  return {
-    locale,
-    intlLocale: localeToIntl(locale),
-    kpis: {
-      monthlyRevenueCents,
-      monthlyRevenueBeforeVatCents,
-      monthlyVatCents,
-      monthlyProfitCents,
-      outstandingDebtCents,
-      bestSellingProducts,
-    },
-    revenueSeries,
-    materialUsage,
-    lowStockMaterials,
-    notifications,
-    overdueInvoices,
-  };
+    const revenueSeries = Array.from({ length: 6 }, (_, index) => {
+      const month = subMonths(now, 5 - index);
+      const row = revenueSeriesByMonth.get(format(month, "yyyy-MM"));
+
+      return {
+        month: format(month, "MMM"),
+        revenue: (row?.revenueCents ?? 0) / 100,
+        profit: (row?.profitCents ?? 0) / 100,
+        vat: (row?.vatCents ?? 0) / 100,
+      };
+    });
+
+    const materialUsage = materialUsageRows.map((movement) => ({
+      name: movement.name,
+      quantity: movement.quantity ?? 0,
+    }));
+
+    return {
+      locale,
+      intlLocale: localeToIntl(locale),
+      kpis: {
+        monthlyRevenueCents,
+        monthlyRevenueBeforeVatCents,
+        monthlyVatCents,
+        monthlyProfitCents,
+        outstandingDebtCents,
+        bestSellingProducts,
+      },
+      revenueSeries,
+      materialUsage,
+      lowStockMaterials,
+      notifications,
+      overdueInvoices: overdueInvoices.map((invoice) => ({
+        id: invoice.id,
+        number: invoice.number,
+        client: invoice.client.name,
+        dueDate: invoice.dueDate,
+        totalCents: invoice.totalCents,
+        outstandingCents: getAdjustedInvoiceOutstandingCents(invoice),
+        status: invoice.status,
+      })),
+    };
   }, { locale });
 }
 

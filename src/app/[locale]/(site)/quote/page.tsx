@@ -3,7 +3,7 @@ import { QuoteForm } from "@/components/forms/quote-form";
 import { Card } from "@/components/shared/card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { COMPANY } from "@/lib/company";
-import type { Locale } from "@/lib/i18n";
+import { locales, type Locale } from "@/lib/i18n";
 import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -12,6 +12,10 @@ export async function generateMetadata({
   const { locale } = await params;
 
   return buildPageMetadata(locale as Locale, "quote");
+}
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
 }
 
 export default async function QuoteRequestPage({

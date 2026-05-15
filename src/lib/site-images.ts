@@ -2,8 +2,8 @@ import type { FurnitureCategory } from "@prisma/client";
 import { publicProductCatalog } from "@/data/product-catalog";
 
 export const siteImages = {
-  hero: "/images/art-home/hero-kitchen.jpg",
-  about: "/images/art-home/about-workshop.jpg",
+  hero: "/images/art-home/hero-kitchen.avif",
+  about: "/images/art-home/about-workshop.avif",
 } as const;
 
 function imageLookupKey(value: string) {
@@ -25,10 +25,10 @@ const productImages = Object.fromEntries(
 ) as Record<string, string>;
 
 const categoryImages: Record<FurnitureCategory, string> = {
-  KITCHENS: "/images/mobiljet/mobilje-3.jpg",
-  TABLES: "/images/mobiljet/mobilje-11.jpg",
-  WARDROBES: "/images/mobiljet/mobilje-9.jpg",
-  CUSTOM: "/images/mobiljet/mobilje-4.jpg",
+  KITCHENS: "/images/mobiljet/mobilje-3.avif",
+  TABLES: "/images/mobiljet/mobilje-11.avif",
+  WARDROBES: "/images/mobiljet/mobilje-9.avif",
+  CUSTOM: "/images/mobiljet/mobilje-4.avif",
 };
 
 export function getProductImage(

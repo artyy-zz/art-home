@@ -342,14 +342,10 @@ function drawWrappedTextTop(
 }
 
 async function loadBrandLogo(pdf: PDFDocument) {
-  const logoPath = join(process.cwd(), "public", "images", "brand", "logo.jpg");
+  const logoPath = join(process.cwd(), "public", "images", "brand", "logo.png");
   const logoBytes = await readFile(logoPath);
 
-  try {
-    return await pdf.embedJpg(logoBytes);
-  } catch {
-    return pdf.embedPng(logoBytes);
-  }
+  return pdf.embedPng(logoBytes);
 }
 
 async function embedDocumentFonts(pdf: PDFDocument): Promise<PdfFonts> {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/shared/card";
 import { PlaceholderMedia } from "@/components/shared/placeholder-media";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { getDictionary, type Locale } from "@/lib/i18n";
+import { getDictionary, locales, type Locale } from "@/lib/i18n";
 import { buildPageMetadata } from "@/lib/seo";
 import { siteImages } from "@/lib/site-images";
 
@@ -12,6 +12,10 @@ export async function generateMetadata({
   const { locale } = await params;
 
   return buildPageMetadata(locale as Locale, "about");
+}
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
 }
 
 export default async function AboutPage({ params }: PageProps<"/[locale]/about">) {

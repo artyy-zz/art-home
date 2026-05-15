@@ -2,9 +2,9 @@ import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
 import { deleteNotificationAction } from "@/actions/admin";
+import { DashboardChartsLoader } from "@/components/admin/dashboard-charts-loader";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
-import { DashboardCharts } from "@/components/admin/dashboard-charts";
 import { buttonClasses } from "@/components/shared/button";
 import { getDashboardSnapshot, statusTone } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
@@ -108,7 +108,7 @@ async function AdminDashboardPage({
         ))}
       </div>
 
-      <DashboardCharts
+      <DashboardChartsLoader
         locale={typedLocale}
         revenueSeries={snapshot.revenueSeries}
         materialUsage={snapshot.materialUsage}

@@ -92,7 +92,6 @@ export function LightboxImage({
                   fill
                   sizes="100vw"
                   className="object-contain drop-shadow-[0_34px_80px_rgba(0,0,0,0.58)]"
-                  priority
                 />
               </div>
             </div>
@@ -149,6 +148,7 @@ export function LightboxImage({
           alt={triggerPhoto.label}
           fill
           priority={priority}
+          loading={priority ? undefined : "lazy"}
           sizes={sizes}
           className="object-cover transition duration-500 ease-out group-hover:scale-[1.06]"
         />

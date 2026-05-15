@@ -279,8 +279,8 @@ export function getStructuredData(locale: Locale) {
   const organizationId = `${siteUrl}/#organization`;
   const localBusinessId = `${siteUrl}/#localbusiness`;
   const websiteId = `${siteUrl}/#website`;
-  const logoUrl = getAbsoluteUrl("/images/brand/logo.jpg");
-  const imageUrl = getAbsoluteUrl("/images/mobiljet/mobilje-1.jpg");
+  const logoUrl = getAbsoluteUrl("/images/brand/logo.png");
+  const imageUrl = getAbsoluteUrl("/images/mobiljet/mobilje-1.avif");
 
   return {
     "@context": "https://schema.org",

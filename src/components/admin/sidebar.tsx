@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { preload } from "swr";
 import {
   BarChart3,
@@ -96,7 +96,6 @@ export function AdminSidebar({
       ].filter((item) => visible.has(item.module)),
     [dict, locale, visible],
   );
-  const hrefs = useMemo(() => items.map((item) => item.href), [items]);
   const prefetchItem = (item: { href: string; module: PermissionModuleKey }) => {
     router.prefetch(item.href);
 
@@ -109,22 +108,6 @@ export function AdminSidebar({
       void preload(`/api/admin/options?${params.toString()}`, sidebarFetcher);
     }
   };
-
-  useEffect(() => {
-    const warmRoutes = () => {
-      for (const href of hrefs) {
-        if (href !== pathname) {
-          router.prefetch(href);
-        }
-      }
-    };
-
-    const timeoutId = setTimeout(warmRoutes, 250);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [hrefs, pathname, router]);
 
   const closeMobile = () => setMobileOpen(false);
 

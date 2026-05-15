@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/shared/card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { COMPANY, GOOGLE_MAPS_EMBED_URL } from "@/lib/company";
-import { getDictionary, type Locale } from "@/lib/i18n";
+import { getDictionary, locales, type Locale } from "@/lib/i18n";
 import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -11,6 +11,10 @@ export async function generateMetadata({
   const { locale } = await params;
 
   return buildPageMetadata(locale as Locale, "contact");
+}
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
 }
 
 function InstagramIcon() {
