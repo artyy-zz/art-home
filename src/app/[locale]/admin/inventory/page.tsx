@@ -6,8 +6,9 @@ import { InventoryActions } from "@/components/admin/inventory-actions";
 import { RecordTable } from "@/components/admin/record-table";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
-import { getInventoryOverview, materialTypeLabel } from "@/lib/erp";
+import { getInventoryOverviewPage, materialTypeLabel } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
+import { parsePage } from "@/lib/pagination";
 import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -42,7 +43,14 @@ async function InventoryPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "stock";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
-  const materials = await getInventoryOverview();
+  const page = parsePage(resolvedSearchParams.page);
+  const materials = await getInventoryOverviewPage({
+    locale: typedLocale,
+    page,
+    query,
+    sort,
+    direction,
+  });
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "INVENTORY", "CREATE");
   const canEdit = can(permissions, "INVENTORY", "EDIT");
@@ -50,7 +58,7 @@ async function InventoryPage({
   const rows = measureDetailSync(
     "admin/inventory.table mapping/formatting",
     () =>
-      materials.map((material) => ({
+      materials.items.map((material) => ({
         id: material.id,
         searchText: `${material.name} ${material.sku} ${materialTypeLabel(material.type, typedLocale)} ${material.notes ?? ""}`,
         sortValues: {
@@ -100,7 +108,7 @@ async function InventoryPage({
           />
         ),
       })),
-    { locale: typedLocale, rows: materials.length },
+    { locale: typedLocale, rows: materials.items.length },
   );
 
   return (
@@ -159,6 +167,22 @@ async function InventoryPage({
               : "No items match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: materials.page,
+            totalPages: materials.totalPages,
+            totalItems: materials.totalItems,
+            pageSize: materials.pageSize,
+            hasNextPage: materials.hasNextPage,
+            hasPreviousPage: materials.hasPreviousPage,
+            exactTotal: materials.exactTotal,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} artikuj"
+                : "Page {page} of {totalPages} - {totalItems} items",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "material", label: typedLocale === "sq" ? "Artikulli" : "Item", sortable: true },
             { key: "type", label: typedLocale === "sq" ? "Lloji" : "Type", sortable: true },

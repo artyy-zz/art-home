@@ -1,15 +1,23 @@
 import { createUserAction, deleteUserAction, updateUserPermissionsAction } from "@/actions/admin";
+import { Prisma } from "@prisma/client";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { PermissionChecklist } from "@/components/admin/permission-checklist";
 import { RecordTable } from "@/components/admin/record-table";
 import { UserCreateForm } from "@/components/forms/user-create-form";
-import { buttonClasses } from "@/components/shared/button";
 import { Card } from "@/components/shared/card";
 import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
+import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
+import { paginatedSliceResult, paginationSliceArgs, parsePage } from "@/lib/pagination";
 import { measureDetailAsync, measureDetailSync, withPagePerf } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { createEmptyPermissionMatrix, permissionStats } from "@/lib/permissions-config";
+import {
+  createEmptyPermissionMatrix,
+  permissionActions,
+  permissionModules,
+  permissionStats,
+  type PermissionMatrix,
+} from "@/lib/permissions-config";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Check } from "lucide-react";
@@ -30,6 +38,51 @@ function isProtectedOwnerUser(user: { email: string; role: string; roleRecord?: 
   );
 }
 
+function contains(value: string | undefined) {
+  return value?.trim() ? { contains: value.trim(), mode: "insensitive" as const } : undefined;
+}
+
+function sortDirection(direction: "asc" | "desc") {
+  return direction === "asc" ? "asc" : "desc";
+}
+
+function createFullPermissionMatrix() {
+  return Object.fromEntries(
+    permissionModules.map((module) => [
+      module,
+      Object.fromEntries(permissionActions.map((action) => [action, true])),
+    ]),
+  ) as PermissionMatrix;
+}
+
+function isPermissionModule(value: string): value is (typeof permissionModules)[number] {
+  return (permissionModules as readonly string[]).includes(value);
+}
+
+function isPermissionAction(value: string): value is (typeof permissionActions)[number] {
+  return (permissionActions as readonly string[]).includes(value);
+}
+
+function permissionMatrixForUser(record: {
+  email: string;
+  role: string;
+  roleRecord?: { isOwner: boolean } | null;
+  permissions: Array<{ module: string; action: string; allowed: boolean }>;
+}) {
+  if (isProtectedOwnerUser(record)) {
+    return createFullPermissionMatrix();
+  }
+
+  const matrix = createEmptyPermissionMatrix();
+  for (const permission of record.permissions) {
+    if (isPermissionModule(permission.module) && isPermissionAction(permission.action)) {
+      matrix[permission.module][permission.action] = permission.allowed;
+    }
+  }
+
+  return matrix;
+}
+
 async function UsersPage({
   params,
   searchParams,
@@ -42,11 +95,31 @@ async function UsersPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
-  const users = await measureDetailAsync(
+  const page = parsePage(resolvedSearchParams.page);
+  const search = contains(query);
+  const where: Prisma.UserWhereInput = search
+    ? {
+        OR: [
+          { name: search },
+          { email: search },
+          { roleRecord: { name: search } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.UserOrderByWithRelationInput =
+    sort === "permissions"
+      ? { permissions: { _count: sortDirection(direction) } }
+      : sort === "lastLogin"
+        ? { lastLoginAt: sortDirection(direction) }
+        : sort === "createdAt"
+          ? { createdAt: sortDirection(direction) }
+          : { name: direction };
+  const userItems = await measureDetailAsync(
     "admin/users.main data query",
     () =>
       prisma.user.findMany({
-        orderBy: { createdAt: "desc" },
+        where,
+        orderBy,
         select: {
           id: true,
           name: true,
@@ -64,14 +137,26 @@ async function UsersPage({
           },
           lastLoginAt: true,
           createdAt: true,
+          permissions: {
+            select: {
+              module: true,
+              action: true,
+              allowed: true,
+            },
+          },
         },
+        ...paginationSliceArgs(page),
       }),
-    { locale: typedLocale, query: "users" },
+    { locale: typedLocale, query, page },
   );
-  const userMatrices = new Map(
-    await Promise.all(
-      users.map(async (record) => [record.id, await getUserPermissionMatrix(record)] as const),
-    ),
+  const users = paginatedSliceResult({ items: userItems, page });
+  const userMatrices = measureDetailSync(
+    "admin/users.permission matrix mapping",
+    () =>
+      new Map(
+        users.items.map((record) => [record.id, permissionMatrixForUser(record)] as const),
+      ),
+    { locale: typedLocale, rows: users.items.length },
   );
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "USERS", "CREATE");
@@ -112,13 +197,29 @@ async function UsersPage({
                 : "No users match this search."
             }
             actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+            serverControlled
+            pagination={{
+              page: users.page,
+              totalPages: users.totalPages,
+              totalItems: users.totalItems,
+              pageSize: users.pageSize,
+              hasNextPage: users.hasNextPage,
+              hasPreviousPage: users.hasPreviousPage,
+              exactTotal: users.exactTotal,
+              label:
+                typedLocale === "sq"
+                  ? "Faqja {page} nga {totalPages} - {totalItems} perdorues"
+                  : "Page {page} of {totalPages} - {totalItems} users",
+              previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+              nextLabel: typedLocale === "sq" ? "Para" : "Next",
+            }}
             columns={[
               { key: "name", label: typedLocale === "sq" ? "Perdoruesi" : "User", sortable: true },
               { key: "permissions", label: typedLocale === "sq" ? "Lejet" : "Permissions", sortable: true },
               { key: "lastLogin", label: typedLocale === "sq" ? "Hyrja e fundit" : "Last login", sortable: true },
               { key: "createdAt", label: typedLocale === "sq" ? "Krijuar" : "Created", sortable: true },
             ]}
-            rows={users.map((record) => {
+            rows={users.items.map((record) => {
               const matrix = userMatrices.get(record.id) ?? createEmptyPermissionMatrix();
               const stats = permissionStats(matrix);
               const isProtectedOwner = isProtectedOwnerUser(record);
@@ -178,7 +279,7 @@ async function UsersPage({
               </p>
             </div>
             <div className="space-y-4">
-              {users.map((record) => {
+              {users.items.map((record) => {
                 const matrix = userMatrices.get(record.id) ?? createEmptyPermissionMatrix();
                 const stats = permissionStats(matrix);
                 const isProtectedOwner = isProtectedOwnerUser(record);
@@ -213,10 +314,10 @@ async function UsersPage({
                         >
                           <PermissionChecklist locale={typedLocale} matrix={matrix} />
                           <div className="flex justify-end">
-                            <button className={buttonClasses({ size: "sm", className: "gap-2" })}>
+                            <SubmitButton size="sm" className="gap-2">
                               <Check className="h-4 w-4" />
                               {typedLocale === "sq" ? "Ruaj lejet" : "Save permissions"}
-                            </button>
+                            </SubmitButton>
                           </div>
                         </form>
                       )}
@@ -229,7 +330,7 @@ async function UsersPage({
         ) : null}
       </div>
     ),
-    { locale: typedLocale, rows: users.length },
+    { locale: typedLocale, rows: users.items.length },
   );
 }
 

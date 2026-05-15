@@ -4,10 +4,11 @@ import { AssetInventoryActions } from "@/components/admin/asset-inventory-action
 import { CreateActionForm, CreateFormPanel } from "@/components/admin/create-form-panel";
 import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
+import { getAssetInventoryOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
-import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
+import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 
 const inputClassName =
@@ -40,23 +41,22 @@ async function AssetsInventoryPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "purchaseDate";
   const direction = param(resolvedSearchParams, "dir") === "asc" ? "asc" : "desc";
+  const page = parsePage(resolvedSearchParams.page);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "ASSETS_INVENTORY", "CREATE");
   const canEdit = can(permissions, "ASSETS_INVENTORY", "EDIT");
   const canDelete = can(permissions, "ASSETS_INVENTORY", "DELETE");
 
-  const assets = await measureDetailAsync(
-    "admin/assets-inventory.main data query",
-    () =>
-      prisma.assetInventory.findMany({
-        orderBy: [{ purchaseDate: "desc" }, { createdAt: "desc" }],
-      }),
-    { locale: typedLocale },
-  );
+  const assets = await getAssetInventoryOverviewPage({
+    page,
+    query,
+    sort,
+    direction,
+  });
   const rows = measureDetailSync(
     "admin/assets-inventory.table mapping/formatting",
     () =>
-      assets.map((asset) => ({
+      assets.items.map((asset) => ({
         id: asset.id,
         searchText: asset.name,
         sortValues: {
@@ -80,7 +80,7 @@ async function AssetsInventoryPage({
           />
         ),
       })),
-    { locale: typedLocale, rows: assets.length },
+    { locale: typedLocale, rows: assets.items.length },
   );
 
   return (
@@ -151,6 +151,22 @@ async function AssetsInventoryPage({
               : "No inventory assets match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: assets.page,
+            totalPages: assets.totalPages,
+            totalItems: assets.totalItems,
+            pageSize: assets.pageSize,
+            hasNextPage: assets.hasNextPage,
+            hasPreviousPage: assets.hasPreviousPage,
+            exactTotal: assets.exactTotal,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} asete"
+                : "Page {page} of {totalPages} - {totalItems} assets",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Emri" : "Name", sortable: true },
             {

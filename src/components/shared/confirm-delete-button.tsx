@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Trash2, X } from "lucide-react";
 import { buttonClasses } from "@/components/shared/button";
 
@@ -12,6 +13,25 @@ type ConfirmDeleteButtonProps = {
   cancelLabel?: string;
   closeLabel?: string;
 };
+
+function ConfirmSubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={buttonClasses({
+        variant: "danger",
+        size: "sm",
+        className: "w-full gap-2 disabled:cursor-wait disabled:opacity-65 sm:w-auto",
+      })}
+    >
+      <Trash2 className="h-4 w-4" />
+      {pending ? "..." : label}
+    </button>
+  );
+}
 
 export function ConfirmDeleteButton({
   label,
@@ -68,13 +88,7 @@ export function ConfirmDeleteButton({
               >
                 {cancelLabel}
               </button>
-              <button
-                type="submit"
-                className={buttonClasses({ variant: "danger", size: "sm", className: "w-full gap-2 sm:w-auto" })}
-              >
-                <Trash2 className="h-4 w-4" />
-                {label}
-              </button>
+              <ConfirmSubmitButton label={label} />
             </div>
           </div>
         </div>

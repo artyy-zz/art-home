@@ -127,6 +127,14 @@ function buildPageHref({
   return `${currentPath}?${params.toString()}`;
 }
 
+function activePaginationKey(pagination?: Pagination) {
+  if (!pagination) {
+    return "page:client";
+  }
+
+  return `page:${pagination.page}:size:${pagination.pageSize}`;
+}
+
 export function RecordTable({
   columns,
   rows,
@@ -167,9 +175,10 @@ export function RecordTable({
       query,
       sort ?? "",
       direction,
+      activePaginationKey(pagination),
       serverControlled ? "server" : "client",
     ],
-    [currentPath, direction, preservedParams, query, serverControlled, sort],
+    [currentPath, direction, pagination, preservedParams, query, serverControlled, sort],
   );
   const { data: cachedTable, mutate } = useSWRImmutable<TableCache>(
     cacheKey,
@@ -244,8 +253,11 @@ export function RecordTable({
         </label>
         {sort ? <input type="hidden" name="sort" value={sort} /> : null}
         <input type="hidden" name="dir" value={direction} />
-        <button className="min-h-12 rounded-full bg-[var(--color-foreground)] px-5 py-2 text-sm font-medium text-white transition hover:bg-black sm:w-auto">
-          {searchLabel}
+        <button
+          disabled={isPending}
+          className="min-h-12 rounded-full bg-[var(--color-foreground)] px-5 py-2 text-sm font-medium text-white transition hover:bg-black disabled:cursor-wait disabled:opacity-65 sm:w-auto"
+        >
+          {isPending ? "..." : searchLabel}
         </button>
         {actionsLabel ? (
           <button

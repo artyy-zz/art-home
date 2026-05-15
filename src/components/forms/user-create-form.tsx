@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { PermissionChecklist } from "@/components/admin/permission-checklist";
 import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/create-form-panel";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -12,6 +13,16 @@ type FormAction = (formData: FormData) => void | Promise<void>;
 
 const inputClassName =
   "rounded-2xl border border-black/10 bg-white/92 px-4 py-3 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[rgba(150,114,79,0.14)]";
+
+function UserCreateSubmitButton({ locale }: { locale: Locale }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button disabled={pending} className={buttonClasses({ className: "disabled:cursor-wait disabled:opacity-65" })}>
+      {pending ? "..." : locale === "sq" ? "Ruaj perdoruesin" : "Save user"}
+    </button>
+  );
+}
 
 export function UserCreateForm({
   locale,
@@ -70,9 +81,7 @@ export function UserCreateForm({
             {locale === "sq" ? "Anulo" : "Cancel"}
           </button>
         ) : null}
-        <button className={buttonClasses({})}>
-          {locale === "sq" ? "Ruaj perdoruesin" : "Save user"}
-        </button>
+        <UserCreateSubmitButton locale={locale} />
       </div>
     </form>
   );

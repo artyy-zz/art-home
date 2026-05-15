@@ -10,7 +10,7 @@ import {
   Prisma,
   type Material,
 } from "@prisma/client";
-import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import { categoryCopy } from "@/lib/company";
 import { publicProductCatalog } from "@/data/product-catalog";
 import type { Locale } from "@/lib/i18n";
@@ -315,6 +315,64 @@ export async function getInventoryOverview() {
       orderBy: [{ stockQuantity: "asc" }, { name: "asc" }],
     }),
   );
+}
+
+type InventoryOverview = Awaited<ReturnType<typeof getInventoryOverview>>[number];
+
+function materialTypesForSearch(query: string | undefined, locale: Locale) {
+  const normalized = query?.trim().toLocaleLowerCase();
+  if (!normalized) {
+    return [];
+  }
+
+  return Object.values(MaterialType).filter((type) => {
+    return (
+      type.toLocaleLowerCase().includes(normalized) ||
+      materialTypeLabel(type, locale).toLocaleLowerCase().includes(normalized)
+    );
+  });
+}
+
+export async function getInventoryOverviewPage({
+  locale,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "stock",
+  direction = "asc",
+}: ListQuery & { locale: Locale }): Promise<PaginatedResult<InventoryOverview>> {
+  const search = contains(query);
+  const typeMatches = materialTypesForSearch(query, locale);
+  const where: Prisma.MaterialWhereInput = search
+    ? {
+        OR: [
+          { name: search },
+          { sku: search },
+          { notes: search },
+          ...(typeMatches.length > 0 ? [{ type: { in: typeMatches } }] : []),
+        ],
+      }
+    : {};
+  const orderBy: Prisma.MaterialOrderByWithRelationInput[] =
+    sort === "material"
+      ? [{ name: direction }]
+      : sort === "type"
+        ? [{ type: direction }, { name: "asc" }]
+        : sort === "threshold"
+          ? [{ lowStockThreshold: sortDirection(direction) }, { name: "asc" }]
+          : sort === "cost"
+            ? [{ costPerUnitCents: sortDirection(direction) }, { name: "asc" }]
+            : [{ stockQuantity: sortDirection(direction) }, { name: "asc" }];
+
+  const items = await measureAdminMainQuery("admin/inventory", () =>
+    prisma.material.findMany({
+      where,
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
+
+  return paginatedSliceResult({ items, page, pageSize });
 }
 
 export function localizeInventoryItem(
@@ -909,6 +967,96 @@ export async function getSupplierOverviewPage({
   return paginatedSliceResult({ items, page, pageSize });
 }
 
+type AssetInventoryOverview = Prisma.AssetInventoryGetPayload<Prisma.AssetInventoryDefaultArgs>;
+
+export async function getAssetInventoryOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "purchaseDate",
+  direction = "desc",
+}: ListQuery): Promise<PaginatedResult<AssetInventoryOverview>> {
+  const search = contains(query);
+  const where: Prisma.AssetInventoryWhereInput = search
+    ? { name: search }
+    : {};
+  const orderBy: Prisma.AssetInventoryOrderByWithRelationInput[] =
+    sort === "name"
+      ? [{ name: direction }]
+      : sort === "quantity"
+        ? [{ quantity: sortDirection(direction) }, { name: "asc" }]
+        : sort === "value"
+          ? [{ valueCents: sortDirection(direction) }, { name: "asc" }]
+          : [{ purchaseDate: sortDirection(direction) }, { createdAt: "desc" }];
+
+  const items = await measureAdminMainQuery("admin/assets-inventory", () =>
+    prisma.assetInventory.findMany({
+      where,
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
+
+  return paginatedSliceResult({ items, page, pageSize });
+}
+
+const stokOverviewArgs = Prisma.validator<Prisma.StokDefaultArgs>()({
+  include: {
+    items: {
+      orderBy: [{ createdAt: "asc" }],
+      include: {
+        material: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            unit: true,
+            stockQuantity: true,
+          },
+        },
+      },
+    },
+  },
+});
+
+type StokOverview = Prisma.StokGetPayload<typeof stokOverviewArgs>;
+
+export async function getStokOverviewPage({
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  query,
+  sort = "name",
+  direction = "asc",
+}: ListQuery): Promise<PaginatedResult<StokOverview>> {
+  const search = contains(query);
+  const where: Prisma.StokWhereInput = search
+    ? {
+        OR: [
+          { name: search },
+          { items: { some: { material: { name: search } } } },
+          { items: { some: { material: { sku: search } } } },
+        ],
+      }
+    : {};
+  const orderBy: Prisma.StokOrderByWithRelationInput[] =
+    sort === "price"
+      ? [{ priceCents: sortDirection(direction) }, { name: "asc" }]
+      : sort === "items"
+        ? [{ items: { _count: sortDirection(direction) } }, { name: "asc" }]
+        : [{ name: direction }, { createdAt: "desc" }];
+
+  const items = await measureAdminMainQuery("admin/stoqet", () =>
+    prisma.stok.findMany({
+      ...stokOverviewArgs,
+      where,
+      orderBy,
+      ...paginationSliceArgs(page, pageSize),
+    }),
+  );
+
+  return paginatedSliceResult({ items, page, pageSize });
+}
+
 export async function getProductOverview(locale: Locale) {
   const products = await prisma.product.findMany({
     ...productWithBomArgs,
@@ -1297,6 +1445,7 @@ export async function getDashboardSnapshot(locale: Locale) {
             orderBy: {
               stockQuantity: "asc",
             },
+            take: 6,
           }),
           prisma.notification.findMany({
             orderBy: {
@@ -1414,198 +1563,196 @@ export async function getDashboardSnapshot(locale: Locale) {
 
 export async function getReportsSnapshot(locale: Locale) {
   return measureAsync("erp.reportsSnapshot", async () => {
-  const [
-    invoices,
-    materials,
-    clients,
-    products,
-    expenses,
-    debitNotes,
-    deliveryNotes,
-  ] = await measureAdminMainQuery(
-    "admin/reports",
-    () =>
-      Promise.all([
-        prisma.invoice.findMany({
-          select: {
-            items: {
-              select: {
-                productName: true,
-                quantity: true,
-                lineTotalCents: true,
-                unitCostCents: true,
-              },
-            },
-          },
-          orderBy: { issuedAt: "desc" },
-          take: 500,
-        }),
-        prisma.inventoryMovement.findMany({
-          where: {
-            kind: InventoryMovementKind.CONSUMPTION,
-          },
-          select: {
-            quantity: true,
-            material: {
-              select: {
-                name: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 500,
-        }),
-        getClientOverview(),
-        getProductOverview(locale),
-        prisma.expense.findMany({
-          orderBy: { date: "desc" },
-        }),
-        prisma.debitNote.findMany({
-          select: {
-            clientId: true,
-            totalCents: true,
-            client: {
-              select: {
-                name: true,
-              },
-            },
-          },
-          orderBy: { issuedAt: "desc" },
-          take: 500,
-        }),
-        prisma.deliveryNote.findMany({
-          select: {
-            status: true,
-          },
-          orderBy: { issuedAt: "desc" },
-        }),
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const nextMonthStart = addMonths(currentMonthStart, 1);
+    const seriesStart = startOfMonth(subMonths(now, 5));
+
+    const [
+      profitByProductRows,
+      materialUsageRows,
+      clientDebtRows,
+      products,
+      expensesByMonthRows,
+      expenseCategoryRows,
+      debitNoteTotal,
+      debitNotesByClientRows,
+      deliveryNoteStatusGroups,
+    ] = await measureAdminMainQuery(
+      "admin/reports",
+      () =>
+        Promise.all([
+          prisma.$queryRaw<
+            Array<{
+              name: string;
+              profitCents: bigint | number | null;
+              quantity: number | null;
+            }>
+          >`
+            SELECT
+              ii."productName" AS name,
+              COALESCE(SUM(ii."lineTotalCents" - ii."unitCostCents" * ii."quantity"), 0) AS "profitCents",
+              COALESCE(SUM(ii."quantity"), 0)::double precision AS quantity
+            FROM "InvoiceItem" ii
+            GROUP BY ii."productName"
+            ORDER BY "profitCents" DESC
+            LIMIT 50
+          `,
+          prisma.$queryRaw<Array<{ name: string; quantity: number | null }>>`
+            SELECT
+              m."name",
+              COALESCE(SUM(im."quantity"), 0)::double precision AS "quantity"
+            FROM "InventoryMovement" im
+            INNER JOIN "Material" m ON m.id = im."materialId"
+            WHERE im."kind"::text = ${InventoryMovementKind.CONSUMPTION}
+            GROUP BY m.id, m."name"
+            ORDER BY "quantity" DESC
+            LIMIT 50
+          `,
+          prisma.$queryRaw<
+            Array<{ id: string; name: string; outstandingDebtCents: bigint | number | null }>
+          >`
+            SELECT
+              c.id,
+              c."name",
+              COALESCE(
+                SUM(
+                  GREATEST(
+                    i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
+                    0
+                  )
+                ),
+                0
+              ) AS "outstandingDebtCents"
+            FROM "Client" c
+            INNER JOIN "Invoice" i ON i."clientId" = c.id
+            LEFT JOIN (
+              SELECT "invoiceId", SUM("totalCents") AS "totalCents"
+              FROM "DebitNote"
+              GROUP BY "invoiceId"
+            ) dn ON dn."invoiceId" = i.id
+            WHERE c."deletedAt" IS NULL
+              AND i."status"::text <> ${InvoiceStatus.PAID}
+            GROUP BY c.id, c."name"
+            HAVING COALESCE(
+              SUM(
+                GREATEST(
+                  i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
+                  0
+                )
+              ),
+              0
+            ) > 0
+            ORDER BY "outstandingDebtCents" DESC
+            LIMIT 50
+          `,
+          getProductOverview(locale),
+          prisma.$queryRaw<Array<{ month: Date; totalCents: bigint | number | null }>>`
+            SELECT
+              date_trunc('month', "date") AS month,
+              COALESCE(SUM("totalCents"), 0) AS "totalCents"
+            FROM "Expense"
+            WHERE "date" >= ${seriesStart}
+              AND "date" < ${nextMonthStart}
+            GROUP BY 1
+            ORDER BY 1 ASC
+          `,
+          prisma.expense.groupBy({
+            by: ["category"],
+            _sum: { totalCents: true },
+            _count: { _all: true },
+            orderBy: { _sum: { totalCents: "desc" } },
+          }),
+          prisma.debitNote.aggregate({
+            _sum: { totalCents: true },
+          }),
+          prisma.$queryRaw<
+            Array<{
+              id: string;
+              name: string;
+              totalCents: bigint | number | null;
+              count: bigint | number | null;
+            }>
+          >`
+            SELECT
+              c.id,
+              c."name",
+              COALESCE(SUM(dn."totalCents"), 0) AS "totalCents",
+              COUNT(*) AS count
+            FROM "DebitNote" dn
+            INNER JOIN "Client" c ON c.id = dn."clientId"
+            GROUP BY c.id, c."name"
+            ORDER BY "totalCents" DESC
+            LIMIT 50
+          `,
+          prisma.deliveryNote.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+          }),
+        ]),
+      { locale },
+    );
+
+    const expensesByMonthMap = new Map(
+      expensesByMonthRows.map((row) => [
+        format(row.month, "yyyy-MM"),
+        numberFromDb(row.totalCents),
       ]),
-    { locale },
-  );
+    );
+    const expensesByMonth = Array.from({ length: 6 }, (_, index) => {
+      const month = subMonths(now, 5 - index);
 
-  const profitByProductMap = new Map<
-    string,
-    { name: string; profitCents: number; quantity: number }
-  >();
-  for (const invoice of invoices) {
-    for (const item of invoice.items) {
-      const current = profitByProductMap.get(item.productName) ?? {
-        name: item.productName,
-        profitCents: 0,
-        quantity: 0,
+      return {
+        month: format(month, "MMM"),
+        totalCents: expensesByMonthMap.get(format(month, "yyyy-MM")) ?? 0,
       };
-
-      current.quantity += item.quantity;
-      current.profitCents += item.lineTotalCents - item.unitCostCents * item.quantity;
-      profitByProductMap.set(item.productName, current);
-    }
-  }
-
-  const profitByProduct = Array.from(profitByProductMap.values()).sort(
-    (left, right) => right.profitCents - left.profitCents,
-  );
-
-  const materialUsageMap = new Map<string, { name: string; quantity: number }>();
-  for (const movement of materials) {
-    const current = materialUsageMap.get(movement.material.name) ?? {
-      name: movement.material.name,
-      quantity: 0,
-    };
-    current.quantity += movement.quantity;
-    materialUsageMap.set(movement.material.name, current);
-  }
-
-  const expenseByCategoryMap = new Map<
-    string,
-    { category: string; totalCents: number; count: number }
-  >();
-  for (const expense of expenses) {
-    const current = expenseByCategoryMap.get(expense.category) ?? {
-      category: expense.category,
-      totalCents: 0,
-      count: 0,
-    };
-
-    current.totalCents += expense.totalCents;
-    current.count += 1;
-    expenseByCategoryMap.set(expense.category, current);
-  }
-
-  const expensesByMonth = Array.from({ length: 6 }, (_, index) => {
-    const month = subMonths(new Date(), 5 - index);
-    const start = startOfMonth(month);
-    const end = endOfMonth(month);
-    const monthExpenses = expenses.filter((expense) => {
-      const date = new Date(expense.date);
-      return date >= start && date <= end;
     });
+    const deliveryNoteCountByStatus = new Map(
+      deliveryNoteStatusGroups.map((group) => [group.status, group._count._all]),
+    );
+    const deliveryNoteCounts = {
+      total: Array.from(deliveryNoteCountByStatus.values()).reduce((sum, count) => sum + count, 0),
+      delivered: deliveryNoteCountByStatus.get(DeliveryNoteStatus.DELIVERED) ?? 0,
+      cancelled: deliveryNoteCountByStatus.get(DeliveryNoteStatus.CANCELLED) ?? 0,
+      draft: deliveryNoteCountByStatus.get(DeliveryNoteStatus.DRAFT) ?? 0,
+    };
 
     return {
-      month: format(month, "MMM"),
-      totalCents: monthExpenses.reduce(
-        (sum, expense) => sum + expense.totalCents,
-        0,
-      ),
+      productMargins: products.map((product) => ({
+        name: product.name,
+        marginCents: product.estimatedProfitCents,
+        priceCents: product.basePriceCents,
+        costCents: product.unitCostCents,
+      })),
+      profitByProduct: profitByProductRows.map((product) => ({
+        name: product.name,
+        profitCents: numberFromDb(product.profitCents),
+        quantity: product.quantity ?? 0,
+      })),
+      materialUsage: materialUsageRows.map((material) => ({
+        name: material.name,
+        quantity: material.quantity ?? 0,
+      })),
+      clientDebt: clientDebtRows.map((client) => ({
+        id: client.id,
+        name: client.name,
+        outstandingDebtCents: numberFromDb(client.outstandingDebtCents),
+      })),
+      expensesByMonth,
+      expensesByCategory: expenseCategoryRows.map((category) => ({
+        category: category.category,
+        totalCents: category._sum.totalCents ?? 0,
+        count: category._count._all,
+      })),
+      debitNoteTotalCents: debitNoteTotal._sum.totalCents ?? 0,
+      debitNotesByClient: debitNotesByClientRows.map((client) => ({
+        id: client.id,
+        name: client.name,
+        totalCents: numberFromDb(client.totalCents),
+        count: numberFromDb(client.count),
+      })),
+      deliveryNoteCounts,
     };
-  });
-
-  const debitNotesByClientMap = new Map<
-    string,
-    { id: string; name: string; totalCents: number; count: number }
-  >();
-  for (const debitNote of debitNotes) {
-    const current = debitNotesByClientMap.get(debitNote.clientId) ?? {
-      id: debitNote.clientId,
-      name: debitNote.client.name,
-      totalCents: 0,
-      count: 0,
-    };
-
-    current.totalCents += debitNote.totalCents;
-    current.count += 1;
-    debitNotesByClientMap.set(debitNote.clientId, current);
-  }
-
-  const deliveryNoteCounts = {
-    total: deliveryNotes.length,
-    delivered: deliveryNotes.filter(
-      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.DELIVERED,
-    ).length,
-    cancelled: deliveryNotes.filter(
-      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.CANCELLED,
-    ).length,
-    draft: deliveryNotes.filter(
-      (deliveryNote) => deliveryNote.status === DeliveryNoteStatus.DRAFT,
-    ).length,
-  };
-
-  return {
-    productMargins: products.map((product) => ({
-      name: product.name,
-      marginCents: product.estimatedProfitCents,
-      priceCents: product.basePriceCents,
-      costCents: product.unitCostCents,
-    })),
-    profitByProduct,
-    materialUsage: Array.from(materialUsageMap.values()).sort(
-      (left, right) => right.quantity - left.quantity,
-    ),
-    clientDebt: clients
-      .filter((client) => client.outstandingDebtCents > 0)
-      .sort((left, right) => right.outstandingDebtCents - left.outstandingDebtCents),
-    expensesByMonth,
-    expensesByCategory: Array.from(expenseByCategoryMap.values()).sort(
-      (left, right) => right.totalCents - left.totalCents,
-    ),
-    debitNoteTotalCents: debitNotes.reduce(
-      (sum, debitNote) => sum + debitNote.totalCents,
-      0,
-    ),
-    debitNotesByClient: Array.from(debitNotesByClientMap.values()).sort(
-      (left, right) => right.totalCents - left.totalCents,
-    ),
-    deliveryNoteCounts,
-  };
   }, { locale });
 }
 

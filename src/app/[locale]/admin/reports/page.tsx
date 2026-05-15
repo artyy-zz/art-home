@@ -1,6 +1,6 @@
 import { withPagePerf } from "@/lib/perf";
 import { Card } from "@/components/shared/card";
-import { ReportsCharts } from "@/components/admin/reports-charts";
+import { ReportsChartsLoader } from "@/components/admin/reports-charts-loader";
 import { getReportsSnapshot } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { measureDetailSync } from "@/lib/perf";
@@ -39,7 +39,7 @@ async function ReportsPage({
     "admin/reports.table mapping/formatting",
     () => (
     <div className="space-y-6">
-      <ReportsCharts locale={typedLocale} margins={reports.productMargins} debts={reports.clientDebt} />
+      <ReportsChartsLoader locale={typedLocale} margins={reports.productMargins} debts={reports.clientDebt} />
 
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">

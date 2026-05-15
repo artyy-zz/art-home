@@ -5,10 +5,11 @@ import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { LazyStockBuilderForm } from "@/components/admin/lazy-admin-options";
 import { RecordTable } from "@/components/admin/record-table";
 import { Card } from "@/components/shared/card";
+import { getStokOverviewPage } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
-import { measureDetailAsync, measureDetailSync } from "@/lib/perf";
+import { parsePage } from "@/lib/pagination";
+import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 function param(
@@ -31,39 +32,22 @@ async function StoqetPage({
   const query = param(resolvedSearchParams, "q");
   const sort = param(resolvedSearchParams, "sort") || "name";
   const direction = param(resolvedSearchParams, "dir") === "desc" ? "desc" : "asc";
+  const page = parsePage(resolvedSearchParams.page);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
   const canCreate = can(permissions, "STOQET", "CREATE");
   const canEdit = can(permissions, "STOQET", "EDIT");
   const canDelete = can(permissions, "STOQET", "DELETE");
 
-  const stocks = await measureDetailAsync(
-    "admin/stoqet.main data query",
-    () =>
-      prisma.stok.findMany({
-        orderBy: [{ createdAt: "desc" }],
-        include: {
-          items: {
-            orderBy: [{ createdAt: "asc" }],
-            include: {
-              material: {
-                select: {
-                  id: true,
-                  name: true,
-                  sku: true,
-                  unit: true,
-                  stockQuantity: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-    { locale: typedLocale },
-  );
+  const stocks = await getStokOverviewPage({
+    page,
+    query,
+    sort,
+    direction,
+  });
   const rows = measureDetailSync(
     "admin/stoqet.table mapping/formatting",
     () =>
-      stocks.map((stock) => {
+      stocks.items.map((stock) => {
         const itemSummary = stock.items
           .slice(0, 3)
           .map((item) => item.material.name)
@@ -122,7 +106,7 @@ async function StoqetPage({
           ),
         };
       }),
-    { locale: typedLocale, rows: stocks.length },
+    { locale: typedLocale, rows: stocks.items.length },
   );
 
   return (
@@ -159,6 +143,22 @@ async function StoqetPage({
               : "No stocks match this search."
           }
           actionsLabel={typedLocale === "sq" ? "Veprime" : "Actions"}
+          serverControlled
+          pagination={{
+            page: stocks.page,
+            totalPages: stocks.totalPages,
+            totalItems: stocks.totalItems,
+            pageSize: stocks.pageSize,
+            hasNextPage: stocks.hasNextPage,
+            hasPreviousPage: stocks.hasPreviousPage,
+            exactTotal: stocks.exactTotal,
+            label:
+              typedLocale === "sq"
+                ? "Faqja {page} nga {totalPages} - {totalItems} stoqe"
+                : "Page {page} of {totalPages} - {totalItems} stocks",
+            previousLabel: typedLocale === "sq" ? "Prapa" : "Previous",
+            nextLabel: typedLocale === "sq" ? "Para" : "Next",
+          }}
           columns={[
             { key: "name", label: typedLocale === "sq" ? "Emri" : "Name", sortable: true },
             {

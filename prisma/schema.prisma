@@ -266,6 +266,7 @@ model Lead {
   offers       Offer[]
 
   @@index([status, createdAt])
+  @@index([clientId])
 }
 
 model QuoteRequest {
@@ -309,6 +310,8 @@ model Material {
   @@index([type, name])
   @@index([name])
   @@index([stockQuantity, name])
+  @@index([lowStockThreshold])
+  @@index([costPerUnitCents])
   @@index([createdAt])
 }
 
@@ -348,6 +351,8 @@ model AssetInventory {
   updatedAt    DateTime @updatedAt
 
   @@index([name])
+  @@index([quantity])
+  @@index([valueCents])
   @@index([purchaseDate])
 }
 
@@ -386,6 +391,7 @@ model ProductBomItem {
   material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   @@unique([productId, materialId])
+  @@index([materialId])
 }
 
 model Offer {
@@ -432,6 +438,7 @@ model OfferItem {
   product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
   material       Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
+  @@index([offerId])
   @@index([materialId])
 }
 
@@ -481,6 +488,7 @@ model InvoiceItem {
   material       Material?       @relation(fields: [materialId], references: [id], onDelete: SetNull)
   debitNoteItems DebitNoteItem[]
 
+  @@index([invoiceId])
   @@index([materialId])
 }
 
@@ -524,6 +532,7 @@ model PurchaseInvoiceItem {
   purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
   material          Material?       @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
+  @@index([purchaseInvoiceId])
   @@index([materialId])
 }
 
@@ -543,6 +552,7 @@ model DeliveryNote {
   items      DeliveryNoteItem[]
 
   @@index([type, status, issuedAt])
+  @@index([status, issuedAt])
   @@index([issuedAt])
   @@index([type, issuedAt])
   @@index([clientId])
@@ -582,6 +592,7 @@ model Expense {
   @@index([date])
   @@index([name])
   @@index([supplierName])
+  @@index([supplierName, date])
   @@index([totalCents])
 }
 
@@ -641,6 +652,8 @@ model InventoryMovement {
   purchaseInvoice   PurchaseInvoice?      @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
 
   @@index([kind, createdAt])
+  @@index([materialId, createdAt])
+  @@index([invoiceId])
   @@index([purchaseInvoiceId])
 }
 
