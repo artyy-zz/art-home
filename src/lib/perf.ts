@@ -8,6 +8,16 @@ export function getPerfContext() {
   return perfContextStorage.getStore();
 }
 
+export function recordPrismaQuery(durationMs: number) {
+  const context = getPerfContext();
+  if (!context) {
+    return;
+  }
+
+  context.prismaQueries = Number(context.prismaQueries ?? 0) + 1;
+  context.prismaQueryMs = Number(context.prismaQueryMs ?? 0) + durationMs;
+}
+
 function mergeContext(context?: PerfContext) {
   return {
     ...getPerfContext(),

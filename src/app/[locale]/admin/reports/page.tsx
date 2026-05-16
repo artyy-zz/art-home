@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import { withPagePerf } from "@/lib/perf";
 import { Card } from "@/components/shared/card";
 import { ReportsChartsLoader } from "@/components/admin/reports-charts-loader";
-import { getReportsSnapshot } from "@/lib/erp";
+import { getReportsOverviewSnapshot, getReportsSnapshot } from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { measureDetailSync } from "@/lib/perf";
 import { requirePermission } from "@/lib/permissions";
@@ -12,9 +13,9 @@ const expenseCategoryLabels = {
     FUEL: "Karburant",
     FOOD: "Ushqim",
     TRANSPORT: "Transport",
-    MAINTENANCE: "Mirëmbajtje",
-    OFFICE: "Zyrë",
-    OTHER: "Tjetër",
+    MAINTENANCE: "Mirembajtje",
+    OFFICE: "Zyre",
+    OTHER: "Tjeter",
   },
   en: {
     FUEL: "Fuel",
@@ -32,15 +33,13 @@ async function ReportsPage({
   const { locale } = await params;
   const typedLocale = locale as Locale;
   await requirePermission(typedLocale, "REPORTS", "VIEW");
-  const reports = await getReportsSnapshot(typedLocale);
+  const reports = await getReportsOverviewSnapshot(typedLocale);
   const localeString = typedLocale === "sq" ? "sq-AL" : "en-GB";
 
   return measureDetailSync(
     "admin/reports.table mapping/formatting",
     () => (
     <div className="space-y-6">
-      <ReportsChartsLoader locale={typedLocale} margins={reports.productMargins} debts={reports.clientDebt} />
-
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
@@ -59,7 +58,7 @@ async function ReportsPage({
         </Card>
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Shpenzimet sipas kategorisë" : "Expenses by category"}
+            {typedLocale === "sq" ? "Shpenzimet sipas kategorise" : "Expenses by category"}
           </h2>
           <div className="mt-6 space-y-3">
             {reports.expensesByCategory.slice(0, 6).map((item) => (
@@ -90,7 +89,7 @@ async function ReportsPage({
             <div className="grid grid-cols-3 gap-2 text-center text-xs text-[var(--color-muted)]">
               <div className="rounded-2xl bg-white/75 p-3">
                 <p className="font-semibold text-[var(--color-foreground)]">{reports.deliveryNoteCounts.delivered}</p>
-                <p>{typedLocale === "sq" ? "Dërguar" : "Delivered"}</p>
+                <p>{typedLocale === "sq" ? "Derguar" : "Delivered"}</p>
               </div>
               <div className="rounded-2xl bg-white/75 p-3">
                 <p className="font-semibold text-[var(--color-foreground)]">{reports.deliveryNoteCounts.cancelled}</p>
@@ -105,9 +104,38 @@ async function ReportsPage({
         </Card>
       </div>
 
+      <Suspense fallback={<ReportsDeferredSkeleton />}>
+        <ReportsDeferredSections locale={typedLocale} />
+      </Suspense>
+    </div>
+    ),
+    { locale: typedLocale },
+  );
+}
+
+function ReportsDeferredSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="panel-card h-72 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="panel-card h-80 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+        <div className="panel-card h-80 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+      </div>
+    </div>
+  );
+}
+
+async function ReportsDeferredSections({ locale }: { locale: Locale }) {
+  const reports = await getReportsSnapshot(locale);
+  const localeString = locale === "sq" ? "sq-AL" : "en-GB";
+
+  return (
+    <>
+      <ReportsChartsLoader locale={locale} margins={reports.productMargins} debts={reports.clientDebt} />
+
       <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-          {typedLocale === "sq" ? "Debit Note sipas klientit" : "Debit notes per client"}
+          {locale === "sq" ? "Debit Note sipas klientit" : "Debit notes per client"}
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {reports.debitNotesByClient.map((client) => (
@@ -116,7 +144,7 @@ async function ReportsPage({
                 <p className="font-semibold text-[var(--color-foreground)]">{client.name}</p>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">
                   {formatNumber(client.count, localeString)}{" "}
-                  {typedLocale === "sq" ? "korrigjime" : "adjustments"}
+                  {locale === "sq" ? "korrigjime" : "adjustments"}
                 </p>
               </div>
               <span className="text-sm font-semibold text-[var(--color-accent-strong)]">
@@ -130,7 +158,7 @@ async function ReportsPage({
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Fitimi per produkt" : "Profit per product"}
+            {locale === "sq" ? "Fitimi per produkt" : "Profit per product"}
           </h2>
           <div className="mt-6 space-y-4">
             {reports.profitByProduct.slice(0, 6).map((product) => (
@@ -139,7 +167,7 @@ async function ReportsPage({
                   <p className="font-semibold text-[var(--color-foreground)]">{product.name}</p>
                   <p className="text-sm text-[var(--color-muted)]">
                     {formatNumber(product.quantity, localeString)}{" "}
-                    {typedLocale === "sq" ? "copë" : "pcs"}
+                    {locale === "sq" ? "cope" : "pcs"}
                   </p>
                 </div>
                 <span className="text-sm font-semibold text-[var(--color-accent-strong)]">
@@ -151,7 +179,7 @@ async function ReportsPage({
         </Card>
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Perdorimi i materialit" : "Material usage"}
+            {locale === "sq" ? "Perdorimi i materialit" : "Material usage"}
           </h2>
           <div className="mt-6 space-y-4">
             {reports.materialUsage.slice(0, 6).map((material) => (
@@ -168,7 +196,7 @@ async function ReportsPage({
 
       <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
         <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-          {typedLocale === "sq" ? "Borxhi sipas klientit" : "Client debt overview"}
+          {locale === "sq" ? "Borxhi sipas klientit" : "Client debt overview"}
         </h2>
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
           {reports.clientDebt.map((client) => (
@@ -181,9 +209,7 @@ async function ReportsPage({
           ))}
         </div>
       </Card>
-    </div>
-    ),
-    { locale: typedLocale },
+    </>
   );
 }
 

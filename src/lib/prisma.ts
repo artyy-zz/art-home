@@ -1,5 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { getPerfContext, measureDetailAsync, perfDetailLog, perfLog } from "@/lib/perf";
+import {
+  getPerfContext,
+  measureDetailAsync,
+  perfDetailLog,
+  perfLog,
+  recordPrismaQuery,
+} from "@/lib/perf";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: ReturnType<typeof createPrismaClient>;
@@ -39,6 +45,7 @@ function createPrismaClient() {
             return await query(args);
           } finally {
             const durationMs = performance.now() - startedAt;
+            recordPrismaQuery(durationMs);
             const context = {
               ...getPerfContext(),
               model,

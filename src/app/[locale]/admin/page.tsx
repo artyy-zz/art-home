@@ -1,12 +1,17 @@
 import { withPagePerf } from "@/lib/perf";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { deleteNotificationAction } from "@/actions/admin";
 import { DashboardChartsLoader } from "@/components/admin/dashboard-charts-loader";
 import { Badge } from "@/components/shared/badge";
 import { Card } from "@/components/shared/card";
 import { buttonClasses } from "@/components/shared/button";
-import { getDashboardSnapshot, statusTone } from "@/lib/erp";
+import {
+  getDashboardDetailSnapshot,
+  getDashboardKpiSnapshot,
+  statusTone,
+} from "@/lib/erp";
 import type { Locale } from "@/lib/i18n";
 import { measureDetailSync } from "@/lib/perf";
 import { can, getUserPermissionMatrix, requirePermission } from "@/lib/permissions";
@@ -59,9 +64,99 @@ async function AdminDashboardPage({
   const typedLocale = locale as Locale;
   const user = await requirePermission(typedLocale, "DASHBOARD", "VIEW");
   const permissions = await getUserPermissionMatrix(user);
-  const snapshot = await getDashboardSnapshot(typedLocale);
-  const localeString = snapshot.intlLocale;
   const canDeleteNotifications = can(permissions, "DASHBOARD", "DELETE");
+
+  return measureDetailSync(
+    "admin/dashboard.table mapping/formatting",
+    () => (
+    <div className="space-y-6">
+      <Suspense fallback={<DashboardKpiSkeleton />}>
+        <DashboardKpiCards locale={typedLocale} />
+      </Suspense>
+
+      <Suspense fallback={<DashboardDeferredSkeleton />}>
+        <DashboardDeferredSections
+          locale={typedLocale}
+          canDeleteNotifications={canDeleteNotifications}
+        />
+      </Suspense>
+    </div>
+    ),
+    { locale: typedLocale },
+  );
+}
+
+function DashboardKpiSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="panel-card rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
+          <div className="h-3 w-28 animate-pulse rounded-full bg-black/10" />
+          <div className="mt-5 h-12 w-36 animate-pulse rounded-2xl bg-black/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function DashboardKpiCards({ locale }: { locale: Locale }) {
+  const snapshot = await getDashboardKpiSnapshot(locale);
+  const localeString = snapshot.intlLocale;
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {[
+        {
+          label: locale === "sq" ? "Te ardhura mujore" : "Monthly revenue",
+          value: formatCurrency(snapshot.kpis.monthlyRevenueCents, localeString),
+        },
+        {
+          label: locale === "sq" ? "Fitimi" : "Profit",
+          value: formatCurrency(snapshot.kpis.monthlyProfitCents, localeString),
+        },
+        {
+          label: locale === "sq" ? "TVSH e mbledhur" : "VAT collected",
+          value: formatCurrency(snapshot.kpis.monthlyVatCents, localeString),
+        },
+        {
+          label: locale === "sq" ? "Borxhe te hapura" : "Outstanding debt",
+          value: formatCurrency(snapshot.kpis.outstandingDebtCents, localeString),
+        },
+      ].map((item) => (
+        <Card key={item.label} className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
+          <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
+            {item.label}
+          </p>
+          <p className="mt-4 break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-5xl">
+            {item.value}
+          </p>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function DashboardDeferredSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="panel-card h-80 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="panel-card h-72 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+        <div className="panel-card h-72 animate-pulse rounded-[24px] bg-black/10 sm:rounded-[30px]" />
+      </div>
+    </div>
+  );
+}
+
+async function DashboardDeferredSections({
+  locale,
+  canDeleteNotifications,
+}: {
+  locale: Locale;
+  canDeleteNotifications: boolean;
+}) {
+  const snapshot = await getDashboardDetailSnapshot(locale);
+  const localeString = snapshot.intlLocale;
   const notificationGroups = Array.from(
     snapshot.notifications.reduce(
       (groups, notification) => {
@@ -74,42 +169,10 @@ async function AdminDashboardPage({
     ),
   );
 
-  return measureDetailSync(
-    "admin/dashboard.table mapping/formatting",
-    () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            label: typedLocale === "sq" ? "Te ardhura mujore" : "Monthly revenue",
-            value: formatCurrency(snapshot.kpis.monthlyRevenueCents, localeString),
-          },
-          {
-            label: typedLocale === "sq" ? "Fitimi" : "Profit",
-            value: formatCurrency(snapshot.kpis.monthlyProfitCents, localeString),
-          },
-          {
-            label: typedLocale === "sq" ? "TVSH e mbledhur" : "VAT collected",
-            value: formatCurrency(snapshot.kpis.monthlyVatCents, localeString),
-          },
-          {
-            label: typedLocale === "sq" ? "Borxhe te hapura" : "Outstanding debt",
-            value: formatCurrency(snapshot.kpis.outstandingDebtCents, localeString),
-          },
-        ].map((item) => (
-          <Card key={item.label} className="rounded-[24px] p-4 sm:rounded-[28px] sm:p-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-[var(--color-muted)]">
-              {item.label}
-            </p>
-            <p className="mt-4 break-words font-display text-3xl leading-none text-[var(--color-foreground)] sm:text-5xl">
-              {item.value}
-            </p>
-          </Card>
-        ))}
-      </div>
-
+  return (
+    <>
       <DashboardChartsLoader
-        locale={typedLocale}
+        locale={locale}
         revenueSeries={snapshot.revenueSeries}
         materialUsage={snapshot.materialUsage}
       />
@@ -118,14 +181,14 @@ async function AdminDashboardPage({
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-              {typedLocale === "sq" ? "Shitjet kryesore" : "Best-selling items"}
+              {locale === "sq" ? "Shitjet kryesore" : "Best-selling items"}
             </h2>
-            <Link href={`/${typedLocale}/admin/reports`} className={buttonClasses({ variant: "ghost", size: "sm" })}>
-              {typedLocale === "sq" ? "Raportet" : "Reports"}
+            <Link href={`/${locale}/admin/reports`} className={buttonClasses({ variant: "ghost", size: "sm" })}>
+              {locale === "sq" ? "Raportet" : "Reports"}
             </Link>
           </div>
           <div className="mt-6 space-y-4">
-            {snapshot.kpis.bestSellingProducts.map((product) => (
+            {snapshot.bestSellingProducts.map((product) => (
               <div
                 key={product.name}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border-[2.25px] border-black/18 bg-white/75 px-4 py-4"
@@ -136,7 +199,7 @@ async function AdminDashboardPage({
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
                     {formatNumber(product.quantity, localeString)}{" "}
-                    {typedLocale === "sq" ? "copë" : "pcs"}
+                    {locale === "sq" ? "copë" : "pcs"}
                   </p>
                 </div>
                 <span className="text-sm font-semibold text-[var(--color-accent-strong)]">
@@ -148,7 +211,7 @@ async function AdminDashboardPage({
         </Card>
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Njoftime dhe alert-e" : "Notifications and alerts"}
+            {locale === "sq" ? "Njoftime dhe alert-e" : "Notifications and alerts"}
           </h2>
           <div className="mt-6 space-y-4">
             {notificationGroups.map(([type, notifications]) => (
@@ -160,7 +223,7 @@ async function AdminDashboardPage({
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden [&::-webkit-details-marker]:hidden">
                   <div className="flex min-w-0 items-center gap-3">
                     <Badge tone={notificationGroupTone(type)}>
-                      {notificationGroupLabel(type, typedLocale)}
+                      {notificationGroupLabel(type, locale)}
                     </Badge>
                     <span className="text-sm font-semibold text-[var(--color-foreground)]">
                       {notifications.length}
@@ -177,19 +240,19 @@ async function AdminDashboardPage({
                       >
                         {canDeleteNotifications ? (
                           <form
-                            action={deleteNotificationAction.bind(null, typedLocale, notification.id)}
+                            action={deleteNotificationAction.bind(null, locale, notification.id)}
                             className="absolute right-3 top-3"
                           >
                             <button
                               type="submit"
                               className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(140,47,43,0.22)] bg-[rgba(140,47,43,0.08)] text-[var(--color-danger)] transition hover:bg-[var(--color-danger)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(140,47,43,0.18)]"
                               aria-label={
-                                typedLocale === "sq"
+                                locale === "sq"
                                   ? "Fshi njoftimin"
                                   : "Delete notification"
                               }
                               title={
-                                typedLocale === "sq"
+                                locale === "sq"
                                   ? "Fshi njoftimin"
                                   : "Delete notification"
                               }
@@ -217,7 +280,7 @@ async function AdminDashboardPage({
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Fatura per ndjekje" : "Invoices to follow up"}
+            {locale === "sq" ? "Fatura per ndjekje" : "Invoices to follow up"}
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.overdueInvoices.map((invoice) => (
@@ -242,7 +305,7 @@ async function AdminDashboardPage({
 
         <Card className="rounded-[24px] p-4 sm:rounded-[30px] sm:p-6">
           <h2 className="font-display text-2xl leading-none text-[var(--color-foreground)] sm:text-3xl">
-            {typedLocale === "sq" ? "Stok i ulet" : "Low stock"}
+            {locale === "sq" ? "Stok i ulet" : "Low stock"}
           </h2>
           <div className="mt-6 space-y-4">
             {snapshot.lowStockMaterials.map((material) => (
@@ -255,7 +318,7 @@ async function AdminDashboardPage({
                     {material.name}
                   </p>
                   <p className="text-sm text-[var(--color-muted)]">
-                    {typedLocale === "sq" ? "Pragu" : "Threshold"}:{" "}
+                    {locale === "sq" ? "Pragu" : "Threshold"}:{" "}
                     {formatNumber(material.lowStockThreshold, localeString)}
                   </p>
                 </div>
@@ -267,9 +330,7 @@ async function AdminDashboardPage({
           </div>
         </Card>
       </div>
-    </div>
-    ),
-    { locale: typedLocale },
+    </>
   );
 }
 
