@@ -115,6 +115,24 @@ export const getCurrentUser = cache(async () => {
       return null;
     }
 
+    if (session.role === "OWNER") {
+      return {
+        id: session.sub,
+        name: session.name,
+        email: session.email,
+        role: session.role,
+        roleId: session.roleId ?? null,
+        roleRecord: {
+          id: session.roleId ?? "session-owner-role",
+          key: "OWNER",
+          name: "Owner",
+          isOwner: true,
+          isSystem: true,
+        },
+        lastLoginAt: null,
+      };
+    }
+
     return prisma.user.findUnique({
       where: { id: session.sub },
       select: {

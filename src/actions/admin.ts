@@ -31,6 +31,10 @@ import { parseMoneyToCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import {
+  measureSync,
+  withActionPerf,
+} from "@/lib/perf";
+import {
   assetInventorySchema,
   clientSchema,
   debitNoteSchema,
@@ -62,8 +66,12 @@ import {
 } from "@/lib/validators";
 
 function revalidateEveryLocale(path: string) {
-  revalidatePath(`/sq${path}`);
-  revalidatePath(`/en${path}`);
+  measureSync("cache.revalidatePath", () => revalidatePath(`/sq${path}`), {
+    path: `/sq${path}`,
+  });
+  measureSync("cache.revalidatePath", () => revalidatePath(`/en${path}`), {
+    path: `/en${path}`,
+  });
 }
 
 function revalidateSupplierPaths() {
@@ -94,7 +102,7 @@ function revalidateQuoteRequestPaths() {
   revalidateEveryLocale("/admin");
 }
 
-export async function deleteNotificationAction(
+async function deleteNotificationActionImpl(
   locale: Locale,
   notificationId: string,
 ) {
@@ -291,7 +299,7 @@ function userPermissionOperations(userId: string, formData: FormData) {
   );
 }
 
-export async function createClientAction(locale: Locale, formData: FormData) {
+async function createClientActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "CLIENTS", "CREATE");
 
   const parsed = clientSchema.safeParse({
@@ -316,7 +324,7 @@ export async function createClientAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/clients");
 }
 
-export async function updateClientAction(
+async function updateClientActionImpl(
   locale: Locale,
   clientId: string,
   formData: FormData,
@@ -346,7 +354,7 @@ export async function updateClientAction(
   revalidateEveryLocale("/admin/clients");
 }
 
-export async function deleteClientAction(locale: Locale, clientId: string) {
+async function deleteClientActionImpl(locale: Locale, clientId: string) {
   await ensureAllowed(locale, "CLIENTS", "DELETE");
 
   const client = await prisma.client.findUnique({
@@ -379,7 +387,7 @@ export async function deleteClientAction(locale: Locale, clientId: string) {
   revalidateEveryLocale("/admin/clients");
 }
 
-export async function createSupplierAction(locale: Locale, formData: FormData) {
+async function createSupplierActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "SUPPLIERS", "CREATE");
 
   const parsed = supplierSchema.safeParse({
@@ -404,7 +412,7 @@ export async function createSupplierAction(locale: Locale, formData: FormData) {
   revalidateSupplierPaths();
 }
 
-export async function updateSupplierAction(
+async function updateSupplierActionImpl(
   locale: Locale,
   supplierId: string,
   formData: FormData,
@@ -434,7 +442,7 @@ export async function updateSupplierAction(
   revalidateSupplierPaths();
 }
 
-export async function deleteSupplierAction(locale: Locale, supplierId: string) {
+async function deleteSupplierActionImpl(locale: Locale, supplierId: string) {
   await ensureAllowed(locale, "SUPPLIERS", "DELETE");
 
   const supplier = await prisma.supplier.findUnique({
@@ -466,7 +474,7 @@ export async function deleteSupplierAction(locale: Locale, supplierId: string) {
   revalidateSupplierPaths();
 }
 
-export async function convertLeadToClientAction(locale: Locale, leadId: string) {
+async function convertLeadToClientActionImpl(locale: Locale, leadId: string) {
   await ensureAllowed(locale, "LEADS", "EDIT");
   await ensureAllowed(locale, "CLIENTS", "CREATE");
 
@@ -510,7 +518,7 @@ export async function convertLeadToClientAction(locale: Locale, leadId: string) 
   revalidateEveryLocale("/admin/clients");
 }
 
-export async function updateLeadStatusAction(
+async function updateLeadStatusActionImpl(
   locale: Locale,
   leadId: string,
   formData: FormData,
@@ -534,7 +542,7 @@ export async function updateLeadStatusAction(
   revalidateEveryLocale("/admin/leads");
 }
 
-export async function deleteLeadAction(locale: Locale, leadId: string) {
+async function deleteLeadActionImpl(locale: Locale, leadId: string) {
   await ensureAllowed(locale, "LEADS", "DELETE");
 
   await prisma.lead.delete({
@@ -544,7 +552,7 @@ export async function deleteLeadAction(locale: Locale, leadId: string) {
   revalidateEveryLocale("/admin/leads");
 }
 
-export async function updateQuoteRequestStatusAction(
+async function updateQuoteRequestStatusActionImpl(
   locale: Locale,
   quoteRequestId: string,
   formData: FormData,
@@ -568,7 +576,7 @@ export async function updateQuoteRequestStatusAction(
   revalidateQuoteRequestPaths();
 }
 
-export async function deleteQuoteRequestAction(
+async function deleteQuoteRequestActionImpl(
   locale: Locale,
   quoteRequestId: string,
 ) {
@@ -581,7 +589,7 @@ export async function deleteQuoteRequestAction(
   revalidateQuoteRequestPaths();
 }
 
-export async function createMaterialAction(locale: Locale, formData: FormData) {
+async function createMaterialActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "INVENTORY", "CREATE");
 
   const parsed = materialSchema.safeParse({
@@ -611,7 +619,7 @@ export async function createMaterialAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/inventory");
 }
 
-export async function updateMaterialAction(
+async function updateMaterialActionImpl(
   locale: Locale,
   materialId: string,
   formData: FormData,
@@ -651,7 +659,7 @@ export async function updateMaterialAction(
   revalidateEveryLocale("/admin/inventory");
 }
 
-export async function deleteMaterialAction(locale: Locale, materialId: string) {
+async function deleteMaterialActionImpl(locale: Locale, materialId: string) {
   await ensureAllowed(locale, "INVENTORY", "DELETE");
 
   await prisma.material.delete({
@@ -661,7 +669,7 @@ export async function deleteMaterialAction(locale: Locale, materialId: string) {
   revalidateEveryLocale("/admin/inventory");
 }
 
-export async function adjustInventoryAction(
+async function adjustInventoryActionImpl(
   locale: Locale,
   materialId: string,
   formData: FormData,
@@ -697,7 +705,7 @@ export async function adjustInventoryAction(
   revalidateEveryLocale("/admin/inventory");
 }
 
-export async function createAssetInventoryAction(locale: Locale, formData: FormData) {
+async function createAssetInventoryActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "ASSETS_INVENTORY", "CREATE");
 
   const parsed = assetInventorySchema.safeParse({
@@ -723,7 +731,7 @@ export async function createAssetInventoryAction(locale: Locale, formData: FormD
   revalidateEveryLocale("/admin/assets-inventory");
 }
 
-export async function updateAssetInventoryAction(
+async function updateAssetInventoryActionImpl(
   locale: Locale,
   assetId: string,
   formData: FormData,
@@ -754,7 +762,7 @@ export async function updateAssetInventoryAction(
   revalidateEveryLocale("/admin/assets-inventory");
 }
 
-export async function deleteAssetInventoryAction(locale: Locale, assetId: string) {
+async function deleteAssetInventoryActionImpl(locale: Locale, assetId: string) {
   await ensureAllowed(locale, "ASSETS_INVENTORY", "DELETE");
 
   await prisma.assetInventory.delete({
@@ -803,7 +811,7 @@ async function assertStokMaterials(materialIds: string[]) {
   }
 }
 
-export async function createStokAction(locale: Locale, formData: FormData) {
+async function createStokActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "STOQET", "CREATE");
 
   const parsed = stokSchema.safeParse({
@@ -832,7 +840,7 @@ export async function createStokAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/stoqet");
 }
 
-export async function updateStokAction(
+async function updateStokActionImpl(
   locale: Locale,
   stokId: string,
   formData: FormData,
@@ -871,7 +879,7 @@ export async function updateStokAction(
   revalidateEveryLocale("/admin/stoqet");
 }
 
-export async function deleteStokAction(locale: Locale, stokId: string) {
+async function deleteStokActionImpl(locale: Locale, stokId: string) {
   await ensureAllowed(locale, "STOQET", "DELETE");
 
   await prisma.stok.delete({
@@ -891,7 +899,7 @@ function parseWorkerDateTime(date: string, time: string) {
   return parsed;
 }
 
-export async function createWorkerAction(locale: Locale, formData: FormData) {
+async function createWorkerActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "WORKER_HOURS", "CREATE");
 
   const parsed = workerSchema.safeParse({
@@ -910,7 +918,7 @@ export async function createWorkerAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function updateWorkerAction(
+async function updateWorkerActionImpl(
   locale: Locale,
   workerId: string,
   formData: FormData,
@@ -934,7 +942,7 @@ export async function updateWorkerAction(
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function deleteWorkerAction(locale: Locale, workerId: string) {
+async function deleteWorkerActionImpl(locale: Locale, workerId: string) {
   await ensureAllowed(locale, "WORKER_HOURS", "DELETE");
 
   await prisma.worker.delete({
@@ -944,7 +952,7 @@ export async function deleteWorkerAction(locale: Locale, workerId: string) {
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function createWorkerTimeEntryAction(
+async function createWorkerTimeEntryActionImpl(
   locale: Locale,
   workerId: string,
   formData: FormData,
@@ -979,7 +987,7 @@ export async function createWorkerTimeEntryAction(
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function updateWorkerTimeEntryAction(
+async function updateWorkerTimeEntryActionImpl(
   locale: Locale,
   entryId: string,
   formData: FormData,
@@ -1084,7 +1092,7 @@ export async function updateWorkerTimeEntryAction(
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function deleteWorkerTimeEntryAction(locale: Locale, entryId: string) {
+async function deleteWorkerTimeEntryActionImpl(locale: Locale, entryId: string) {
   await ensureAllowed(locale, "WORKER_HOURS", "DELETE");
 
   await prisma.workerTimeEntry.delete({
@@ -1094,7 +1102,7 @@ export async function deleteWorkerTimeEntryAction(locale: Locale, entryId: strin
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function createWorkerAdvanceAction(
+async function createWorkerAdvanceActionImpl(
   locale: Locale,
   workerId: string,
   formData: FormData,
@@ -1121,7 +1129,7 @@ export async function createWorkerAdvanceAction(
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function updateWorkerAdvanceAction(
+async function updateWorkerAdvanceActionImpl(
   locale: Locale,
   advanceId: string,
   formData: FormData,
@@ -1148,7 +1156,7 @@ export async function updateWorkerAdvanceAction(
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function deleteWorkerAdvanceAction(locale: Locale, advanceId: string) {
+async function deleteWorkerAdvanceActionImpl(locale: Locale, advanceId: string) {
   await ensureAllowed(locale, "WORKER_HOURS", "DELETE");
 
   await prisma.workerAdvance.delete({
@@ -1158,7 +1166,7 @@ export async function deleteWorkerAdvanceAction(locale: Locale, advanceId: strin
   revalidateEveryLocale("/admin/worker-hours");
 }
 
-export async function createProductAction(locale: Locale, formData: FormData) {
+async function createProductActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "INVENTORY", "CREATE");
 
   const bom = JSON.parse(String(formData.get("bomData") ?? "[]")) as Array<{
@@ -1222,7 +1230,7 @@ export async function createProductAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/");
 }
 
-export async function createOfferAction(locale: Locale, formData: FormData) {
+async function createOfferActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "OFFERS", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
@@ -1304,7 +1312,7 @@ export async function createOfferAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin");
 }
 
-export async function updateOfferStatusAction(
+async function updateOfferStatusActionImpl(
   locale: Locale,
   offerId: string,
   formData: FormData,
@@ -1353,7 +1361,7 @@ export async function updateOfferStatusAction(
   revalidateEveryLocale("/admin/offers");
 }
 
-export async function deleteOfferAction(locale: Locale, offerId: string) {
+async function deleteOfferActionImpl(locale: Locale, offerId: string) {
   await ensureAllowed(locale, "OFFERS", "DELETE");
 
   await prisma.offer.delete({
@@ -1462,7 +1470,7 @@ async function deductInventoryForInvoice(
   await prisma.$transaction(operations);
 }
 
-export async function createInvoiceAction(locale: Locale, formData: FormData) {
+async function createInvoiceActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "INVOICES", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
@@ -1570,7 +1578,7 @@ export async function createInvoiceAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin");
 }
 
-export async function convertOfferToInvoiceAction(locale: Locale, offerId: string) {
+async function convertOfferToInvoiceActionImpl(locale: Locale, offerId: string) {
   await ensureAllowed(locale, "OFFERS", "EDIT");
   await ensureAllowed(locale, "INVOICES", "CREATE");
 
@@ -1635,7 +1643,7 @@ export async function convertOfferToInvoiceAction(locale: Locale, offerId: strin
   revalidateEveryLocale("/admin");
 }
 
-export async function updateInvoiceAction(
+async function updateInvoiceActionImpl(
   locale: Locale,
   invoiceId: string,
   formData: FormData,
@@ -1699,7 +1707,7 @@ export async function updateInvoiceAction(
   revalidateEveryLocale("/admin");
 }
 
-export async function deleteInvoiceAction(locale: Locale, invoiceId: string) {
+async function deleteInvoiceActionImpl(locale: Locale, invoiceId: string) {
   await ensureAllowed(locale, "INVOICES", "DELETE");
 
   await prisma.invoice.delete({
@@ -1757,7 +1765,7 @@ async function restockInventoryForPurchaseInvoice(
   await prisma.$transaction(operations);
 }
 
-export async function createPurchaseInvoiceAction(locale: Locale, formData: FormData) {
+async function createPurchaseInvoiceActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "PURCHASE_INVOICES", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
@@ -1857,7 +1865,7 @@ export async function createPurchaseInvoiceAction(locale: Locale, formData: Form
   revalidateEveryLocale("/admin");
 }
 
-export async function updatePurchaseInvoiceAction(
+async function updatePurchaseInvoiceActionImpl(
   locale: Locale,
   purchaseInvoiceId: string,
   formData: FormData,
@@ -1921,7 +1929,7 @@ export async function updatePurchaseInvoiceAction(
   revalidateEveryLocale("/admin");
 }
 
-export async function deletePurchaseInvoiceAction(
+async function deletePurchaseInvoiceActionImpl(
   locale: Locale,
   purchaseInvoiceId: string,
 ) {
@@ -1936,7 +1944,7 @@ export async function deletePurchaseInvoiceAction(
   revalidateEveryLocale("/admin");
 }
 
-export async function createDeliveryNoteAction(locale: Locale, formData: FormData) {
+async function createDeliveryNoteActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "DELIVERY_NOTES", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
@@ -2016,7 +2024,7 @@ export async function createDeliveryNoteAction(locale: Locale, formData: FormDat
   revalidateDeliveryNotePaths();
 }
 
-export async function updateDeliveryNoteAction(
+async function updateDeliveryNoteActionImpl(
   locale: Locale,
   deliveryNoteId: string,
   formData: FormData,
@@ -2045,7 +2053,7 @@ export async function updateDeliveryNoteAction(
   revalidateDeliveryNotePaths();
 }
 
-export async function deleteDeliveryNoteAction(
+async function deleteDeliveryNoteActionImpl(
   locale: Locale,
   deliveryNoteId: string,
 ) {
@@ -2058,7 +2066,7 @@ export async function deleteDeliveryNoteAction(
   revalidateDeliveryNotePaths();
 }
 
-export async function createExpenseAction(locale: Locale, formData: FormData) {
+async function createExpenseActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "EXPENSES", "CREATE");
 
   const parsed = expenseSchema.safeParse({
@@ -2100,7 +2108,7 @@ export async function createExpenseAction(locale: Locale, formData: FormData) {
   revalidateExpensePaths();
 }
 
-export async function updateExpenseAction(
+async function updateExpenseActionImpl(
   locale: Locale,
   expenseId: string,
   formData: FormData,
@@ -2147,7 +2155,7 @@ export async function updateExpenseAction(
   revalidateExpensePaths();
 }
 
-export async function deleteExpenseAction(locale: Locale, expenseId: string) {
+async function deleteExpenseActionImpl(locale: Locale, expenseId: string) {
   await ensureAllowed(locale, "EXPENSES", "DELETE");
 
   await prisma.expense.delete({
@@ -2157,7 +2165,7 @@ export async function deleteExpenseAction(locale: Locale, expenseId: string) {
   revalidateExpensePaths();
 }
 
-export async function createDebitNoteAction(locale: Locale, formData: FormData) {
+async function createDebitNoteActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "DEBIT_NOTES", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
@@ -2262,7 +2270,7 @@ export async function createDebitNoteAction(locale: Locale, formData: FormData) 
   revalidateDebitNotePaths();
 }
 
-export async function updateDebitNoteAction(
+async function updateDebitNoteActionImpl(
   locale: Locale,
   debitNoteId: string,
   formData: FormData,
@@ -2291,7 +2299,7 @@ export async function updateDebitNoteAction(
   revalidateDebitNotePaths();
 }
 
-export async function deleteDebitNoteAction(locale: Locale, debitNoteId: string) {
+async function deleteDebitNoteActionImpl(locale: Locale, debitNoteId: string) {
   await ensureAllowed(locale, "DEBIT_NOTES", "DELETE");
 
   await prisma.debitNote.delete({
@@ -2301,7 +2309,7 @@ export async function deleteDebitNoteAction(locale: Locale, debitNoteId: string)
   revalidateDebitNotePaths();
 }
 
-export async function createUserAction(locale: Locale, formData: FormData) {
+async function createUserActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "USERS", "CREATE");
   const parsed = userCreateSchema.safeParse({
     name: formData.get("name"),
@@ -2334,7 +2342,7 @@ export async function createUserAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/users");
 }
 
-export async function updateUserRoleAction(
+async function updateUserRoleActionImpl(
   locale: Locale,
   userId: string,
   formData: FormData,
@@ -2385,7 +2393,7 @@ export async function updateUserRoleAction(
   revalidateEveryLocale("/admin/users");
 }
 
-export async function deleteUserAction(locale: Locale, userId: string) {
+async function deleteUserActionImpl(locale: Locale, userId: string) {
   const actor = await ensureAllowed(locale, "USERS", "DELETE");
   const target = await prisma.user.findUnique({
     where: { id: userId },
@@ -2416,7 +2424,7 @@ export async function deleteUserAction(locale: Locale, userId: string) {
   revalidateEveryLocale("/admin/users");
 }
 
-export async function updateUserPermissionsAction(
+async function updateUserPermissionsActionImpl(
   locale: Locale,
   userId: string,
   formData: FormData,
@@ -2470,7 +2478,7 @@ function rolePermissionOperations(roleId: string, formData: FormData) {
   );
 }
 
-export async function createRoleAction(locale: Locale, formData: FormData) {
+async function createRoleActionImpl(locale: Locale, formData: FormData) {
   await assertOwner(locale);
 
   const parsed = roleSchema.safeParse({
@@ -2496,7 +2504,7 @@ export async function createRoleAction(locale: Locale, formData: FormData) {
   revalidateEveryLocale("/admin/users");
 }
 
-export async function updateRoleAction(
+async function updateRoleActionImpl(
   locale: Locale,
   roleId: string,
   formData: FormData,
@@ -2532,7 +2540,7 @@ export async function updateRoleAction(
   revalidateEveryLocale("/admin/users");
 }
 
-export async function deleteRoleAction(locale: Locale, roleId: string) {
+async function deleteRoleActionImpl(locale: Locale, roleId: string) {
   await assertOwner(locale);
 
   const role = await prisma.role.findUnique({
@@ -2551,3 +2559,62 @@ export async function deleteRoleAction(locale: Locale, roleId: string) {
   revalidateEveryLocale("/admin/roles");
   revalidateEveryLocale("/admin/users");
 }
+
+export const deleteNotificationAction = withActionPerf("deleteNotificationAction", deleteNotificationActionImpl);
+export const createClientAction = withActionPerf("createClientAction", createClientActionImpl);
+export const updateClientAction = withActionPerf("updateClientAction", updateClientActionImpl);
+export const deleteClientAction = withActionPerf("deleteClientAction", deleteClientActionImpl);
+export const createSupplierAction = withActionPerf("createSupplierAction", createSupplierActionImpl);
+export const updateSupplierAction = withActionPerf("updateSupplierAction", updateSupplierActionImpl);
+export const deleteSupplierAction = withActionPerf("deleteSupplierAction", deleteSupplierActionImpl);
+export const convertLeadToClientAction = withActionPerf("convertLeadToClientAction", convertLeadToClientActionImpl);
+export const updateLeadStatusAction = withActionPerf("updateLeadStatusAction", updateLeadStatusActionImpl);
+export const deleteLeadAction = withActionPerf("deleteLeadAction", deleteLeadActionImpl);
+export const updateQuoteRequestStatusAction = withActionPerf("updateQuoteRequestStatusAction", updateQuoteRequestStatusActionImpl);
+export const deleteQuoteRequestAction = withActionPerf("deleteQuoteRequestAction", deleteQuoteRequestActionImpl);
+export const createMaterialAction = withActionPerf("createMaterialAction", createMaterialActionImpl);
+export const updateMaterialAction = withActionPerf("updateMaterialAction", updateMaterialActionImpl);
+export const deleteMaterialAction = withActionPerf("deleteMaterialAction", deleteMaterialActionImpl);
+export const adjustInventoryAction = withActionPerf("adjustInventoryAction", adjustInventoryActionImpl);
+export const createAssetInventoryAction = withActionPerf("createAssetInventoryAction", createAssetInventoryActionImpl);
+export const updateAssetInventoryAction = withActionPerf("updateAssetInventoryAction", updateAssetInventoryActionImpl);
+export const deleteAssetInventoryAction = withActionPerf("deleteAssetInventoryAction", deleteAssetInventoryActionImpl);
+export const createStokAction = withActionPerf("createStokAction", createStokActionImpl);
+export const updateStokAction = withActionPerf("updateStokAction", updateStokActionImpl);
+export const deleteStokAction = withActionPerf("deleteStokAction", deleteStokActionImpl);
+export const createWorkerAction = withActionPerf("createWorkerAction", createWorkerActionImpl);
+export const updateWorkerAction = withActionPerf("updateWorkerAction", updateWorkerActionImpl);
+export const deleteWorkerAction = withActionPerf("deleteWorkerAction", deleteWorkerActionImpl);
+export const createWorkerTimeEntryAction = withActionPerf("createWorkerTimeEntryAction", createWorkerTimeEntryActionImpl);
+export const updateWorkerTimeEntryAction = withActionPerf("updateWorkerTimeEntryAction", updateWorkerTimeEntryActionImpl);
+export const deleteWorkerTimeEntryAction = withActionPerf("deleteWorkerTimeEntryAction", deleteWorkerTimeEntryActionImpl);
+export const createWorkerAdvanceAction = withActionPerf("createWorkerAdvanceAction", createWorkerAdvanceActionImpl);
+export const updateWorkerAdvanceAction = withActionPerf("updateWorkerAdvanceAction", updateWorkerAdvanceActionImpl);
+export const deleteWorkerAdvanceAction = withActionPerf("deleteWorkerAdvanceAction", deleteWorkerAdvanceActionImpl);
+export const createProductAction = withActionPerf("createProductAction", createProductActionImpl);
+export const createOfferAction = withActionPerf("createOfferAction", createOfferActionImpl);
+export const updateOfferStatusAction = withActionPerf("updateOfferStatusAction", updateOfferStatusActionImpl);
+export const deleteOfferAction = withActionPerf("deleteOfferAction", deleteOfferActionImpl);
+export const createInvoiceAction = withActionPerf("createInvoiceAction", createInvoiceActionImpl);
+export const convertOfferToInvoiceAction = withActionPerf("convertOfferToInvoiceAction", convertOfferToInvoiceActionImpl);
+export const updateInvoiceAction = withActionPerf("updateInvoiceAction", updateInvoiceActionImpl);
+export const deleteInvoiceAction = withActionPerf("deleteInvoiceAction", deleteInvoiceActionImpl);
+export const createPurchaseInvoiceAction = withActionPerf("createPurchaseInvoiceAction", createPurchaseInvoiceActionImpl);
+export const updatePurchaseInvoiceAction = withActionPerf("updatePurchaseInvoiceAction", updatePurchaseInvoiceActionImpl);
+export const deletePurchaseInvoiceAction = withActionPerf("deletePurchaseInvoiceAction", deletePurchaseInvoiceActionImpl);
+export const createDeliveryNoteAction = withActionPerf("createDeliveryNoteAction", createDeliveryNoteActionImpl);
+export const updateDeliveryNoteAction = withActionPerf("updateDeliveryNoteAction", updateDeliveryNoteActionImpl);
+export const deleteDeliveryNoteAction = withActionPerf("deleteDeliveryNoteAction", deleteDeliveryNoteActionImpl);
+export const createExpenseAction = withActionPerf("createExpenseAction", createExpenseActionImpl);
+export const updateExpenseAction = withActionPerf("updateExpenseAction", updateExpenseActionImpl);
+export const deleteExpenseAction = withActionPerf("deleteExpenseAction", deleteExpenseActionImpl);
+export const createDebitNoteAction = withActionPerf("createDebitNoteAction", createDebitNoteActionImpl);
+export const updateDebitNoteAction = withActionPerf("updateDebitNoteAction", updateDebitNoteActionImpl);
+export const deleteDebitNoteAction = withActionPerf("deleteDebitNoteAction", deleteDebitNoteActionImpl);
+export const createUserAction = withActionPerf("createUserAction", createUserActionImpl);
+export const updateUserRoleAction = withActionPerf("updateUserRoleAction", updateUserRoleActionImpl);
+export const deleteUserAction = withActionPerf("deleteUserAction", deleteUserActionImpl);
+export const updateUserPermissionsAction = withActionPerf("updateUserPermissionsAction", updateUserPermissionsActionImpl);
+export const createRoleAction = withActionPerf("createRoleAction", createRoleActionImpl);
+export const updateRoleAction = withActionPerf("updateRoleAction", updateRoleActionImpl);
+export const deleteRoleAction = withActionPerf("deleteRoleAction", deleteRoleActionImpl);

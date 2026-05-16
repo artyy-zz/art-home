@@ -1,4 +1,19 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 type PerfContext = Record<string, string | number | boolean | null | undefined>;
+
+const perfContextStorage = new AsyncLocalStorage<PerfContext>();
+
+export function getPerfContext() {
+  return perfContextStorage.getStore();
+}
+
+function mergeContext(context?: PerfContext) {
+  return {
+    ...getPerfContext(),
+    ...context,
+  };
+}
 
 function formatContext(context?: PerfContext) {
   if (!context) {
@@ -13,11 +28,11 @@ function formatContext(context?: PerfContext) {
 }
 
 export function perfLog(label: string, durationMs: number, context?: PerfContext) {
-  console.log(`[PERF] ${label} ${durationMs.toFixed(1)}ms${formatContext(context)}`);
+  console.log(`[PERF] ${label} ${durationMs.toFixed(1)}ms${formatContext(mergeContext(context))}`);
 }
 
 export function perfDetailLog(label: string, durationMs: number, context?: PerfContext) {
-  console.log(`[PERF_DETAIL] ${label} ${durationMs.toFixed(1)}ms${formatContext(context)}`);
+  console.log(`[PERF_DETAIL] ${label} ${durationMs.toFixed(1)}ms${formatContext(mergeContext(context))}`);
 }
 
 export async function measureAsync<T>(
@@ -77,7 +92,7 @@ export function withPagePerf<TArgs extends unknown[], TResult>(
   handler: (...args: TArgs) => Promise<TResult>,
 ) {
   return async (...args: TArgs) =>
-    measureAsync(`page.serverRender ${label}`, async () => {
+    perfContextStorage.run({ route: label }, () => measureAsync(`page.serverRender ${label}`, async () => {
       const props = args[0] as { params?: Promise<{ locale?: string }> } | undefined;
       if (props?.params) {
         await measureDetailAsync(
@@ -87,7 +102,7 @@ export function withPagePerf<TArgs extends unknown[], TResult>(
       }
 
       return handler(...args);
-    });
+    }));
 }
 
 export function withApiPerf<TArgs extends unknown[], TResult>(
@@ -95,5 +110,17 @@ export function withApiPerf<TArgs extends unknown[], TResult>(
   handler: (...args: TArgs) => Promise<TResult>,
 ) {
   return async (...args: TArgs) =>
-    measureAsync(`api.request ${label}`, () => handler(...args));
+    perfContextStorage.run({ route: label }, () =>
+      measureAsync(`api.request ${label}`, () => handler(...args)),
+    );
+}
+
+export function withActionPerf<TArgs extends unknown[], TResult>(
+  label: string,
+  handler: (...args: TArgs) => Promise<TResult>,
+) {
+  return async (...args: TArgs) =>
+    perfContextStorage.run({ action: label }, () =>
+      measureAsync(`serverAction ${label}`, () => handler(...args)),
+    );
 }

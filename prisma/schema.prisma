@@ -490,6 +490,7 @@ model InvoiceItem {
 
   @@index([invoiceId])
   @@index([materialId])
+  @@index([productName])
 }
 
 model PurchaseInvoice {
@@ -667,6 +668,7 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([isRead, createdAt])
+  @@index([createdAt])
 }
 
 model Worker {

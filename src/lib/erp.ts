@@ -430,7 +430,27 @@ export async function getPurchaseInvoiceOverview() {
   });
 }
 
-type OfferOverview = Awaited<ReturnType<typeof getOfferOverview>>[number];
+const offerOverviewPageArgs = Prisma.validator<Prisma.OfferDefaultArgs>()({
+  select: {
+    id: true,
+    number: true,
+    status: true,
+    notes: true,
+    subtotalCents: true,
+    vatEnabled: true,
+    vatRate: true,
+    vatAmountCents: true,
+    totalCents: true,
+    validUntil: true,
+    createdAt: true,
+    client: { select: { id: true, name: true } },
+    lead: { select: { id: true, name: true } },
+    invoice: { select: { id: true } },
+    items: { select: { id: true, productName: true } },
+  },
+});
+
+type OfferOverviewPage = Prisma.OfferGetPayload<typeof offerOverviewPageArgs>;
 
 export async function getOfferOverviewPage({
   page = 1,
@@ -438,7 +458,7 @@ export async function getOfferOverviewPage({
   query,
   sort = "createdAt",
   direction = "desc",
-}: ListQuery): Promise<PaginatedResult<OfferOverview>> {
+}: ListQuery): Promise<PaginatedResult<OfferOverviewPage>> {
   const search = contains(query);
   const where: Prisma.OfferWhereInput = search
     ? {
@@ -467,12 +487,7 @@ export async function getOfferOverviewPage({
   const items = await measureAdminMainQuery("admin/offers", () =>
     prisma.offer.findMany({
       where,
-      include: {
-        client: true,
-        lead: true,
-        invoice: true,
-        items: true,
-      },
+      ...offerOverviewPageArgs,
       orderBy,
       ...paginationSliceArgs(page, pageSize),
     }),
@@ -481,7 +496,35 @@ export async function getOfferOverviewPage({
   return paginatedSliceResult({ items, page, pageSize });
 }
 
-type InvoiceOverview = Awaited<ReturnType<typeof getInvoiceOverview>>[number];
+const invoiceOverviewPageArgs = Prisma.validator<Prisma.InvoiceDefaultArgs>()({
+  select: {
+    id: true,
+    number: true,
+    status: true,
+    notes: true,
+    subtotalCents: true,
+    vatEnabled: true,
+    vatRate: true,
+    vatAmountCents: true,
+    totalCents: true,
+    amountPaidCents: true,
+    dueDate: true,
+    issuedAt: true,
+    client: { select: { id: true, name: true } },
+    offer: { select: { id: true } },
+    items: {
+      select: {
+        id: true,
+        productName: true,
+        quantity: true,
+        unitPriceCents: true,
+      },
+    },
+    debitNotes: { select: { totalCents: true } },
+  },
+});
+
+type InvoiceOverviewPage = Prisma.InvoiceGetPayload<typeof invoiceOverviewPageArgs>;
 
 export async function getInvoiceOverviewPage({
   page = 1,
@@ -489,7 +532,7 @@ export async function getInvoiceOverviewPage({
   query,
   sort = "issuedAt",
   direction = "desc",
-}: ListQuery): Promise<PaginatedResult<InvoiceOverview>> {
+}: ListQuery): Promise<PaginatedResult<InvoiceOverviewPage>> {
   const search = contains(query);
   const where: Prisma.InvoiceWhereInput = search
     ? {
@@ -517,12 +560,7 @@ export async function getInvoiceOverviewPage({
   const items = await measureAdminMainQuery("admin/invoices", () =>
     prisma.invoice.findMany({
       where,
-      include: {
-        client: true,
-        offer: true,
-        items: true,
-        debitNotes: true,
-      },
+      ...invoiceOverviewPageArgs,
       orderBy,
       ...paginationSliceArgs(page, pageSize),
     }),
@@ -614,7 +652,16 @@ export async function getClientOverviewPage({
   const clients = await measureAdminMainQuery("admin/clients", () =>
     prisma.client.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        contactPerson: true,
+        email: true,
+        phone: true,
+        address: true,
+        nui: true,
+        vatNumber: true,
+        notes: true,
         offers: { select: { id: true } },
         invoices: {
           select: {
@@ -796,7 +843,41 @@ export async function getDebitNoteOverview() {
   });
 }
 
-type DebitNoteOverview = Awaited<ReturnType<typeof getDebitNoteOverview>>[number];
+const debitNoteOverviewPageArgs = Prisma.validator<Prisma.DebitNoteDefaultArgs>()({
+  select: {
+    id: true,
+    number: true,
+    reason: true,
+    notes: true,
+    subtotalCents: true,
+    vatEnabled: true,
+    vatRate: true,
+    vatAmountCents: true,
+    totalCents: true,
+    issuedAt: true,
+    client: { select: { id: true, name: true } },
+    invoice: {
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        totalCents: true,
+        amountPaidCents: true,
+        debitNotes: { select: { totalCents: true } },
+      },
+    },
+    items: {
+      select: {
+        id: true,
+        productName: true,
+        quantity: true,
+        unitPriceCents: true,
+      },
+    },
+  },
+});
+
+type DebitNoteOverviewPage = Prisma.DebitNoteGetPayload<typeof debitNoteOverviewPageArgs>;
 
 export async function getDebitNoteOverviewPage({
   page = 1,
@@ -804,7 +885,7 @@ export async function getDebitNoteOverviewPage({
   query,
   sort = "issuedAt",
   direction = "desc",
-}: ListQuery): Promise<PaginatedResult<DebitNoteOverview>> {
+}: ListQuery): Promise<PaginatedResult<DebitNoteOverviewPage>> {
   const search = contains(query);
   const where: Prisma.DebitNoteWhereInput = search
     ? {
@@ -829,19 +910,7 @@ export async function getDebitNoteOverviewPage({
   const items = await measureAdminMainQuery("admin/debit-notes", () =>
     prisma.debitNote.findMany({
       where,
-      include: {
-        client: true,
-        invoice: {
-          include: {
-            debitNotes: true,
-          },
-        },
-        items: {
-          include: {
-            invoiceItem: true,
-          },
-        },
-      },
+      ...debitNoteOverviewPageArgs,
       orderBy,
       ...paginationSliceArgs(page, pageSize),
     }),
@@ -1309,6 +1378,68 @@ function numberFromDb(value: bigint | number | null | undefined) {
   return typeof value === "bigint" ? Number(value) : (value ?? 0);
 }
 
+type DashboardTotals = {
+  subtotalCents?: bigint | number | null;
+  vatAmountCents?: bigint | number | null;
+  totalCents?: bigint | number | null;
+};
+
+type DashboardProductRow = {
+  name: string;
+  quantity?: number | null;
+  revenueCents?: bigint | number | null;
+};
+
+type DashboardSeriesRow = {
+  month: string;
+  revenueCents?: bigint | number | null;
+  profitCents?: bigint | number | null;
+  vatCents?: bigint | number | null;
+};
+
+type DashboardMaterialUsageRow = {
+  name: string;
+  quantity?: number | null;
+};
+
+type DashboardLowStockMaterialRow = {
+  id: string;
+  name: string;
+  unit: Material["unit"];
+  stockQuantity: number;
+  lowStockThreshold: number;
+};
+
+type DashboardNotificationRow = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  createdAt: string | Date;
+};
+
+type DashboardOverdueInvoiceRow = {
+  id: string;
+  number: string;
+  client: string;
+  dueDate: string | Date;
+  totalCents: bigint | number | null;
+  outstandingCents: bigint | number | null;
+  status: InvoiceStatus;
+};
+
+type DashboardMetricsRow = {
+  monthlyTotals: DashboardTotals | null;
+  monthlyProfitCents: bigint | number | null;
+  outstandingDebtCents: bigint | number | null;
+  bestSellingProducts: DashboardProductRow[] | null;
+  revenueSeries: DashboardSeriesRow[] | null;
+  materialUsage: DashboardMaterialUsageRow[] | null;
+  lowStockMaterials: DashboardLowStockMaterialRow[] | null;
+  notifications: DashboardNotificationRow[] | null;
+  overdueInvoices: DashboardOverdueInvoiceRow[] | null;
+};
+
 export async function getDashboardSnapshot(locale: Locale) {
   return measureAsync("erp.dashboardSnapshot", async () => {
     const now = new Date();
@@ -1316,80 +1447,55 @@ export async function getDashboardSnapshot(locale: Locale) {
     const nextMonthStart = addMonths(currentMonthStart, 1);
     const seriesStart = startOfMonth(subMonths(now, 5));
 
-    const [
-      monthlyInvoiceTotals,
-      monthlyProfitRows,
-      outstandingDebtRows,
-      bestSellingProductGroups,
-      revenueSeriesRows,
-      materialUsageRows,
-      lowStockMaterials,
-      notifications,
-      overdueInvoices,
-    ] = await measureAdminMainQuery(
+    const dashboardMetricsRows = await measureAdminMainQuery(
       "admin/dashboard",
       () =>
-        Promise.all([
-          prisma.invoice.aggregate({
-            where: {
-              issuedAt: {
-                gte: currentMonthStart,
-                lt: nextMonthStart,
-              },
-            },
-            _sum: {
-              subtotalCents: true,
-              vatAmountCents: true,
-              totalCents: true,
-            },
-          }),
-          prisma.$queryRaw<Array<{ monthlyProfitCents: bigint | number | null }>>`
-            SELECT COALESCE(SUM(ii."lineTotalCents" - ii."unitCostCents" * ii."quantity"), 0) AS "monthlyProfitCents"
-            FROM "InvoiceItem" ii
-            INNER JOIN "Invoice" i ON i.id = ii."invoiceId"
-            WHERE i."issuedAt" >= ${currentMonthStart}
-              AND i."issuedAt" < ${nextMonthStart}
-          `,
-          prisma.$queryRaw<Array<{ outstandingDebtCents: bigint | number | null }>>`
-            SELECT COALESCE(
-              SUM(
-                GREATEST(
-                  i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
-                  0
-                )
-              ),
-              0
-            ) AS "outstandingDebtCents"
-            FROM "Invoice" i
-            LEFT JOIN (
-              SELECT "invoiceId", SUM("totalCents") AS "totalCents"
-              FROM "DebitNote"
-              GROUP BY "invoiceId"
-            ) dn ON dn."invoiceId" = i.id
-            WHERE i."status"::text <> ${InvoiceStatus.PAID}
-          `,
-          prisma.invoiceItem.groupBy({
-            by: ["productName"],
-            _sum: {
-              quantity: true,
-              lineTotalCents: true,
-            },
-            orderBy: {
-              _sum: {
-                quantity: "desc",
-              },
-            },
-            take: 4,
-          }),
-          prisma.$queryRaw<
-            Array<{
-              month: Date;
-              revenueCents: bigint | number | null;
-              profitCents: bigint | number | null;
-              vatCents: bigint | number | null;
-            }>
-          >`
-            WITH invoice_months AS (
+        prisma.$queryRaw<DashboardMetricsRow[]>`
+            WITH monthly_invoices AS (
+              SELECT
+                COALESCE(SUM("subtotalCents"), 0) AS "subtotalCents",
+                COALESCE(SUM("vatAmountCents"), 0) AS "vatAmountCents",
+                COALESCE(SUM("totalCents"), 0) AS "totalCents"
+              FROM "Invoice"
+              WHERE "issuedAt" >= ${currentMonthStart}
+                AND "issuedAt" < ${nextMonthStart}
+            ),
+            monthly_profit AS (
+              SELECT COALESCE(SUM(ii."lineTotalCents" - ii."unitCostCents" * ii."quantity"), 0) AS "monthlyProfitCents"
+              FROM "InvoiceItem" ii
+              INNER JOIN "Invoice" i ON i.id = ii."invoiceId"
+              WHERE i."issuedAt" >= ${currentMonthStart}
+                AND i."issuedAt" < ${nextMonthStart}
+            ),
+            outstanding_debt AS (
+              SELECT COALESCE(
+                SUM(
+                  GREATEST(
+                    i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
+                    0
+                  )
+                ),
+                0
+              ) AS "outstandingDebtCents"
+              FROM "Invoice" i
+              LEFT JOIN (
+                SELECT "invoiceId", SUM("totalCents") AS "totalCents"
+                FROM "DebitNote"
+                GROUP BY "invoiceId"
+              ) dn ON dn."invoiceId" = i.id
+              WHERE i."status"::text <> ${InvoiceStatus.PAID}
+            ),
+            best_selling_products AS (
+              SELECT
+                ii."productName" AS name,
+                COALESCE(SUM(ii."quantity"), 0)::double precision AS quantity,
+                COALESCE(SUM(ii."lineTotalCents"), 0) AS "revenueCents"
+              FROM "InvoiceItem" ii
+              GROUP BY ii."productName"
+              ORDER BY quantity DESC
+              LIMIT 4
+            ),
+            invoice_months AS (
               SELECT
                 date_trunc('month', "issuedAt") AS month,
                 COALESCE(SUM("totalCents"), 0) AS "revenueCents",
@@ -1408,106 +1514,113 @@ export async function getDashboardSnapshot(locale: Locale) {
               WHERE i."issuedAt" >= ${seriesStart}
                 AND i."issuedAt" < ${nextMonthStart}
               GROUP BY 1
+            ),
+            revenue_series AS (
+              SELECT
+                to_char(COALESCE(invoice_months.month, profit_months.month), 'YYYY-MM') AS month,
+                COALESCE(invoice_months."revenueCents", 0) AS "revenueCents",
+                COALESCE(profit_months."profitCents", 0) AS "profitCents",
+                COALESCE(invoice_months."vatCents", 0) AS "vatCents"
+              FROM invoice_months
+              FULL OUTER JOIN profit_months USING (month)
+              ORDER BY month ASC
+            ),
+            material_usage AS (
+              SELECT
+                m."name",
+                COALESCE(SUM(im."quantity"), 0)::double precision AS "quantity"
+              FROM "InventoryMovement" im
+              INNER JOIN "Material" m ON m.id = im."materialId"
+              WHERE im."kind"::text = ${InventoryMovementKind.CONSUMPTION}
+              GROUP BY m.id, m."name"
+              ORDER BY "quantity" DESC
+              LIMIT 5
+            ),
+            low_stock_materials AS (
+              SELECT
+                id,
+                name,
+                unit,
+                "stockQuantity",
+                "lowStockThreshold"
+              FROM "Material"
+              WHERE "stockQuantity" <= "lowStockThreshold"
+              ORDER BY "stockQuantity" ASC
+              LIMIT 6
+            ),
+            latest_notifications AS (
+              SELECT
+                id,
+                type,
+                title,
+                message,
+                "createdAt"
+              FROM "Notification"
+              ORDER BY "createdAt" DESC
+              LIMIT 6
+            ),
+            overdue_invoices AS (
+              SELECT
+                i.id,
+                i.number,
+                c.name AS client,
+                i."dueDate",
+                i."totalCents",
+                GREATEST(
+                  i."totalCents" - i."amountPaidCents" - COALESCE(dn."totalCents", 0),
+                  0
+                ) AS "outstandingCents",
+                i.status
+              FROM "Invoice" i
+              INNER JOIN "Client" c ON c.id = i."clientId"
+              LEFT JOIN (
+                SELECT "invoiceId", SUM("totalCents") AS "totalCents"
+                FROM "DebitNote"
+                GROUP BY "invoiceId"
+              ) dn ON dn."invoiceId" = i.id
+              WHERE i."status"::text <> ${InvoiceStatus.PAID}
+                AND (i."dueDate" < ${now} OR i."status"::text = ${InvoiceStatus.OVERDUE})
+              ORDER BY i."dueDate" ASC, i."issuedAt" DESC
+              LIMIT 5
             )
             SELECT
-              COALESCE(invoice_months.month, profit_months.month) AS month,
-              COALESCE(invoice_months."revenueCents", 0) AS "revenueCents",
-              COALESCE(profit_months."profitCents", 0) AS "profitCents",
-              COALESCE(invoice_months."vatCents", 0) AS "vatCents"
-            FROM invoice_months
-            FULL OUTER JOIN profit_months USING (month)
-            ORDER BY month ASC
+              (SELECT row_to_json(monthly_invoices) FROM monthly_invoices) AS "monthlyTotals",
+              (SELECT "monthlyProfitCents" FROM monthly_profit) AS "monthlyProfitCents",
+              (SELECT "outstandingDebtCents" FROM outstanding_debt) AS "outstandingDebtCents",
+              COALESCE((SELECT json_agg(row_to_json(best_selling_products)) FROM best_selling_products), '[]'::json) AS "bestSellingProducts",
+              COALESCE((SELECT json_agg(row_to_json(revenue_series)) FROM revenue_series), '[]'::json) AS "revenueSeries",
+              COALESCE((SELECT json_agg(row_to_json(material_usage)) FROM material_usage), '[]'::json) AS "materialUsage",
+              COALESCE((SELECT json_agg(row_to_json(low_stock_materials)) FROM low_stock_materials), '[]'::json) AS "lowStockMaterials",
+              COALESCE((SELECT json_agg(row_to_json(latest_notifications)) FROM latest_notifications), '[]'::json) AS "notifications",
+              COALESCE((SELECT json_agg(row_to_json(overdue_invoices)) FROM overdue_invoices), '[]'::json) AS "overdueInvoices"
           `,
-          prisma.$queryRaw<Array<{ name: string; quantity: number | null }>>`
-            SELECT
-              m."name",
-              COALESCE(SUM(im."quantity"), 0)::double precision AS "quantity"
-            FROM "InventoryMovement" im
-            INNER JOIN "Material" m ON m.id = im."materialId"
-            WHERE im."kind"::text = ${InventoryMovementKind.CONSUMPTION}
-            GROUP BY m.id, m."name"
-            ORDER BY "quantity" DESC
-            LIMIT 5
-          `,
-          prisma.material.findMany({
-            where: {
-              stockQuantity: {
-                lte: prisma.material.fields.lowStockThreshold,
-              },
-            },
-            select: {
-              id: true,
-              name: true,
-              unit: true,
-              stockQuantity: true,
-              lowStockThreshold: true,
-            },
-            orderBy: {
-              stockQuantity: "asc",
-            },
-            take: 6,
-          }),
-          prisma.notification.findMany({
-            orderBy: {
-              createdAt: "desc",
-            },
-            take: 6,
-          }),
-          prisma.invoice.findMany({
-            where: {
-              status: {
-                not: InvoiceStatus.PAID,
-              },
-              OR: [
-                { dueDate: { lt: now } },
-                { status: InvoiceStatus.OVERDUE },
-              ],
-            },
-            select: {
-              id: true,
-              number: true,
-              status: true,
-              totalCents: true,
-              amountPaidCents: true,
-              dueDate: true,
-              client: {
-                select: {
-                  name: true,
-                },
-              },
-              debitNotes: {
-                select: {
-                  totalCents: true,
-                },
-              },
-            },
-            orderBy: [{ dueDate: "asc" }, { issuedAt: "desc" }],
-            take: 5,
-          }),
-        ]),
       { locale },
     );
 
-    const monthlyRevenueCents = monthlyInvoiceTotals._sum.totalCents ?? 0;
+    const dashboardMetrics = dashboardMetricsRows[0];
+    const monthlyInvoiceTotals = dashboardMetrics?.monthlyTotals;
+    const bestSellingProductRows = dashboardMetrics?.bestSellingProducts ?? [];
+    const revenueSeriesRows = dashboardMetrics?.revenueSeries ?? [];
+    const materialUsageRows = dashboardMetrics?.materialUsage ?? [];
+    const lowStockMaterials = dashboardMetrics?.lowStockMaterials ?? [];
+    const notifications = dashboardMetrics?.notifications ?? [];
+    const overdueInvoiceRows = dashboardMetrics?.overdueInvoices ?? [];
+    const monthlyRevenueCents = numberFromDb(monthlyInvoiceTotals?.totalCents);
     const monthlyRevenueBeforeVatCents =
-      monthlyInvoiceTotals._sum.subtotalCents ?? 0;
-    const monthlyVatCents = monthlyInvoiceTotals._sum.vatAmountCents ?? 0;
-    const monthlyProfitCents = numberFromDb(
-      monthlyProfitRows[0]?.monthlyProfitCents,
-    );
-    const outstandingDebtCents = numberFromDb(
-      outstandingDebtRows[0]?.outstandingDebtCents,
-    );
+      numberFromDb(monthlyInvoiceTotals?.subtotalCents);
+    const monthlyVatCents = numberFromDb(monthlyInvoiceTotals?.vatAmountCents);
+    const monthlyProfitCents = numberFromDb(dashboardMetrics?.monthlyProfitCents);
+    const outstandingDebtCents = numberFromDb(dashboardMetrics?.outstandingDebtCents);
 
-    const bestSellingProducts = bestSellingProductGroups.map((product) => ({
-      name: product.productName,
-      quantity: product._sum.quantity ?? 0,
-      revenueCents: product._sum.lineTotalCents ?? 0,
+    const bestSellingProducts = bestSellingProductRows.map((product) => ({
+      name: product.name,
+      quantity: product.quantity ?? 0,
+      revenueCents: numberFromDb(product.revenueCents),
     }));
 
     const revenueSeriesByMonth = new Map(
       revenueSeriesRows.map((row) => [
-        format(row.month, "yyyy-MM"),
+        row.month,
         {
           revenueCents: numberFromDb(row.revenueCents),
           profitCents: numberFromDb(row.profitCents),
@@ -1548,13 +1661,13 @@ export async function getDashboardSnapshot(locale: Locale) {
       materialUsage,
       lowStockMaterials,
       notifications,
-      overdueInvoices: overdueInvoices.map((invoice) => ({
+      overdueInvoices: overdueInvoiceRows.map((invoice) => ({
         id: invoice.id,
         number: invoice.number,
-        client: invoice.client.name,
+        client: invoice.client,
         dueDate: invoice.dueDate,
-        totalCents: invoice.totalCents,
-        outstandingCents: getAdjustedInvoiceOutstandingCents(invoice),
+        totalCents: numberFromDb(invoice.totalCents),
+        outstandingCents: numberFromDb(invoice.outstandingCents),
         status: invoice.status,
       })),
     };
