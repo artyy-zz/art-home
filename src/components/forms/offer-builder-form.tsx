@@ -6,7 +6,6 @@ import { useCreateFormPanel, useFinishCreateForm } from "@/components/admin/crea
 import { Button } from "@/components/shared/button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
-import { centsToDecimalString } from "@/lib/money";
 import { formatDateInputValue } from "@/lib/utils";
 
 type FormAction = (formData: FormData) => void | Promise<void>;
@@ -30,12 +29,16 @@ type ClientOption = {
 
 type OfferRow = {
   materialId: string;
+  productName: string;
+  description: string;
   quantity: string;
   unitPrice: string;
 };
 
 const emptyRow: OfferRow = {
   materialId: "",
+  productName: "",
+  description: "",
   quantity: "",
   unitPrice: "",
 };
@@ -150,36 +153,46 @@ export function OfferBuilderForm({
         </div>
         <div className="mt-4 space-y-3">
           {rows.map((row, index) => (
-            <div key={index} className="grid gap-3 md:grid-cols-[1fr_140px_160px_56px]">
-              <select
-                value={row.materialId}
+            <div key={index} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px_150px_56px]">
+              <input
+                type="text"
+                value={row.productName}
+                placeholder={locale === "sq" ? "Artikulli" : "Item"}
                 onChange={(event) =>
                   setRows((current) =>
-                    current.map((item, itemIndex) => {
-                      if (itemIndex !== index) {
-                        return item;
-                      }
-
-                      const inventoryItem = items.find((option) => option.id === event.target.value);
-                      return {
-                        ...item,
-                        materialId: event.target.value,
-                        unitPrice: inventoryItem
-                          ? centsToDecimalString(inventoryItem.unitPriceCents)
-                          : "",
-                      };
-                    }),
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, productName: event.target.value, materialId: "" }
+                        : item,
+                    ),
                   )
                 }
                 className={inputClassName}
-              >
-                <option value="">{locale === "sq" ? "Zgjidh artikull" : "Choose item"}</option>
+                list={`offer-items-${index}`}
+                required
+              />
+              <datalist id={`offer-items-${index}`}>
                 {items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} - {item.categoryTitle} - {item.sku}
+                  <option key={item.id} value={item.name}>
+                    {item.categoryTitle} - {item.sku}
                   </option>
                 ))}
-              </select>
+              </datalist>
+              <input
+                type="text"
+                value={row.description}
+                placeholder={locale === "sq" ? "Pershkrimi" : "Description"}
+                onChange={(event) =>
+                  setRows((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, description: event.target.value }
+                        : item,
+                    ),
+                  )
+                }
+                className={inputClassName}
+              />
               <input
                 type="number"
                 value={row.quantity}
@@ -201,8 +214,16 @@ export function OfferBuilderForm({
                 step="0.01"
                 value={row.unitPrice}
                 placeholder={locale === "sq" ? "Cmimi" : "Price"}
-                readOnly
-                className={`${inputClassName} bg-[#f7f2ec]`}
+                onChange={(event) =>
+                  setRows((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index
+                        ? { ...item, unitPrice: event.target.value }
+                        : item,
+                    ),
+                  )
+                }
+                className={inputClassName}
               />
               <Button
                 type="button"
@@ -222,9 +243,11 @@ export function OfferBuilderForm({
         name="itemsData"
         value={JSON.stringify(
           rows
-            .filter((row) => row.materialId)
+            .filter((row) => row.productName.trim())
             .map((row) => ({
-              materialId: row.materialId,
+              materialId: row.materialId || undefined,
+              productName: row.productName,
+              description: row.description,
               quantity: Number(row.quantity || 1),
               unitPrice: Number(row.unitPrice),
             })),

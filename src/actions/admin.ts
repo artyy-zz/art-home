@@ -48,6 +48,7 @@ import {
   invoiceUpdateSchema,
   leadStatusSchema,
   materialSchema,
+  manualOfferItemSchema,
   offerItemSchema,
   offerSchema,
   productBomItemSchema,
@@ -1234,7 +1235,9 @@ async function createOfferActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "OFFERS", "CREATE");
 
   const itemsData = JSON.parse(String(formData.get("itemsData") ?? "[]")) as Array<{
-    materialId: string;
+    materialId?: string;
+    productName: string;
+    description?: string;
     quantity: number;
     unitPrice?: number;
   }>;
@@ -1252,7 +1255,7 @@ async function createOfferActionImpl(locale: Locale, formData: FormData) {
     notes: formData.get("notes"),
     vatEnabled: parseCheckbox(formData, "vatEnabled"),
     vatRate: STANDARD_VAT_RATE,
-    items: itemsData.map((item) => offerItemSchema.parse(item)),
+    items: itemsData.map((item) => manualOfferItemSchema.parse(item)),
   });
 
   if (!parsed.success) {
@@ -1262,27 +1265,29 @@ async function createOfferActionImpl(locale: Locale, formData: FormData) {
   const materials = await prisma.material.findMany({
     where: {
       id: {
-        in: parsed.data.items.map((item) => item.materialId),
+        in: parsed.data.items
+          .map((item) => item.materialId)
+          .filter((materialId): materialId is string => Boolean(materialId)),
       },
     },
   });
 
   const materialMap = new Map(materials.map((material) => [material.id, material]));
   const lineItems = parsed.data.items.map((item) => {
-    const material = materialMap.get(item.materialId);
-    if (!material) {
+    const material = item.materialId ? materialMap.get(item.materialId) : null;
+    if (item.materialId && !material) {
       throw new Error("Selected inventory item could not be found.");
     }
 
     const unitPriceCents = parseMoneyToCents(item.unitPrice);
 
     return {
-      materialId: material.id,
-      productName: material.name,
-      description: material.sku,
+      materialId: material?.id ?? null,
+      productName: item.productName,
+      description: item.description ?? material?.sku,
       quantity: item.quantity,
       unitPriceCents,
-      unitCostCents: material.costPerUnitCents,
+      unitCostCents: material?.costPerUnitCents ?? 0,
       lineTotalCents: unitPriceCents * item.quantity,
     };
   });

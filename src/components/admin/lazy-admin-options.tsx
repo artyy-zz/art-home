@@ -151,28 +151,19 @@ export function LazyOfferBuilderForm({
   if (isLoading) return <OptionSkeleton />;
   if (error || !data) return <OptionError locale={locale} />;
 
-  if (data.clients.length === 0 || data.items.length === 0) {
-    const missingClient = data.clients.length === 0;
+  if (data.clients.length === 0) {
     return (
       <SetupPrompt
         message={
-          missingClient
-            ? locale === "sq"
-              ? "Shtoni nje klient para se te krijoni oferten e pare."
-              : "Add a client before creating the first offer."
-            : locale === "sq"
-              ? "Shtoni nje artikull para se te krijoni oferten e pare."
-              : "Add an item before creating the first offer."
+          locale === "sq"
+            ? "Shtoni nje klient para se te krijoni oferten e pare."
+            : "Add a client before creating the first offer."
         }
-        href={`/${locale}/admin/${missingClient ? "clients" : "inventory"}`}
+        href={`/${locale}/admin/clients`}
         label={
-          missingClient
-            ? locale === "sq"
-              ? "Shto klient"
-              : "Add client"
-            : locale === "sq"
-              ? "Shto artikull"
-              : "Add item"
+          locale === "sq"
+            ? "Shto klient"
+            : "Add client"
         }
       />
     );

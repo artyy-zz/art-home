@@ -169,6 +169,14 @@ export const offerItemSchema = z.object({
   unitPrice: z.coerce.number().positive(),
 });
 
+export const manualOfferItemSchema = z.object({
+  materialId: optionalText,
+  productName: z.string().min(1).trim(),
+  description: optionalText,
+  quantity: z.coerce.number().int().positive(),
+  unitPrice: z.coerce.number().positive(),
+});
+
 export const offerSchema = z.object({
   number: documentNumber,
   clientId: z.string().min(1),
@@ -178,7 +186,7 @@ export const offerSchema = z.object({
   notes: optionalText,
   vatEnabled: z.boolean().default(true),
   vatRate: z.coerce.number().min(0),
-  items: z.array(offerItemSchema).min(1),
+  items: z.array(manualOfferItemSchema).min(1),
 });
 
 export const invoiceSchema = z.object({
