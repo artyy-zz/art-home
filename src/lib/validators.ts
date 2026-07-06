@@ -41,8 +41,8 @@ const optionalAmount = z.preprocess(
 const documentNumber = z.string().trim().min(1, "Document number is required");
 
 export const loginSchema = z.object({
-  email: z.email("Invalid email address").trim(),
-  password: z.string().min(8, "Password is required"),
+  username: z.string().trim().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const leadSchema = z.object({
@@ -307,9 +307,17 @@ export const debitNoteUpdateSchema = z.object({
 });
 
 export const userCreateSchema = z.object({
-  name: z.string().min(2).trim(),
-  email: z.email("Invalid email address").trim().toLowerCase(),
+  username: z.string().min(2).trim(),
   password: z.string().min(1, "Password is required"),
+});
+
+export const userCredentialsSchema = z.object({
+  username: z.string().min(2).trim(),
+  password: z
+    .string()
+    .trim()
+    .transform((value) => (value.length ? value : undefined))
+    .optional(),
 });
 
 export const userRoleSchema = z.object({

@@ -57,8 +57,13 @@ export function UserCreateForm({
 
   return (
     <form ref={formRef} action={handleSubmit} className="grid gap-4 md:grid-cols-3">
-      <input name="name" required className={inputClassName} placeholder={locale === "sq" ? "Emri" : "Name"} />
-      <input name="email" required type="email" className={inputClassName} placeholder="Email" />
+      <input
+        name="username"
+        required
+        autoComplete="username"
+        className={inputClassName}
+        placeholder={locale === "sq" ? "Perdoruesi" : "Username"}
+      />
       <PasswordInput className={inputClassName} placeholder={locale === "sq" ? "Fjalekalimi" : "Password"} buttonClassName="hover:bg-black/5" />
       <div className="md:col-span-3">
         <p className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">

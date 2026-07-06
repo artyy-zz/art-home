@@ -3,8 +3,8 @@ import { PrismaClient, UserRole } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const ownerEmail = process.env.OWNER_EMAIL ?? "owner@arthome-ks.com";
-const ownerName = process.env.OWNER_NAME ?? "Art Home Owner";
+const ownerUsername = process.env.OWNER_USERNAME ?? "Art";
+const ownerName = process.env.OWNER_NAME ?? ownerUsername;
 const ownerPassword = process.env.OWNER_PASSWORD ?? "Admin123!";
 
 async function main() {
@@ -29,23 +29,28 @@ async function main() {
   const passwordHash = await bcrypt.hash(ownerPassword, 10);
 
   await prisma.user.upsert({
-    where: { email: ownerEmail },
+    where: { usernameNormalized: ownerUsername.toLowerCase() },
     update: {
       name: ownerName,
+      username: ownerUsername,
+      usernameNormalized: ownerUsername.toLowerCase(),
+      password: ownerPassword,
       passwordHash,
       role: UserRole.OWNER,
       roleId: ownerRole.id,
     },
     create: {
       name: ownerName,
-      email: ownerEmail,
+      username: ownerUsername,
+      usernameNormalized: ownerUsername.toLowerCase(),
+      password: ownerPassword,
       passwordHash,
       role: UserRole.OWNER,
       roleId: ownerRole.id,
     },
   });
 
-  console.log(`Owner user ready: ${ownerEmail}`);
+  console.log(`Owner user ready: ${ownerUsername}`);
 }
 
 main()

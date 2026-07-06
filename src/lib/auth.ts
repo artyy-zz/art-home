@@ -18,7 +18,7 @@ type SessionPayload = {
   role: UserRole;
   roleId?: string | null;
   name: string;
-  email: string;
+  username: string;
 };
 
 function getSessionSecret() {
@@ -38,14 +38,19 @@ async function signSession(payload: SessionPayload) {
     .sign(getSessionSecret());
 }
 
-export async function authenticateUser(email: string, password: string) {
+function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
+export async function authenticateUser(username: string, password: string) {
+  const usernameNormalized = normalizeUsername(username);
   const user = await measureAsync(
     "auth.authenticate.userLookup",
     () =>
       prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
+        where: { usernameNormalized },
       }),
-    { email: email.toLowerCase() },
+    { username: usernameNormalized },
   );
 
   if (!user) {
@@ -116,10 +121,35 @@ export const getCurrentUser = cache(async () => {
     }
 
     if (session.role === "OWNER") {
+      const databaseUser = await prisma.user.findUnique({
+        where: { id: session.sub },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          role: true,
+          roleId: true,
+          roleRecord: {
+            select: {
+              id: true,
+              key: true,
+              name: true,
+              isOwner: true,
+              isSystem: true,
+            },
+          },
+          lastLoginAt: true,
+        },
+      });
+
+      if (databaseUser) {
+        return databaseUser;
+      }
+
       return {
         id: session.sub,
         name: session.name,
-        email: session.email,
+        username: session.username ?? session.name,
         role: session.role,
         roleId: session.roleId ?? null,
         roleRecord: {
@@ -138,7 +168,7 @@ export const getCurrentUser = cache(async () => {
       select: {
         id: true,
         name: true,
-        email: true,
+        username: true,
         role: true,
         roleId: true,
         roleRecord: {

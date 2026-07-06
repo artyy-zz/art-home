@@ -59,6 +59,7 @@ import {
   roleSchema,
   stokSchema,
   supplierSchema,
+  userCredentialsSchema,
   userCreateSchema,
   userRoleSchema,
   workerAdvanceSchema,
@@ -118,6 +119,10 @@ async function deleteNotificationActionImpl(
 
 function parseCheckbox(formData: FormData, key: string) {
   return formData.get(key) === "on";
+}
+
+function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
 }
 
 const STANDARD_VAT_RATE = 18;
@@ -211,7 +216,7 @@ async function ensureAllowed(
   return user as {
     id: string;
     name: string;
-    email: string;
+    username: string;
     role: UserRole;
     roleId: string | null;
     roleRecord: {
@@ -2317,8 +2322,7 @@ async function deleteDebitNoteActionImpl(locale: Locale, debitNoteId: string) {
 async function createUserActionImpl(locale: Locale, formData: FormData) {
   await ensureAllowed(locale, "USERS", "CREATE");
   const parsed = userCreateSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password"),
   });
 
@@ -2327,12 +2331,15 @@ async function createUserActionImpl(locale: Locale, formData: FormData) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  const usernameNormalized = normalizeUsername(parsed.data.username);
   const permissions = permissionMatrixFromFormData(formData);
   await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: {
-        name: parsed.data.name,
-        email: parsed.data.email,
+        name: parsed.data.username,
+        username: parsed.data.username,
+        usernameNormalized,
+        password: parsed.data.password,
         passwordHash,
         role: "STAFF",
         roleId: null,
@@ -2342,6 +2349,41 @@ async function createUserActionImpl(locale: Locale, formData: FormData) {
     await tx.userPermission.createMany({
       data: userPermissionRows(createdUser.id, permissions),
     });
+  });
+
+  revalidateEveryLocale("/admin/users");
+}
+
+async function updateUserCredentialsActionImpl(
+  locale: Locale,
+  userId: string,
+  formData: FormData,
+) {
+  await assertOwner(locale);
+
+  const parsed = userCredentialsSchema.safeParse({
+    username: formData.get("username"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid user payload.");
+  }
+
+  const data: Prisma.UserUpdateInput = {
+    name: parsed.data.username,
+    username: parsed.data.username,
+    usernameNormalized: normalizeUsername(parsed.data.username),
+  };
+
+  if (parsed.data.password) {
+    data.password = parsed.data.password;
+    data.passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data,
   });
 
   revalidateEveryLocale("/admin/users");
@@ -2409,14 +2451,8 @@ async function deleteUserActionImpl(locale: Locale, userId: string) {
     throw new Error("User not found.");
   }
 
-  const actorIsOwner =
-    actor.role === "OWNER" ||
-    Boolean(actor.roleRecord?.isOwner) ||
-    actor.email.toLowerCase() === "artiibela0@gmail.com";
-  const targetIsOwner =
-    target.role === "OWNER" ||
-    Boolean(target.roleRecord?.isOwner) ||
-    target.email.toLowerCase() === "artiibela0@gmail.com";
+  const actorIsOwner = isOwnerUser(actor);
+  const targetIsOwner = isOwnerUser(target);
 
   if (target.id === actor.id || (targetIsOwner && !actorIsOwner)) {
     throw new Error(unauthorizedMessage(locale));
@@ -2445,11 +2481,7 @@ async function updateUserPermissionsActionImpl(
     throw new Error("User not found.");
   }
 
-  if (
-    target.roleRecord?.isOwner ||
-    target.role === "OWNER" ||
-    target.email.toLowerCase() === "artiibela0@gmail.com"
-  ) {
+  if (isOwnerUser(target)) {
     throw new Error(unauthorizedMessage(locale));
   }
 
@@ -2617,6 +2649,7 @@ export const createDebitNoteAction = withActionPerf("createDebitNoteAction", cre
 export const updateDebitNoteAction = withActionPerf("updateDebitNoteAction", updateDebitNoteActionImpl);
 export const deleteDebitNoteAction = withActionPerf("deleteDebitNoteAction", deleteDebitNoteActionImpl);
 export const createUserAction = withActionPerf("createUserAction", createUserActionImpl);
+export const updateUserCredentialsAction = withActionPerf("updateUserCredentialsAction", updateUserCredentialsActionImpl);
 export const updateUserRoleAction = withActionPerf("updateUserRoleAction", updateUserRoleActionImpl);
 export const deleteUserAction = withActionPerf("deleteUserAction", deleteUserActionImpl);
 export const updateUserPermissionsAction = withActionPerf("updateUserPermissionsAction", updateUserPermissionsActionImpl);

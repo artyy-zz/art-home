@@ -16,7 +16,7 @@ export async function loginAction(
   formData: FormData,
 ) {
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    username: formData.get("username"),
     password: formData.get("password"),
   });
 
@@ -26,10 +26,10 @@ export async function loginAction(
     };
   }
 
-  const user = await authenticateUser(parsed.data.email, parsed.data.password);
+  const user = await authenticateUser(parsed.data.username, parsed.data.password);
   if (!user) {
     return {
-      error: locale === "sq" ? "Email ose fjalekalim i pasakte." : "Invalid email or password.",
+      error: locale === "sq" ? "Perdorues ose fjalekalim i pasakte." : "Invalid username or password.",
     };
   }
 
@@ -38,7 +38,7 @@ export async function loginAction(
     role: user.role,
     roleId: user.roleId,
     name: user.name,
-    email: user.email,
+    username: user.username,
   });
 
   redirect(`/${locale}/admin`);

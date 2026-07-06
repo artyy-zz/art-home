@@ -1,11 +1,11 @@
-import { createUserAction, deleteUserAction, updateUserPermissionsAction } from "@/actions/admin";
+import { createUserAction, updateUserPermissionsAction } from "@/actions/admin";
 import { Prisma } from "@prisma/client";
 import { CreateFormPanel } from "@/components/admin/create-form-panel";
 import { PermissionChecklist } from "@/components/admin/permission-checklist";
 import { RecordTable } from "@/components/admin/record-table";
+import { UserActions } from "@/components/admin/user-actions";
 import { UserCreateForm } from "@/components/forms/user-create-form";
 import { Card } from "@/components/shared/card";
-import { ConfirmDeleteButton } from "@/components/shared/confirm-delete-button";
 import { SubmitButton } from "@/components/shared/submit-button";
 import type { Locale } from "@/lib/i18n";
 import { paginatedSliceResult, paginationSliceArgs, parsePage } from "@/lib/pagination";
@@ -30,12 +30,8 @@ function param(
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-function isProtectedOwnerUser(user: { email: string; role: string; roleRecord?: { isOwner: boolean } | null }) {
-  return (
-    user.email.toLowerCase() === "artiibela0@gmail.com" ||
-    user.role === "OWNER" ||
-    Boolean(user.roleRecord?.isOwner)
-  );
+function isProtectedOwnerUser(user: { role: string; roleRecord?: { isOwner: boolean } | null }) {
+  return user.role === "OWNER" || Boolean(user.roleRecord?.isOwner);
 }
 
 function contains(value: string | undefined) {
@@ -64,7 +60,6 @@ function isPermissionAction(value: string): value is (typeof permissionActions)[
 }
 
 function permissionMatrixForUser(record: {
-  email: string;
   role: string;
   roleRecord?: { isOwner: boolean } | null;
   permissions: Array<{ module: string; action: string; allowed: boolean }>;
@@ -101,7 +96,7 @@ async function UsersPage({
     ? {
         OR: [
           { name: search },
-          { email: search },
+          { username: search },
           { roleRecord: { name: search } },
         ],
       }
@@ -123,7 +118,8 @@ async function UsersPage({
         select: {
           id: true,
           name: true,
-          email: true,
+          username: true,
+          password: true,
           role: true,
           roleId: true,
           roleRecord: {
@@ -188,7 +184,7 @@ async function UsersPage({
             sort={sort}
             direction={direction}
             searchPlaceholder={
-              typedLocale === "sq" ? "Kerko perdorues ose email" : "Search users or email"
+              typedLocale === "sq" ? "Kerko perdorues" : "Search users"
             }
             searchLabel={typedLocale === "sq" ? "Kerko" : "Search"}
             emptyMessage={
@@ -226,9 +222,9 @@ async function UsersPage({
 
               return {
                 id: record.id,
-                searchText: `${record.name} ${record.email}`,
+                searchText: record.username,
                 sortValues: {
-                  name: record.name,
+                  name: record.username,
                   permissions: stats.enabled,
                   lastLogin: record.lastLoginAt,
                   createdAt: record.createdAt,
@@ -236,8 +232,8 @@ async function UsersPage({
                 cells: {
                   name: (
                     <div>
-                      <p className="font-semibold">{record.name}</p>
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
+                      <p className="font-semibold">{record.username}</p>
+                      <p className="mt-1 text-xs text-[var(--color-muted)]">{record.roleRecord?.name ?? record.role}</p>
                     </div>
                   ),
                   permissions: isProtectedOwner
@@ -248,19 +244,19 @@ async function UsersPage({
                   lastLogin: record.lastLoginAt ? formatDate(record.lastLoginAt, localeString) : "-",
                   createdAt: formatDate(record.createdAt, localeString),
                 },
-                actions: canDelete && record.id !== user.id && (!isProtectedOwner || currentUserIsOwner) ? (
-                  <form action={deleteUserAction.bind(null, typedLocale, record.id)}>
-                    <ConfirmDeleteButton
-                      label={typedLocale === "sq" ? "Fshi" : "Delete"}
-                      message={
-                        typedLocale === "sq"
-                          ? `A je i sigurt qe deshiron ta fshish perdoruesin "${record.name}"?`
-                          : `Are you sure you want to delete user "${record.name}"?`
-                      }
-                      className="gap-2"
-                    />
-                  </form>
-                ) : null,
+                actions: (
+                  <UserActions
+                    locale={typedLocale}
+                    user={{
+                      id: record.id,
+                      username: record.username,
+                      password: record.password,
+                    }}
+                    canEditCredentials={currentUserIsOwner}
+                    canDelete={canDelete && record.id !== user.id && (!isProtectedOwner || currentUserIsOwner)}
+                    deleteMessageName={record.username}
+                  />
+                ),
               };
             })}
           />
@@ -292,8 +288,8 @@ async function UsersPage({
                     <summary className="cursor-pointer list-none">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <p className="font-semibold text-[var(--color-foreground)]">{record.name}</p>
-                          <p className="mt-1 text-xs text-[var(--color-muted)]">{record.email}</p>
+                          <p className="font-semibold text-[var(--color-foreground)]">{record.username}</p>
+                          <p className="mt-1 text-xs text-[var(--color-muted)]">{record.roleRecord?.name ?? record.role}</p>
                         </div>
                         <span className="rounded-full bg-black/[0.05] px-3 py-1 text-xs font-semibold text-[var(--color-muted)]">
                           {isProtectedOwner

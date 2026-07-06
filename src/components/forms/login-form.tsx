@@ -20,8 +20,8 @@ export function LoginForm({ locale }: { locale: Locale }) {
   return (
     <form action={formAction} className="space-y-4">
       <label className="space-y-2 text-sm text-white/88">
-        <span>Email</span>
-        <input type="email" name="email" required className={inputClassName} />
+        <span>{locale === "sq" ? "Perdoruesi" : "Username"}</span>
+        <input name="username" required autoComplete="username" className={inputClassName} />
       </label>
       <label className="space-y-2 text-sm text-white/88">
         <span>{locale === "sq" ? "Fjalekalimi" : "Password"}</span>

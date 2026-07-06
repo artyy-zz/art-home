@@ -140,21 +140,25 @@ enum NotificationType {
 }
 
 model User {
-  id           String           @id @default(cuid())
-  name         String
-  email        String           @unique
-  passwordHash String
-  role         UserRole         @default(STAFF)
-  roleId       String?
-  roleRecord   Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  lastLoginAt  DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  permissions  UserPermission[]
+  id                 String           @id @default(cuid())
+  name               String
+  username           String           @unique
+  usernameNormalized String           @unique
+  email              String?          @unique
+  password           String?
+  passwordHash       String
+  role               UserRole         @default(STAFF)
+  roleId             String?
+  roleRecord         Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  lastLoginAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  permissions        UserPermission[]
 
   @@index([roleId])
   @@index([createdAt])
   @@index([name])
+  @@index([username])
   @@index([role, name])
 }
 

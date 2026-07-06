@@ -24,8 +24,9 @@ export function PermissionChecklist({
   function selectSection(event: MouseEvent<HTMLButtonElement>) {
     const row = event.currentTarget.closest("tr");
     const inputs = row?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:not(:disabled)');
+    const shouldCheck = inputs ? Array.from(inputs).some((input) => !input.checked) : true;
     inputs?.forEach((input) => {
-      input.checked = true;
+      input.checked = shouldCheck;
     });
   }
 
@@ -53,7 +54,7 @@ export function PermissionChecklist({
                   onClick={selectSection}
                   disabled={locked}
                   className="rounded-full px-2 py-1 text-left transition hover:bg-[var(--color-accent-soft)] disabled:cursor-default disabled:hover:bg-transparent"
-                  title={locale === "sq" ? "Selekto te gjitha lejet e ketij seksioni" : "Select all permissions in this section"}
+                  title={locale === "sq" ? "Selekto ose pastro te gjitha lejet e ketij seksioni" : "Select or clear all permissions in this section"}
                 >
                   {permissionModuleLabels[permissionModule][locale]}
                 </button>
